@@ -26,6 +26,8 @@ DENY_MODULES = {
 ALLOWED_DOTTED = {"urllib.parse"}
 DENY_CALLS = {"eval", "exec", "compile", "__import__", "open", "getattr", "setattr", "delattr",
               "globals", "locals", "vars", "dir", "input", "breakpoint"}
+# Unsafe deserializers: choosing one of these to silence an upgrade error is a security downgrade.
+UNSAFE_YAML = {"Loader", "UnsafeLoader", "CLoader", "CUnsafeLoader"}
 DENY_ATTRS = {"__path__", "__code__", "__file__", "__dict__", "__globals__", "__builtins__",
               "__subclasses__", "__class__", "__bases__", "__mro__", "__closure__", "__module__"}
 
@@ -59,6 +61,8 @@ def _census(tree: ast.AST) -> Counter:
         elif isinstance(node, ast.Attribute):
             if node.attr in DENY_ATTRS:
                 c[f"attribute {node.attr}"] += 1
+            if isinstance(node.value, ast.Name) and node.value.id == "yaml" and node.attr in UNSAFE_YAML:
+                c[f"unsafe deserialization yaml.{node.attr} (use yaml.SafeLoader, or decline)"] += 1
         elif isinstance(node, ast.Raise):
             c["raise statement"] += 1
     return c

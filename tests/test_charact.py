@@ -175,3 +175,24 @@ def test_finish_rejection_budget_ends_in_an_honest_decline(tmp_path):
     res = Agent(model, repo, report, runner, behavior_checker=chk, max_finish_rejections=2).run()
     assert [s["result"][:15] for s in res.steps if s["tool"] == "finish"].count("finish REJECTED") == 2
     assert res.status == "declined" and res.reason.startswith("behavior differs")
+
+
+def test_sites_exercised_by_probes_count_toward_verified_but_are_stated(tmp_path):
+    from upkeep.proof import ProofBundle
+    from upkeep.sandbox import TestResult
+    old, new, repo, report, sites, local, runner = world(QUOTE, tmp_path)
+    report.uncovered = [s for s in sites if s.kind == "call"]  # no test runs the call; the import line runs on any import
+    report.coverage_known = True
+    ok = TestResult(True, 0, "", "docker")
+    good = patched(repo, tmp_path, QUOTE.solution)
+    chk = BehaviorChecker(FakeInputs('[["a b"], ["a b/c:d"]]'), repo, sites, local(old), local(new))
+    rep = chk.check(good)
+    assert rep.ok and rep.probed_sites and all(isinstance(x, list) for x in rep.probed_sites)
+    b = ProofBundle("lib", "1", "2", report, ok, ok, behavior=rep.to_dict())
+    assert b.status() == "verified"
+    assert "exercised by behavior probes" in b.to_markdown() and "NOT covered" not in b.to_markdown()
+    # without probes the same situation is NOT verified
+    assert ProofBundle("lib", "1", "2", report, ok, ok).status() == "tests-pass-but-unverified-sites"
+    # and a mismatch always means declined
+    bad = {"probed_sites": rep.probed_sites, "mismatches": [{"function": "quote", "input": [], "old": "a", "new": "b"}]}
+    assert ProofBundle("lib", "1", "2", report, ok, ok, behavior=bad).status() == "declined"

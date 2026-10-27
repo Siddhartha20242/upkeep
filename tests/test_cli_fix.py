@@ -65,3 +65,25 @@ def test_uncovered_site_is_reported_not_called_verified(tmp_path):
     proof = (out / "PROOF.md").read_text()
     assert "`tests-pass-but-unverified-sites`" in proof
     assert "NOT covered: `app.py:9`" in proof
+
+
+def test_behavior_check_flag_blocks_a_naive_fix_and_the_proof_says_so(tmp_path):
+    from tests.test_charact import FakeInputs, edit
+    from upkeep.evalcases import materialize
+    from upkeep.evalcases_behavior import CASES
+    old, new, repo = materialize(CASES[0], tmp_path)
+    naive = edit("app.py", 1, 1, "from urllib.parse import quote as url_quote")
+    model = Scripted([[naive], [tc("finish", {"status": "fixed", "summary": "x"}, "9")]])
+    out = tmp_path / "out"
+    # one fake model serves both roles: agent tool calls, and (via .text) probe inputs
+    class Both(Scripted):
+        def chat(self, messages, tools=None, **kw):
+            if tools is None:
+                return FakeInputs('[["a b"], ["a b/c:d"]]').chat(messages)
+            return super().chat(messages, tools=tools, **kw)
+    both = Both(model.turns)
+    code = cli.main(["fix", "--repo", str(repo), "--old", str(old), "--new", str(new), "--package", "lib", "--out", str(out),
+                     "--test-backend", "local", "--unsandboxed", "--behavior-check"], client=both)
+    assert code == 1
+    proof = (out / "PROOF.md").read_text()
+    assert "## Behavior check against the old library" in proof and "1 mismatch" in proof and "`declined`" in proof

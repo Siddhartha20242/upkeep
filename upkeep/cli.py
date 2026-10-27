@@ -6,12 +6,13 @@ import sys
 from pathlib import Path
 
 from .agent import Agent
+from .charact import BehaviorChecker
 from .dashboard import build as build_dashboard
 from .llm import client_for, load_env
 from .pr import PRError, open_draft_pr
 from .proof import ProofBundle
 from .radar import run_radar
-from .sandbox import SandboxRefused, run_tests
+from .sandbox import SandboxRefused, run_python, run_tests
 from .vuln import query_osv
 
 
@@ -74,9 +75,11 @@ def _fix(args, client=None) -> int:
         print("(Behavior changes that keep signatures identical are invisible to the radar.)")
         return 0
 
+    new_paths = None if args.deps else [args.new]  # a deps folder already holds the new library
+
     def runner(w, coverage=False):
         return run_tests(w, backend=args.test_backend, allow_unsandboxed=args.unsandboxed,
-                         extra_paths=[args.new], deps_dir=args.deps, image=args.image, with_coverage=coverage)
+                         extra_paths=new_paths, deps_dir=args.deps, image=args.image, with_coverage=coverage)
 
     # Measure which affected call sites the repo's own tests actually execute (a line counts as
     # covered even if the call raises). Without this, a green run can't be called "verified".
@@ -85,7 +88,15 @@ def _fix(args, client=None) -> int:
     runner_plain = lambda w: runner(w)  # noqa: E731
     changelog = args.changelog.read_text() if args.changelog else None
     client = client or client_for(args.provider, args.model)
-    agent = Agent(client, args.repo, report, runner_plain, changelog=changelog)
+    checker = None
+    if args.behavior_check:
+        old_paths = None if (args.old_deps or args.deps) else [args.old]
+        sites = [s for _, ss in report.affected for s in ss]
+        world = lambda paths, deps: (lambda d, script: run_python(  # noqa: E731
+            d, script, backend=args.test_backend, allow_unsandboxed=args.unsandboxed,
+            extra_paths=paths, deps_dir=deps, image=args.image))
+        checker = BehaviorChecker(client, args.repo, sites, world(old_paths, args.old_deps), world(new_paths, args.deps))
+    agent = Agent(client, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker)
     res = agent.run()
 
     bundle = ProofBundle(
@@ -93,6 +104,7 @@ def _fix(args, client=None) -> int:
         tests_before=agent.baseline_result, tests_after=res.final_tests,
         injection_flags=res.injection_flags,
         declined_reason=res.reason if res.status == "declined" else None, patch=res.diff,
+        behavior=res.behavior,
     )
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "fix.patch").write_text(res.diff)
@@ -151,7 +163,10 @@ def main(argv: list[str] | None = None, client=None) -> int:
     f.add_argument("--model")
     f.add_argument("--test-backend", choices=["docker", "local"], default="docker")
     f.add_argument("--unsandboxed", action="store_true", help="allow --test-backend local (NOT isolated)")
-    f.add_argument("--deps", type=Path, help="read-only dependency dir for the docker test run")
+    f.add_argument("--deps", type=Path, help="read-only dependency dir holding the NEW library, for the docker test run")
+    f.add_argument("--old-deps", type=Path, help="dependency dir holding the OLD library (for --behavior-check)")
+    f.add_argument("--behavior-check", action="store_true",
+                   help="compare patched code on the new library with the original on the old one (needs probe inputs from the model)")
     f.add_argument("--image", default="python:3.12-slim")
     f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
     f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")

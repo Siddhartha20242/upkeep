@@ -42,3 +42,17 @@ def test_unparsable_edit_rejected():
 def test_preexisting_constructs_are_not_penalised():
     old = "import os\n\n\ndef f():\n    return os.getcwd()\n"
     assert check_edit(old, old.replace("getcwd()", "getcwd() + 'x'")) == (True, "")
+
+
+@pytest.mark.parametrize("loader", ["yaml.Loader", "yaml.UnsafeLoader", "yaml.CLoader"])
+def test_unsafe_yaml_loaders_are_rejected_but_safe_ones_pass(loader):
+    base = "import yaml\n\n\ndef f(t):\n    return yaml.load(t)\n"
+    ok, why = check_edit(base, f"import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader={loader})\n")
+    assert not ok and "unsafe deserialization" in why and "SafeLoader" in why
+    for safe in ("yaml.SafeLoader", "yaml.CSafeLoader", "yaml.FullLoader"):
+        assert check_edit(base, f"import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader={safe})\n")[0], safe
+
+
+def test_preexisting_unsafe_loader_is_not_blamed_on_the_edit():
+    old = "import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader=yaml.Loader)\n"
+    assert check_edit(old, old.replace("(t,", "(t.strip(),"))[0]

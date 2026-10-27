@@ -23,10 +23,20 @@ class ProofBundle:
     patch: str | None = None
     behavior: dict | None = None
 
+    def _probed(self) -> set[tuple]:
+        return {tuple(x) for x in (self.behavior or {}).get("probed_sites", [])}
+
+    def _unexercised(self):
+        """Affected sites that neither a test nor a behavior probe executed."""
+        probed = self._probed()
+        return [s for s in self.radar.uncovered if (s.file, s.line) not in probed]
+
     def status(self) -> str:
         if self.declined_reason:
             return "declined"
-        if self.tests_after is not None and self.tests_after.ok and not self.radar.uncovered:
+        if self.behavior and self.behavior.get("mismatches"):
+            return "declined"
+        if self.tests_after is not None and self.tests_after.ok and not self._unexercised():
             return "verified"
         if self.tests_after is not None and self.tests_after.ok:
             return "tests-pass-but-unverified-sites"
@@ -63,7 +73,12 @@ class ProofBundle:
         if not r.coverage_known:
             lines.append("- coverage unknown (tests not run under coverage)")
         elif r.uncovered:
-            lines += [f"- NOT covered: `{s.file}:{s.line}`" for s in r.uncovered]
+            probed = self._probed()
+            for s in r.uncovered:
+                if (s.file, s.line) in probed:
+                    lines.append(f"- not run by the repo's tests, but exercised by behavior probes: `{s.file}:{s.line}`")
+                else:
+                    lines.append(f"- NOT covered: `{s.file}:{s.line}`")
         else:
             lines.append("- all affected sites are executed by existing tests")
 

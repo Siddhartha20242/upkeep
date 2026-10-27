@@ -39,6 +39,9 @@ class Target:
     name: str
     source: str
     params: list[str]
+    file: str = ""
+    start: int = 0
+    end: int = 0
 
 
 @dataclass
@@ -48,6 +51,7 @@ class BehaviorReport:
     mismatches: list[dict] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     tokens: int = 0
+    probed_sites: list[list] = field(default_factory=list)  # [file, line] of affected sites inside functions that were probed
 
     @property
     def ok(self) -> bool:
@@ -65,7 +69,7 @@ class BehaviorReport:
 
     def to_dict(self) -> dict:
         return {"functions_checked": self.functions_checked, "inputs_checked": self.inputs_checked,
-                "mismatches": self.mismatches, "skipped": self.skipped}
+                "mismatches": self.mismatches, "skipped": self.skipped, "probed_sites": self.probed_sites}
 
 
 def find_targets(repo: Path, sites: list[CallSite]) -> list[Target]:
@@ -81,7 +85,8 @@ def find_targets(repo: Path, sites: list[CallSite]) -> list[Target]:
             if isinstance(node, ast.FunctionDef) and node.lineno <= s.line <= (node.end_lineno or node.lineno):
                 module = ".".join(Path(s.file).with_suffix("").parts)
                 params = [a.arg for a in node.args.posonlyargs + node.args.args]
-                seen[(module, node.name)] = Target(module, node.name, ast.get_source_segment(text, node) or "", params)
+                seen[(module, node.name)] = Target(module, node.name, ast.get_source_segment(text, node) or "", params,
+                                                   s.file, node.lineno, node.end_lineno or node.lineno)
     return list(seen.values())
 
 
@@ -148,6 +153,7 @@ class BehaviorChecker:
     def __init__(self, client: _Chat, original_repo: Path, sites: list[CallSite],
                  run_old: Runner, run_new: Runner, n_inputs: int = 8):
         self.client, self.original, self.run_old, self.run_new, self.n = client, Path(original_repo), run_old, run_new, n_inputs
+        self.sites = list(sites)
         self.targets = find_targets(self.original, sites)
         self._inputs: dict[tuple[str, str], list[list]] = {}
         self._old: dict[tuple[str, str], list | None] = {}
@@ -182,6 +188,8 @@ class BehaviorChecker:
                 continue
             rep.functions_checked += 1
             rep.inputs_checked += len(inputs)
+            rep.probed_sites += [[s.file, s.line] for s in self.sites
+                                 if s.file == t.file and t.start <= s.line <= t.end and [s.file, s.line] not in rep.probed_sites]
             for args, o, n in zip(inputs, old, new):
                 if o != n:
                     rep.mismatches.append({"function": t.name, "input": args, "old": json.dumps(o), "new": json.dumps(n)})

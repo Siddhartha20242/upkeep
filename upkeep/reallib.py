@@ -157,10 +157,10 @@ class Prepared:
 
 def _deps(pins: list[str], cache: Path) -> Path:
     key = re.sub(r"[^a-zA-Z0-9]+", "_", "_".join(sorted(pins)))
-    d = cache / f"deps-{IMAGE.replace(':', '_')}-{key}"
+    d = cache / f"deps-cov-{IMAGE.replace(':', '_')}-{key}"
     if not d.exists():
         dummy = Path(tempfile.mkdtemp())
-        res = prepare_deps(dummy, d, ["pytest", *pins], image=IMAGE)
+        res = prepare_deps(dummy, d, ["pytest", "coverage", *pins], image=IMAGE)
         shutil.rmtree(dummy, ignore_errors=True)
         if not res.ok:
             shutil.rmtree(d, ignore_errors=True)

@@ -31,11 +31,12 @@ evidence. **The code decides the verdict, not the model.** If it cannot show a f
    `read_release_notes`, `finish`. Release notes are *pulled* on demand, not pushed into the prompt.
 3. **Guards enforced in code, not by prompting.**
    - *Scope guard:* an edit may only touch the affected lines.
-   - *Content check:* no new `raise`, `eval`, `open`, dunder introspection or network/OS imports (`urllib.parse` is allowed).
+   - *Content check:* no new `raise`, `eval`, `open`, dunder introspection, network/OS imports (`urllib.parse` is allowed), or
+     unsafe deserializers such as `yaml.Loader` (it told the model to use `yaml.SafeLoader` instead).
    - *Untrusted input:* changelogs and test output are screened, wrapped as data, and never obeyed.
    - *Sandbox:* tests run in Docker with no network, no secrets, dropped capabilities, and a read-only dependency folder.
 4. **Verdict by code.** The model's claim of success is ignored. The system re-runs the tests; "verified" requires green
-   tests, no behavior differences, and every affected site executed by a test.
+   tests, no behavior differences, and every affected site executed by a test **or by a behavior probe** (the proof says which).
 5. **Behavior check.** For each function the agent changed, a model proposes probe inputs (JSON only, never executed as
    code). The original code runs on the old library and the patched code on the new one; any difference blocks "verified".
 6. **Proof bundle (`PROOF.md`).** API diff, affected sites, which sites tests execute, before/after results,
@@ -43,6 +44,8 @@ evidence. **The code decides the verdict, not the model.** If it cannot show a f
 
 `upkeep fix` never modifies your repo: it writes `fix.patch`, `PROOF.md` and `result.json`. `--open-pr` proposes a
 **draft** pull request and is a dry run unless you add `--confirm`.
+
+A rehearsed 3-minute walkthrough with real commands is in [`docs/DEMO.md`](docs/DEMO.md).
 
 ## Quick start
 
