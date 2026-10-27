@@ -1,0 +1,104 @@
+=== NCI-GDC/gdc-client
+[NCI-GDC/gdc-client] python image: python:3.9-slim  pip args: ['--no-build-isolation']
+[NCI-GDC/gdc-client] requirements file: requirements.txt
+[NCI-GDC/gdc-client] deps install: FAILED
+p.linux-aarch64-cpython-39/src/lxml
+      gcc -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -fPIC -DCYTHON_CLINE_IN_TRACEBACK=0 -Isrc -Isrc/lxml/includes -I/usr/local/include/python3.9 -c src/lxml/etree.c -o build/temp.linux-aarch64-cpython-39/src/lxml/etree.o -w
+      Compile failed: command 'gcc' failed: No such file or directory
+      cc -I/usr/include/libxml2 -c /tmp/xmlXPathInit6cknun4q.c -o tmp/xmlXPathInit6cknun4q.o
+      *********************************************************************************
+      Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?
+      *********************************************************************************
+      error: command 'gcc' failed: No such file or directory
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: legacy-install-failure
+
+× Encountered error while trying to install package.
+╰─> lxml
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for output from the failure.
+
+[notice] A new release of pip is available: 23.0.1 -> 26.0.1
+[notice] To update, run: pip install --upgrade pip
+
+{"repo": "NCI-GDC/gdc-client", "valid": false, "reason": "dependency install failed"}
+=== k4cg/heiko
+[k4cg/heiko] python image: python:3.9-slim  pip args: ['--no-build-isolation']
+[k4cg/heiko] requirements file: test-requirements.txt
+[k4cg/heiko] parent: 17 errors in 0.14s
+[k4cg/heiko] fix: 17 errors in 0.14s
+{
+  "repo": "k4cg/heiko",
+  "fix": "d378af45ca3f40b6763668f4ca051a760aedd160",
+  "parent": "a886ec0288aba6b2b9699c364a27ce2f8d8615b9",
+  "pin": "PyYAML==6.0.2",
+  "valid": false,
+  "fail_to_pass": [],
+  "n_fail_to_pass": 0,
+  "parent_failures": 17,
+  "fix_failures": 17,
+  "still_failing_after_fix": [
+    "nfc/mnfc_test.py",
+    "test/test_auth_api.py",
+    "test/test_auth_success.py",
+    "test/test_error.py",
+    "test/test_item.py"
+  ],
+  "reason": "no test fails before the fix and passes after it"
+}
+--- first errors at the parent commit ---
+    import swagger_client
+swagger_client/__init__.py:19: in <module>
+    from swagger_client.api.auth_api import AuthApi
+swagger_client/api/__init__.py:6: in <module>
+    from swagger_client.api.auth_api import AuthApi
+swagger_client/api/auth_api.py:19: in <module>
+    import six
+E   ModuleNotFoundError: No module named 'six'
+=========================== short test summary info ============================
+ERROR nfc/mnfc_test.py
+ERROR test/test_auth_api.py
+ERROR test/test_auth_success.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+3 errors in 0.03s
+=== canonical/charm-nrpe
+[canonical/charm-nrpe] python image: python:3.9-slim  pip args: ['--no-build-isolation']
+[canonical/charm-nrpe] requirements file: none found
+[canonical/charm-nrpe] parent: 4 errors in 0.14s
+[canonical/charm-nrpe] fix: 4 errors in 0.14s
+{
+  "repo": "canonical/charm-nrpe",
+  "fix": "d9587da6f8cc604e23446633c8ccfaf3805dbf87",
+  "parent": "2a396fcb7f8c3f1e9775b18a30c37c654f2b21fe",
+  "pin": "PyYAML==6.0.2",
+  "valid": false,
+  "fail_to_pass": [],
+  "n_fail_to_pass": 0,
+  "parent_failures": 4,
+  "fix_failures": 4,
+  "still_failing_after_fix": [
+    "tests/unit/test_nrpe_helpers.py",
+    "tests/unit/test_nrpe_plugins.py",
+    "tests/unit/test_plugins_cis_audit.py",
+    "tests/unit/test_plugins_systemd_scopes.py"
+  ],
+  "reason": "no test fails before the fix and passes after it"
+}
+--- first errors at the parent commit ---
+Traceback:
+/usr/local/lib/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/unit/test_plugins_cis_audit.py:10: in <module>
+    from files.plugins import check_cis_audit, cron_cis_audit
+files/plugins/check_cis_audit.py:21: in <module>
+    from nagios_plugin3 import (
+E   ModuleNotFoundError: No module named 'nagios_plugin3'
+=========================== short test summary info ============================
+ERROR tests/unit/test_nrpe_helpers.py
+ERROR tests/unit/test_nrpe_plugins.py
+ERROR tests/unit/test_plugins_cis_audit.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+3 errors in 0.09s

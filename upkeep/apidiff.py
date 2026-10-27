@@ -1,0 +1,185 @@
+"""Static API signature extraction and diffing.
+
+Parses source trees with `ast` and never imports or executes the package, so
+untrusted library code is never run.
+
+Scope (v0): top-level public functions and classes (constructor taken from
+``__init__``), plus simple relative re-exports in ``__init__.py``. Instance
+method calls need type information and are out of scope.
+"""
+
+from __future__ import annotations
+
+import ast
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Param:
+    name: str
+    kind: str  # posonly | pos | vararg | kwonly | varkw
+    has_default: bool
+
+
+@dataclass(frozen=True)
+class Signature:
+    qualname: str  # canonical dotted name, e.g. "pkg.mod.func"
+    params: tuple[Param, ...]
+    is_class: bool = False
+
+
+@dataclass(frozen=True)
+class Change:
+    symbol: str
+    kind: str
+    detail: str
+    breaking: bool = True
+
+
+def _params_from_args(args: ast.arguments, skip_first: bool = False) -> tuple[Param, ...]:
+    out: list[Param] = []
+    positional = [(a, "posonly") for a in args.posonlyargs] + [(a, "pos") for a in args.args]
+    n_defaults = len(args.defaults)
+    first_default_idx = len(positional) - n_defaults
+    for i, (a, kind) in enumerate(positional):
+        out.append(Param(a.arg, kind, i >= first_default_idx))
+    if args.vararg:
+        out.append(Param(args.vararg.arg, "vararg", True))
+    for a, d in zip(args.kwonlyargs, args.kw_defaults):
+        out.append(Param(a.arg, "kwonly", d is not None))
+    if args.kwarg:
+        out.append(Param(args.kwarg.arg, "varkw", True))
+    if skip_first and out and out[0].kind in ("pos", "posonly"):
+        out = out[1:]
+    return tuple(out)
+
+
+_NON_API_PARTS = {"test", "tests", "testing", "conftest"}
+
+
+def _is_public(dotted: str) -> bool:
+    parts = dotted.split(".")
+    return not any(part.startswith("_") or part in _NON_API_PARTS for part in parts)
+
+
+def _module_name(root: Path, file: Path) -> str:
+    rel = file.relative_to(root).with_suffix("")
+    parts = list(rel.parts)
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join(parts)
+
+
+def extract_api(root: Path, package: str) -> dict[str, Signature]:
+    """Return {public dotted name: Signature} for ``package`` under ``root``."""
+    root = Path(root)
+    pkg_dir = root / package
+    api: dict[str, Signature] = {}
+    reexports: list[tuple[str, str]] = []  # (public alias, canonical name)
+
+    for file in sorted(pkg_dir.rglob("*.py")):
+        try:
+            tree = ast.parse(file.read_text(encoding="utf-8"), filename=str(file))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+        module = _module_name(root, file)
+        is_init = file.name == "__init__.py"
+
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                qual = f"{module}.{node.name}"
+                if _is_public(qual):
+                    api[qual] = Signature(qual, _params_from_args(node.args))
+            elif isinstance(node, ast.ClassDef):
+                qual = f"{module}.{node.name}"
+                if not _is_public(qual):
+                    continue
+                params: tuple[Param, ...] = ()
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                        params = _params_from_args(item.args, skip_first=True)
+                api[qual] = Signature(qual, params, is_class=True)
+            elif is_init and isinstance(node, ast.ImportFrom) and node.level == 1:
+                base = module if module else package
+                target_mod = f"{base}.{node.module}" if node.module else base
+                for alias in node.names:
+                    if alias.name == "*":
+                        continue
+                    public = f"{module}.{alias.asname or alias.name}"
+                    reexports.append((public, f"{target_mod}.{alias.name}"))
+
+    for public, canonical in reexports:
+        if canonical in api and _is_public(public):
+            sig = api[canonical]
+            api[public] = Signature(sig.qualname, sig.params, sig.is_class)
+    return api
+
+
+def format_signature(sig: Signature) -> str:
+    """Human/model-readable signature, e.g. ``area(height, width, *, unit=...)``."""
+    parts: list[str] = []
+    saw_star = False
+    for p in sig.params:
+        if p.kind == "vararg":
+            parts.append(f"*{p.name}")
+            saw_star = True
+        elif p.kind == "varkw":
+            parts.append(f"**{p.name}")
+        else:
+            if p.kind == "kwonly" and not saw_star:
+                parts.append("*")
+                saw_star = True
+            parts.append(f"{p.name}=..." if p.has_default else p.name)
+    return f"{sig.qualname}({', '.join(parts)})"
+
+
+def _positional_names(sig: Signature) -> list[str]:
+    return [p.name for p in sig.params if p.kind in ("posonly", "pos")]
+
+
+def diff_api(old: dict[str, Signature], new: dict[str, Signature]) -> list[Change]:
+    """Breaking changes between two extracted APIs (symbols present in ``old``)."""
+    changes: list[Change] = []
+    for name, o in sorted(old.items()):
+        n = new.get(name)
+        if n is None:
+            changes.append(Change(name, "removed", "symbol no longer exists"))
+            continue
+        old_by = {p.name: p for p in o.params}
+        new_by = {p.name: p for p in n.params}
+        new_has_varkw = any(p.kind == "varkw" for p in n.params)
+
+        for pname, op in old_by.items():
+            if op.kind in ("vararg", "varkw"):
+                if pname not in new_by and not any(p.kind == op.kind for p in n.params):
+                    changes.append(Change(name, "param_removed", f"*{pname} removed"))
+                continue
+            np_ = new_by.get(pname)
+            if np_ is None:
+                if op.kind == "kwonly" and new_has_varkw:
+                    continue
+                changes.append(Change(name, "param_removed", f"parameter '{pname}' removed"))
+                continue
+            if op.kind != np_.kind:
+                changes.append(
+                    Change(name, "param_kind_changed", f"'{pname}': {op.kind} -> {np_.kind}")
+                )
+            if op.has_default and not np_.has_default:
+                changes.append(
+                    Change(name, "param_became_required", f"'{pname}' lost its default")
+                )
+
+        for pname, np_ in new_by.items():
+            if pname not in old_by and not np_.has_default and np_.kind not in ("vararg", "varkw"):
+                changes.append(
+                    Change(name, "param_added_required", f"new required parameter '{pname}'")
+                )
+
+        old_pos = [p for p in _positional_names(o) if p in new_by]
+        new_pos = [p for p in _positional_names(n) if p in old_by]
+        if old_pos != new_pos and set(old_pos) == set(new_pos):
+            changes.append(
+                Change(name, "params_reordered", f"positional order {old_pos} -> {new_pos}")
+            )
+    return changes

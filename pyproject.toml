@@ -1,0 +1,22 @@
+[project]
+name = "upkeep"
+version = "0.0.1"
+description = "Verified, security-aware dependency upgrade agent for Python projects"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+upkeep = "upkeep.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["upkeep*"]

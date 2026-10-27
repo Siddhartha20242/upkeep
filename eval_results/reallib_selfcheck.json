@@ -1,0 +1,29 @@
+[
+  {
+    "case": "pyyaml_load",
+    "sound": true,
+    "old_lib_passes_visible_and_hidden": true,
+    "new_lib_fails_visible": true,
+    "solution_passes_visible_and_hidden_on_new": true,
+    "radar_detects_break": true,
+    "changelog_found": true
+  },
+  {
+    "case": "jinja2_removed_names",
+    "sound": true,
+    "old_lib_passes_visible_and_hidden": true,
+    "new_lib_fails_visible": true,
+    "solution_passes_visible_and_hidden_on_new": true,
+    "radar_detects_break": true,
+    "changelog_found": false
+  },
+  {
+    "case": "werkzeug_urls",
+    "sound": true,
+    "old_lib_passes_visible_and_hidden": true,
+    "new_lib_fails_visible": true,
+    "solution_passes_visible_and_hidden_on_new": true,
+    "radar_detects_break": true,
+    "changelog_found": true
+  }
+]
