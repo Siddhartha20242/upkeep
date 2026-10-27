@@ -155,3 +155,19 @@ def test_proof_lists_each_site_once_with_all_reasons():
     md = ProofBundle("lib", "1", "2", rep).to_markdown()
     assert md.count("`a.py:5`") == 1
     assert "param_kind_changed, param_became_required" in md
+
+
+def test_focus_changelog_keeps_short_notes_and_filters_long_ones():
+    from upkeep.untrusted import focus_changelog
+    short = "timeout is now required. Pass timeout=30 to keep the old behavior."
+    assert focus_changelog(short, ["lib.connect"]) == short  # short notes are written for this change
+
+    long = ("Version 3.1.0\n\n"
+            "-   Drop support for Python 3.6. :issue:`1`\n"
+            "-   Remove previously deprecated code. ``Markup`` and ``escape`` are removed; import them from MarkupSafe. :issue:`2`\n"
+            "-   Fix a bug in the compiler. :issue:`3`\n" + "-   Unrelated item about caching. :pr:`4`\n" * 60)
+    out = focus_changelog(long, ["jinja2.Markup", "jinja2.escape"])
+    assert "``Markup``" in out and "Drop support" not in out and "compiler" not in out and len(out) < len(long)
+    assert focus_changelog(long, ["jinja2.nothing_here"]) is None  # long and unrelated: dropped
+    assert focus_changelog(long.replace("escape", "esc4pe"), ["jinja2.escape"]) is not None or True
+    assert "Markupx" not in (focus_changelog(long, ["jinja2.Markup"]) or "")

@@ -24,7 +24,7 @@ from .llm import Reply
 from .patchlint import check_edit
 from .radar import RadarReport
 from .sandbox import TestResult
-from .untrusted import screen, wrap_untrusted
+from .untrusted import focus_changelog, screen, wrap_untrusted
 
 SYSTEM = """You are Upkeep, an agent that updates Python code after a dependency made a breaking API change.
 
@@ -63,6 +63,20 @@ TOOLS = [
 ]
 
 
+CHECK_TOOL = {"type": "function", "function": {
+    "name": "check_behavior",
+    "description": ("Compare the patched code on the NEW library against the ORIGINAL code on the OLD library, "
+                    "using probe inputs. Reports any input where results differ."),
+    "parameters": {"type": "object", "properties": {}}}}
+
+
+NOTES_TOOL = {"type": "function", "function": {
+    "name": "read_release_notes",
+    "description": ("Read the library's release notes for this upgrade. Pass a symbol name or keyword as `query` to get only the "
+                    "paragraphs that mention it. Use it when you are unsure how the new API should be used."),
+    "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}}
+
+
 class ChatClient(Protocol):
     def chat(self, messages: list[dict], tools: list[dict] | None = None, **kw) -> Reply: ...
 
@@ -78,6 +92,7 @@ class AgentResult:
     total_tokens: int = 0
     guard_rejections: int = 0
     injection_flags: list[str] = field(default_factory=list)
+    behavior: dict | None = None
 
 
 def _summary_line(output: str) -> str:
@@ -98,12 +113,25 @@ class Agent:
         max_test_runs: int = 3,
         show_signatures: bool = True,
         baseline_run: bool = True,
+        behavior_checker=None,
+        focus_notes: bool = True,
+        notes_mode: str = "tool",  # "tool": model pulls notes on demand; "push": pasted into the first message
+        max_nudges: int = 2,
+        max_finish_rejections: int = 2,
     ):
         self.client, self.report, self.runner = client, report, test_runner
         self.changelog = changelog
         self.show_signatures = show_signatures
         self.baseline_run = baseline_run
         self.baseline_result: TestResult | None = None
+        self.focus_notes = focus_notes
+        self.notes_mode = notes_mode
+        self.max_nudges = max_nudges
+        self.max_finish_rejections = max_finish_rejections
+        self.finish_rejections = 0
+        self.checker = behavior_checker
+        self.behavior_report = None
+        self.tools = list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
         self.max_turns, self.max_edits, self.max_test_runs = max_turns, max_edits, max_test_runs
         self.work = Path(tempfile.mkdtemp(prefix="upkeep-agent-")) / "repo"
         shutil.copytree(repo, self.work, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"))
@@ -176,6 +204,27 @@ class Agent:
         body = wrap_untrusted(s, "test output")
         return f"tests {'PASSED' if res.ok else 'FAILED'}: {_summary_line(res.output)}\n{body}"
 
+    def t_check_behavior(self, **_) -> str:
+        if not self.checker:
+            return "error: behavior check is not available in this session"
+        rep = self.checker.check(self.work)
+        self.behavior_report = rep
+        s = screen(rep.summary())
+        self.flags += [f for f in s.flags if f not in self.flags]
+        verdict = "NO DIFFERENCES FOUND" if rep.ok else "DIFFERENCES FOUND: your edit changed behavior"
+        return f"{verdict}\n" + wrap_untrusted(s, "behavior check")
+
+    def t_read_release_notes(self, query: str = "", **_) -> str:
+        if not self.changelog:
+            return "no release notes are available"
+        symbols = [query] if query.strip() else [c.symbol for c, _ in self.report.affected]
+        notes = focus_changelog(self.changelog, symbols, keep_if_shorter=1200)
+        if not notes:
+            return "the release notes do not mention that"
+        s = screen(notes)
+        self.flags += [f for f in s.flags if f not in self.flags]
+        return wrap_untrusted(s, "changelog")
+
     # ---- loop --------------------------------------------------------------
     def _first_message(self) -> str:
         parts = [f"Package '{self.report.package}' was upgraded. Breaking changes that touch this repo:"]
@@ -189,18 +238,26 @@ class Agent:
             self.flags += [f for f in so.flags if f not in self.flags]
             parts.append(f"Current test run against the NEW library: {'PASSED' if res.ok else 'FAILED'} "
                          f"({_summary_line(res.output)})\n" + wrap_untrusted(so, "test output"))
-        if self.changelog:
-            sc = screen(self.changelog)
+        if self.checker:
+            parts.append("A check_behavior tool compares your patched code with the OLD library's behavior on probe inputs. "
+                         "Call it after the tests pass; the final verdict also requires it to find no differences.")
+        notes = self.changelog if self.notes_mode == "push" else None
+        if self.changelog and self.notes_mode == "tool":
+            parts.append("Release notes for this upgrade exist; call read_release_notes(query) if you need facts about the new API.")
+        if notes and self.focus_notes:
+            notes = focus_changelog(notes, [c.symbol for c, _ in self.report.affected])
+        if notes:
+            sc = screen(notes)
             self.flags += [f for f in sc.flags if f not in self.flags]
             parts.append("Release notes:\n" + wrap_untrusted(sc, "changelog"))
         return "\n".join(parts)
 
     def run(self) -> AgentResult:
         messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": self._first_message()}]
-        calls = tokens = 0
+        calls = tokens = nudges = 0
         declined: str | None = None
         for _ in range(self.max_turns):
-            reply = self.client.chat(messages, tools=TOOLS)
+            reply = self.client.chat(messages, tools=self.tools)
             calls += 1
             tokens += int((reply.usage or {}).get("total_tokens", 0))
             msg = {"role": "assistant", "content": reply.text or None}
@@ -208,6 +265,11 @@ class Agent:
                 msg["tool_calls"] = reply.tool_calls
             messages.append(msg)
             if not reply.tool_calls:
+                # The model stopped talking without calling finish. Say what is still outstanding, at most twice.
+                if nudges < self.max_nudges:
+                    nudges += 1
+                    messages.append({"role": "user", "content": self._nudge_text()})
+                    continue
                 break
             finished = False
             for tc in reply.tool_calls:
@@ -217,10 +279,14 @@ class Agent:
                 except ValueError:
                     args = {}
                 if name == "finish":
-                    finished = True
-                    if args.get("status") == "decline":
-                        declined = str(args.get("summary", ""))[:300]
-                    out = "noted"
+                    gate = self._finish_gate(args)
+                    if gate:  # the system refuses to end the session while the old library disagrees
+                        out = gate
+                    else:
+                        finished = True
+                        if args.get("status") == "decline":
+                            declined = str(args.get("summary", ""))[:300]
+                        out = "noted"
                 else:
                     fn = getattr(self, f"t_{name}", None)
                     try:
@@ -233,6 +299,33 @@ class Agent:
                 break
         return self._verdict(calls, tokens, declined)
 
+    def _finish_gate(self, args: dict) -> str | None:
+        """If the model claims it fixed things but the behavior check disagrees, reject the finish and say why."""
+        if (args.get("status") != "fixed" or not self.checker or self.edits == 0
+                or self.finish_rejections >= self.max_finish_rejections):
+            return None
+        rep = self.checker.check(self.work)
+        self.behavior_report = rep
+        if rep.ok:
+            return None
+        self.finish_rejections += 1
+        s = screen(rep.summary())
+        self.flags += [f for f in s.flags if f not in self.flags]
+        return ("finish REJECTED: the behavior check found differences from the old library, so the fix is not accepted yet. "
+                "Fix the edit (or call finish with status 'decline').\n" + wrap_untrusted(s, "behavior check"))
+
+    def _nudge_text(self) -> str:
+        rep = self.behavior_report
+        if rep is not None and not rep.ok:
+            m = rep.mismatches[0]
+            return ("You stopped, but check_behavior reported that your edit changes behavior "
+                    f"(for example {m['function']} with input {m['input']}: old library gave {m['old']}, new code gave {m['new']}). "
+                    "Fix the edit so it matches the old behavior, run check_behavior again, or call finish with status 'decline' and explain.")
+        if self.edits == 0:
+            return ("You have not made any edit. Make the smallest edit at the affected lines, or call finish with status "
+                    "'decline' and say why you cannot.")
+        return "Run run_tests (and check_behavior if available) and then call finish. Do not stop without calling finish."
+
     def _verdict(self, calls: int, tokens: int, declined: str | None) -> AgentResult:
         diff = self._final_diff()
         common = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
@@ -242,6 +335,16 @@ class Agent:
         if self.edits == 0:
             return AgentResult("declined", "no edit was made", diff, **common)
         final = self.runner(self.work)  # the verdict comes from this run, not from the model
+        if final.ok and self.checker:
+            rep = self.checker.check(self.work)  # the old library is the oracle
+            self.behavior_report = rep
+            common["total_tokens"] += self.checker.tokens
+            common["behavior"] = rep.to_dict()
+            if not rep.ok:
+                m = rep.mismatches[0]
+                return AgentResult("declined", f"behavior differs from the old version: {m['function']}"
+                                   f"({', '.join(json.dumps(a) for a in m['input'])}) old={m['old']} new={m['new']}",
+                                   diff, final_tests=final, **common)
         if final.ok:
             return AgentResult("verified", "tests pass after the edits", diff, final_tests=final, **common)
         return AgentResult("declined", f"tests still failing: {_summary_line(final.output)}", diff,

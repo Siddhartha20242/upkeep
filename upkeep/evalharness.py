@@ -19,15 +19,18 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from .agent import Agent, ChatClient
+from .charact import BehaviorChecker
 from .evalcases import Case, _w, materialize
 from .radar import run_radar
-from .sandbox import run_tests
+from .sandbox import run_python, run_tests
 
 CONFIGS = {
     "full": dict(show_signatures=True, max_test_runs=3, use_changelog=True),
     "nosig": dict(show_signatures=False, max_test_runs=3, use_changelog=True),
     "oneshot": dict(show_signatures=True, max_test_runs=1, use_changelog=True),
     "nochangelog": dict(show_signatures=True, max_test_runs=3, use_changelog=False),
+    "behavior": dict(show_signatures=True, max_test_runs=3, use_changelog=True, behavior_check=True),
+    "notespush": dict(show_signatures=True, max_test_runs=3, use_changelog=True, notes_mode="push"),
     "nobaseline": dict(show_signatures=True, max_test_runs=3, use_changelog=True, baseline_run=False),
 }
 
@@ -73,10 +76,17 @@ def run_case(case: Case, client: ChatClient, config: str = "full") -> Outcome:
             outcome = "undetected" if case.expect == "undetectable" else "missed"
             return Outcome(**base, outcome=outcome, status="not run", reason="static diff found nothing affecting the repo")
 
+        checker = None
+        if cfg.get("behavior_check"):
+            sites = [s for _, ss in report.affected for s in ss]
+            local = lambda lib: (lambda repo_dir, script: run_python(  # noqa: E731 - authored fixtures: local backend is fine
+                repo_dir, script, backend="local", allow_unsandboxed=True, extra_paths=[lib]))
+            checker = BehaviorChecker(client, repo, sites, local(old), local(new))
         agent = Agent(client, repo, report, _local_runner(new),
                       changelog=case.changelog if cfg["use_changelog"] else None,
                       max_test_runs=cfg["max_test_runs"], show_signatures=cfg["show_signatures"],
-                      baseline_run=cfg.get("baseline_run", True))
+                      baseline_run=cfg.get("baseline_run", True), behavior_checker=checker,
+                      notes_mode=cfg.get("notes_mode", "tool"))
         t0 = time.monotonic()
         res = agent.run()
         dt = time.monotonic() - t0

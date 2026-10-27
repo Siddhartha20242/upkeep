@@ -77,6 +77,29 @@ def screen(text: str) -> Screening:
     return Screening(cleaned, flags, truncated, removed)
 
 
+def focus_changelog(text: str, symbols: list[str], max_chars: int = 1800, keep_if_shorter: int = 1200) -> str | None:
+    """Keep only the release-note paragraphs that mention an affected symbol.
+
+    Short notes are kept whole (they are usually written for exactly this change). A long note that
+    mentions none of the symbols is dropped (None): it is unrelated noise and costs tokens.
+    """
+    if len(text) <= keep_if_shorter:
+        return text
+    names = {s.split(".")[-1] for s in symbols if s}
+    pattern = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(re.escape(n) for n in sorted(names)) + r")(?![A-Za-z0-9_])") if names else None
+    blocks, cur = [], []
+    for line in text.splitlines():
+        starts_item = re.match(r"\s*([-*+]|\d+[.)])\s", line) is not None
+        if (not line.strip() or starts_item) and cur:
+            blocks.append("\n".join(cur)); cur = []
+        if line.strip():
+            cur.append(line)
+    if cur:
+        blocks.append("\n".join(cur))
+    kept = [b for b in blocks if pattern and pattern.search(b)]
+    return "\n\n".join(kept)[:max_chars] if kept else None
+
+
 def wrap_untrusted(s: Screening, source: str) -> str:
     """Delimited block for a model prompt. The header repeats the rule, but the
     delimiter is not a boundary an attacker cannot imitate, so do not rely on it."""

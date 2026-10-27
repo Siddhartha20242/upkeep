@@ -22,10 +22,19 @@ DENY_MODULES = {
     "ctypes", "shutil", "builtins", "pickle", "marshal", "glob", "tempfile", "gc", "types",
     "requests", "pty", "signal", "multiprocessing", "threading",
 }
+# Pure string/number helpers are fine even though their package root is denied (urllib.request is not).
+ALLOWED_DOTTED = {"urllib.parse"}
 DENY_CALLS = {"eval", "exec", "compile", "__import__", "open", "getattr", "setattr", "delattr",
               "globals", "locals", "vars", "dir", "input", "breakpoint"}
 DENY_ATTRS = {"__path__", "__code__", "__file__", "__dict__", "__globals__", "__builtins__",
               "__subclasses__", "__class__", "__bases__", "__mro__", "__closure__", "__module__"}
+
+
+def _denied_module(name: str) -> str | None:
+    if name in ALLOWED_DOTTED or any(name.startswith(a + ".") for a in ALLOWED_DOTTED):
+        return None
+    root = name.split(".")[0]
+    return root if root in DENY_MODULES else None
 
 
 def _census(tree: ast.AST) -> Counter:
@@ -33,11 +42,15 @@ def _census(tree: ast.AST) -> Counter:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
-                if a.name.split(".")[0] in DENY_MODULES:
-                    c[f"import {a.name.split('.')[0]}"] += 1
+                d = _denied_module(a.name)
+                if d:
+                    c[f"import {d}"] += 1
         elif isinstance(node, ast.ImportFrom):
-            if node.module and node.module.split(".")[0] in DENY_MODULES:
-                c[f"import {node.module.split('.')[0]}"] += 1
+            if node.module:
+                for a in node.names:  # check "module.name" so `from urllib import parse` is allowed, `request` is not
+                    d = _denied_module(f"{node.module}.{a.name}")
+                    if d:
+                        c[f"import {d}"] += 1
         elif isinstance(node, ast.Call):
             f = node.func
             name = f.id if isinstance(f, ast.Name) else None

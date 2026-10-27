@@ -23,11 +23,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .agent import Agent
+from .charact import BehaviorChecker
 from .apidiff import diff_api, extract_api  # noqa: F401  (diff used by radar)
 from .evalcases import _w
 from .evalharness import Outcome
 from .radar import run_radar
-from .sandbox import prepare_deps, run_tests
+from .sandbox import prepare_deps, run_python, run_tests
 
 IMAGE = "python:3.9-slim"  # old releases (PyYAML 5.4.1) still ship wheels for 3.9
 
@@ -174,8 +175,11 @@ def prepare(case: RealCase, cache: Path) -> Prepared:
     old_src, new_src = _locate(old_root, case.module), _locate(new_root, case.module)
     if not old_src or not new_src:
         raise RuntimeError(f"package dir {case.module!r} not found in sdist")
-    return Prepared(old_src, new_src, changelog_section(new_root, case.extra.get("changelog_ver", case.new_ver)),
-                    _deps(case.old_pins, cache), _deps(case.new_pins, cache))
+    cl_ver = case.extra.get("changelog_ver", case.new_ver)
+    changelog = changelog_section(new_root, cl_ver)
+    if changelog is None and cl_ver != case.new_ver:  # the newer archive may not ship the notes
+        changelog = changelog_section(_download_sdist(case.dist, cl_ver, cache), cl_ver)
+    return Prepared(old_src, new_src, changelog, _deps(case.old_pins, cache), _deps(case.new_pins, cache))
 
 
 def _run(repo: Path, deps: Path, extra: dict[str, str] | None = None):
@@ -208,20 +212,27 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
     return {"case": case.name, "sound": all(v for k, v in checks.items() if k != "changelog_found"), **checks}
 
 
-def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True) -> Outcome:
+def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
+                   focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
         _w(repo, case.repo)
         report = run_radar(repo, prep.old_src, prep.new_src, case.module)
-        base = dict(name=case.name, kind=case.kind, expect="fix", config="real-full" if use_changelog else "real-nochangelog",
+        base = dict(name=case.name, kind=case.kind, expect="fix", config=("real-behavior" if behavior_check else "real-full") if use_changelog else "real-nochangelog",
                     radar_risk=report.risk)
         if not report.affected:
             return Outcome(**base, outcome="missed", status="not run", reason="radar found nothing")
         runner = lambda w: run_tests(  # noqa: E731
             w, backend="docker", image=IMAGE, deps_dir=prep.new_deps, with_coverage=False,
             pytest_args=["-q", "-p", "no:cacheprovider", "--tb=short"], memory="1g", timeout=300)
-        agent = Agent(client, repo, report, runner, changelog=prep.changelog if use_changelog else None)
+        checker = None
+        if behavior_check:
+            sites = [s for _, ss in report.affected for s in ss]
+            world = lambda deps: (lambda d, script: run_python(d, script, backend="docker", image=IMAGE, deps_dir=deps))  # noqa: E731
+            checker = BehaviorChecker(client, repo, sites, world(prep.old_deps), world(prep.new_deps))
+        agent = Agent(client, repo, report, runner, changelog=prep.changelog if use_changelog else None,
+                      behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=max_turns)
         t0 = time.monotonic()
         res = agent.run()
         dt = time.monotonic() - t0

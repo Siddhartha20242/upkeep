@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 
 from .agent import Agent
+from .dashboard import build as build_dashboard
 from .llm import client_for, load_env
+from .pr import PRError, open_draft_pr
 from .proof import ProofBundle
 from .radar import run_radar
 from .sandbox import SandboxRefused, run_tests
@@ -104,6 +106,17 @@ def _fix(args, client=None) -> int:
          "tokens": res.total_tokens, "guard_rejections": res.guard_rejections,
          "injection_flags": res.injection_flags, "steps": res.steps}, indent=2))
     print(f"{args.package}: {res.status.upper()}  ({res.reason})")
+    if args.open_pr:
+        status = bundle.status()
+        try:
+            plan = open_draft_pr(args.repo, args.out / "fix.patch", args.out / "PROOF.md", args.package, args.new_version,
+                                 status, base=args.base, confirm=args.confirm)
+            print(("OPENED " if plan.executed else "DRY RUN (add --confirm to do this): ") + plan.title)
+            print("  " + "\n  ".join(plan.steps))
+            if plan.url:
+                print(f"  draft PR: {plan.url}")
+        except PRError as e:
+            print(f"PR not opened: {e}", file=sys.stderr)
     print(f"wrote {args.out}/fix.patch, PROOF.md, result.json  (the repo itself was NOT modified)")
     agent.cleanup()
     return 0 if res.status == "verified" else 1
@@ -140,7 +153,16 @@ def main(argv: list[str] | None = None, client=None) -> int:
     f.add_argument("--unsandboxed", action="store_true", help="allow --test-backend local (NOT isolated)")
     f.add_argument("--deps", type=Path, help="read-only dependency dir for the docker test run")
     f.add_argument("--image", default="python:3.12-slim")
+    f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
+    f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")
+    f.add_argument("--base", default="main", help="base branch for --open-pr")
     f.set_defaults(fn=lambda a: _fix(a, client))
+
+    d = sub.add_parser("dashboard", help="write a self-contained HTML page for a fix run and/or benchmark results")
+    d.add_argument("--run", type=Path, help="output folder of `upkeep fix` (result.json, fix.patch, PROOF.md)")
+    d.add_argument("--evals", type=Path, help="folder with benchmark result JSON files")
+    d.add_argument("--out", type=Path, default=Path("dashboard.html"))
+    d.set_defaults(fn=lambda a: (print(f"wrote {build_dashboard(a.run, a.evals, a.out)}"), 0)[1])
 
     v = sub.add_parser("vulns", help="known vulnerabilities for a pinned version (OSV)")
     v.add_argument("--package", required=True)

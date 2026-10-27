@@ -22,27 +22,32 @@ def opt(name, default):
 
 def main() -> int:
     Path("eval_results").mkdir(exist_ok=True)
+    only = opt("--only", "")
+    cases = [c for c in CASES if not only or c.name == only]
     preps = {}
-    for c in CASES:
+    for c in cases:
         print(f"preparing {c.name} ({c.dist} {c.old_ver} -> {c.new_ver}) ...", flush=True)
         preps[c.name] = prepare(c, CACHE)
         print(f"   changelog from release archive: {'yes' if preps[c.name].changelog else 'NOT FOUND'}", flush=True)
     if "--selfcheck" in sys.argv:
-        results = [selfcheck(c, preps[c.name]) for c in CASES]
+        results = [selfcheck(c, preps[c.name]) for c in cases]
         for r in results:
             print(json.dumps(r))
         Path("eval_results/reallib_selfcheck.json").write_text(json.dumps(results, indent=2))
         print("ALL SOUND" if all(r["sound"] for r in results) else "SOME CASES ARE UNSOUND")
         return 0
     provider, nochange, repeat = opt("--provider", "baseten"), "--nochangelog" in sys.argv, int(opt("--repeat", "1"))
+    behavior = "--behavior" in sys.argv
     client = client_for(provider)
     outs = []
     for i in range(repeat):
-        for c in CASES:
-            o = run_agent_case(c, preps[c.name], client, use_changelog=not nochange)
+        for c in cases:
+            o = run_agent_case(c, preps[c.name], client, use_changelog=not nochange, behavior_check=behavior,
+                               focus_notes="--rawnotes" not in sys.argv,
+                               notes_mode=opt("--notes", "tool"), max_turns=int(opt("--max-turns", "14")))
             outs.append(o)
             print(f"[run {i + 1}] {o.name}: {o.outcome} ({o.model_calls} calls, {o.tokens} tokens, {o.seconds}s) {o.reason[:60]}", flush=True)
-    Path(f"eval_results/reallib_{provider}{'_nochangelog' if nochange else ''}.json").write_text(
+    Path(f"eval_results/reallib_{provider}{'_nochangelog' if nochange else ''}{'_behavior' if behavior else '_lint2'}{opt('--tag', '')}.json").write_text(
         json.dumps([o.to_dict() for o in outs], indent=2))
     print("done")
     return 0

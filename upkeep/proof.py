@@ -21,6 +21,7 @@ class ProofBundle:
     injection_flags: list[str] = field(default_factory=list)
     declined_reason: str | None = None
     patch: str | None = None
+    behavior: dict | None = None
 
     def status(self) -> str:
         if self.declined_reason:
@@ -69,6 +70,18 @@ class ProofBundle:
         lines += ["", "## Test results"]
         for label, t in (("before", self.tests_before), ("after", self.tests_after)):
             lines.append(f"- {label}: " + (("pass" if t.ok else f"FAIL (exit {t.returncode})") + f" [{t.backend}]" if t else "not run"))
+
+        lines += ["", "## Behavior check against the old library"]
+        b = self.behavior
+        if b is None:
+            lines.append("- not run (only the repo's own tests were used)")
+        else:
+            lines.append(f"- {b['inputs_checked']} probe inputs over {b['functions_checked']} function(s); "
+                         f"{len(b['mismatches'])} mismatch(es)")
+            for m in b["mismatches"][:5]:
+                lines.append(f"  - {m['function']}({', '.join(str(a) for a in m['input'])}): old {m['old']} vs new {m['new']}")
+            lines += [f"  - skipped: {x}" for x in b["skipped"][:3]]
+            lines.append("- probes are model-chosen: a clean result is evidence, not proof")
 
         lines += ["", "## Known vulnerabilities in the current version"]
         if self.advisories:

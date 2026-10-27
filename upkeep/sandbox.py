@@ -236,3 +236,46 @@ def prepare_deps(
     except subprocess.TimeoutExpired:
         return TestResult(False, -1, "pip timed out", "docker")
     return TestResult(p.returncode == 0, p.returncode, _truncate(p.stdout + p.stderr), "docker")
+
+
+def run_python(
+    repo: Path,
+    script: str,
+    backend: str = "docker",
+    extra_paths: list[Path] | None = None,
+    deps_dir: Path | None = None,
+    image: str = "python:3.12-slim",
+    timeout: int = 120,
+    allow_unsandboxed: bool = False,
+    python: str | None = None,
+) -> tuple[bool, str]:
+    """Run ``python -c script`` with the repo as the working directory, in the sandbox.
+
+    Used for the behavior check: the same probe script runs once in the "old world"
+    (original code + old library) and once in the "new world" (patched code + new library).
+    """
+    if backend == "local" and not allow_unsandboxed:
+        raise SandboxRefused("local backend runs untrusted code on the host; pass allow_unsandboxed=True")
+    tmp = Path(tempfile.mkdtemp(prefix="upkeep-py-"))
+    try:
+        work = tmp / "work"
+        shutil.copytree(repo, work, symlinks=True, ignore=COPY_IGNORE)
+        if backend == "docker":
+            argv = docker_command(work, ["python", "-c", script], image=image, extra_paths=extra_paths, deps_dir=deps_dir)
+            env = None
+        else:
+            paths = [str(Path(p).resolve()) for p in (list(extra_paths or []) + ([deps_dir] if deps_dir else []))]
+            env = {"PATH": "/usr/bin:/bin", "HOME": str(work), "PYTHONDONTWRITEBYTECODE": "1"}
+            if paths:
+                env["PYTHONPATH"] = os.pathsep.join(paths)
+            argv = [python or sys.executable, "-c", script]
+        try:
+            p = subprocess.run(argv, cwd=None if backend == "docker" else work, env=env,
+                               capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return False, "timed out"
+        except FileNotFoundError:
+            return False, "docker not installed"
+        return p.returncode == 0, _truncate(p.stdout + p.stderr)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
