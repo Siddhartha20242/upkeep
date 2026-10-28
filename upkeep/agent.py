@@ -15,12 +15,13 @@ import json
 import re
 import shutil
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Protocol
 
 from .guard import allowed_ranges, check_diff
-from .llm import Reply
+from .llm import LLMError, Reply
 from .patchlint import check_edit
 from .radar import RadarReport
 from .sandbox import TestResult
@@ -256,11 +257,18 @@ class Agent:
         messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": self._first_message()}]
         calls = tokens = nudges = 0
         declined: str | None = None
+        model_error: str | None = None
         for _ in range(self.max_turns):
-            reply = self.client.chat(messages, tools=self.tools)
+            try:
+                reply = self._chat(messages)
+            except LLMError as e:  # a failed model call must end in an honest decline, never a crash
+                model_error = str(e)[:200]
+                break
             calls += 1
             tokens += int((reply.usage or {}).get("total_tokens", 0))
             msg = {"role": "assistant", "content": reply.text or None}
+            if not reply.text and not reply.tool_calls:
+                msg["content"] = "(no output)"  # the API rejects an assistant message with neither content nor tool calls
             if reply.tool_calls:
                 msg["tool_calls"] = reply.tool_calls
             messages.append(msg)
@@ -297,7 +305,21 @@ class Agent:
                 messages.append({"role": "tool", "tool_call_id": tc["id"], "content": out})
             if finished:
                 break
+        if model_error:
+            return AgentResult("declined", f"model call failed: {model_error}", self._final_diff(), steps=self.steps,
+                               model_calls=calls, total_tokens=tokens, guard_rejections=self.rejections,
+                               injection_flags=self.flags)
         return self._verdict(calls, tokens, declined)
+
+    def _chat(self, messages: list[dict]) -> Reply:
+        """One retry for transient failures (network, 5xx, rate limit). A 4xx bad request is not retried."""
+        try:
+            return self.client.chat(messages, tools=self.tools)
+        except LLMError as first:
+            if "HTTP 4" in str(first) and "HTTP 429" not in str(first):
+                raise
+            time.sleep(2)
+            return self.client.chat(messages, tools=self.tools)
 
     def _finish_gate(self, args: dict) -> str | None:
         """If the model claims it fixed things but the behavior check disagrees, reject the finish and say why."""

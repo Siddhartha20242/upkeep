@@ -20,6 +20,7 @@ class Param:
     name: str
     kind: str  # posonly | pos | vararg | kwonly | varkw
     has_default: bool
+    default: str | None = None  # source text of a LITERAL default (None if there is none or it is not a literal)
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class Signature:
     qualname: str  # canonical dotted name, e.g. "pkg.mod.func"
     params: tuple[Param, ...]
     is_class: bool = False
+    is_method: bool = False  # a method of a public class (only extracted with include_methods=True)
 
 
 @dataclass(frozen=True)
@@ -35,6 +37,17 @@ class Change:
     kind: str
     detail: str
     breaking: bool = True
+    param: str | None = None  # the parameter this change is about, if any
+
+
+def _lit(node) -> str | None:
+    if node is None:
+        return None
+    try:
+        ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return None
+    return ast.unparse(node)
 
 
 def _params_from_args(args: ast.arguments, skip_first: bool = False) -> tuple[Param, ...]:
@@ -43,11 +56,12 @@ def _params_from_args(args: ast.arguments, skip_first: bool = False) -> tuple[Pa
     n_defaults = len(args.defaults)
     first_default_idx = len(positional) - n_defaults
     for i, (a, kind) in enumerate(positional):
-        out.append(Param(a.arg, kind, i >= first_default_idx))
+        has = i >= first_default_idx
+        out.append(Param(a.arg, kind, has, _lit(args.defaults[i - first_default_idx]) if has else None))
     if args.vararg:
         out.append(Param(args.vararg.arg, "vararg", True))
     for a, d in zip(args.kwonlyargs, args.kw_defaults):
-        out.append(Param(a.arg, "kwonly", d is not None))
+        out.append(Param(a.arg, "kwonly", d is not None, _lit(d)))
     if args.kwarg:
         out.append(Param(args.kwarg.arg, "varkw", True))
     if skip_first and out and out[0].kind in ("pos", "posonly"):
@@ -71,12 +85,29 @@ def _module_name(root: Path, file: Path) -> str:
     return ".".join(parts)
 
 
-def extract_api(root: Path, package: str) -> dict[str, Signature]:
-    """Return {public dotted name: Signature} for ``package`` under ``root``."""
+def _method_sigs(cls: ast.ClassDef, qual: str) -> dict[str, Signature]:
+    out: dict[str, Signature] = {}
+    for item in cls.body:
+        if not isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) or item.name.startswith("_"):
+            continue
+        decos = {d.id for d in item.decorator_list if isinstance(d, ast.Name)}
+        skip_first = "staticmethod" not in decos  # self / cls
+        out[f"{qual}.{item.name}"] = Signature(f"{qual}.{item.name}", _params_from_args(item.args, skip_first=skip_first),
+                                               False, True)
+    return out
+
+
+def extract_api(root: Path, package: str, include_methods: bool = False) -> dict[str, Signature]:
+    """Return {public dotted name: Signature} for ``package`` under ``root``.
+
+    ``include_methods`` also records public methods as ``pkg.mod.Class.method`` (used to MEASURE how much a
+    static scan could miss; the call-site scanner itself cannot resolve instance calls)."""
     root = Path(root)
     pkg_dir = root / package
     api: dict[str, Signature] = {}
     reexports: list[tuple[str, str]] = []  # (public alias, canonical name)
+    class_bases: dict[str, list[str]] = {}            # class qualname -> simple names of its bases
+    class_methods: dict[str, dict[str, Signature]] = {}  # class qualname -> its OWN public methods (by name)
 
     for file in sorted(pkg_dir.rglob("*.py")):
         try:
@@ -100,6 +131,10 @@ def extract_api(root: Path, package: str) -> dict[str, Signature]:
                     if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                         params = _params_from_args(item.args, skip_first=True)
                 api[qual] = Signature(qual, params, is_class=True)
+                if include_methods:
+                    class_bases[qual] = [b.id if isinstance(b, ast.Name) else b.attr for b in node.bases
+                                         if isinstance(b, (ast.Name, ast.Attribute))]
+                    class_methods[qual] = {k.rsplit(".", 1)[1]: v for k, v in _method_sigs(node, qual).items()}
             elif is_init and isinstance(node, ast.ImportFrom) and node.level == 1:
                 base = module if module else package
                 target_mod = f"{base}.{node.module}" if node.module else base
@@ -109,10 +144,35 @@ def extract_api(root: Path, package: str) -> dict[str, Signature]:
                     public = f"{module}.{alias.asname or alias.name}"
                     reexports.append((public, f"{target_mod}.{alias.name}"))
 
+    if include_methods:
+        by_simple: dict[str, list[str]] = {}
+        for q in class_methods:
+            by_simple.setdefault(q.rsplit(".", 1)[1], []).append(q)
+
+        def effective(q: str, seen: tuple[str, ...] = ()) -> dict[str, Signature]:
+            """Own methods plus inherited ones from base classes defined in this package (nearest wins)."""
+            out: dict[str, Signature] = {}
+            for base in class_bases.get(q, []):
+                cands = by_simple.get(base, [])
+                # prefer a base in the same module, else the only/first match in the package
+                same = [c for c in cands if c.rsplit(".", 1)[0] == q.rsplit(".", 1)[0]]
+                for c in (same or cands)[:1]:
+                    if c != q and c not in seen:
+                        out.update(effective(c, seen + (q,)))
+            out.update(class_methods.get(q, {}))
+            return out
+
+        for q in class_methods:
+            for name, sig in effective(q).items():
+                api[f"{q}.{name}"] = Signature(f"{q}.{name}", sig.params, False, True)
+
     for public, canonical in reexports:
         if canonical in api and _is_public(public):
             sig = api[canonical]
-            api[public] = Signature(sig.qualname, sig.params, sig.is_class)
+            api[public] = Signature(sig.qualname, sig.params, sig.is_class, sig.is_method)
+            if include_methods and sig.is_class:
+                for k, m in [(k, v) for k, v in api.items() if k.startswith(canonical + ".")]:
+                    api[public + k[len(canonical):]] = m
     return api
 
 
@@ -153,27 +213,31 @@ def diff_api(old: dict[str, Signature], new: dict[str, Signature]) -> list[Chang
         for pname, op in old_by.items():
             if op.kind in ("vararg", "varkw"):
                 if pname not in new_by and not any(p.kind == op.kind for p in n.params):
-                    changes.append(Change(name, "param_removed", f"*{pname} removed"))
+                    changes.append(Change(name, "param_removed", f"*{pname} removed", param=pname))
                 continue
             np_ = new_by.get(pname)
             if np_ is None:
                 if op.kind == "kwonly" and new_has_varkw:
                     continue
-                changes.append(Change(name, "param_removed", f"parameter '{pname}' removed"))
+                changes.append(Change(name, "param_removed", f"parameter '{pname}' removed", param=pname))
                 continue
             if op.kind != np_.kind:
                 changes.append(
-                    Change(name, "param_kind_changed", f"'{pname}': {op.kind} -> {np_.kind}")
+                    Change(name, "param_kind_changed", f"'{pname}': {op.kind} -> {np_.kind}", param=pname)
                 )
             if op.has_default and not np_.has_default:
                 changes.append(
-                    Change(name, "param_became_required", f"'{pname}' lost its default")
+                    Change(name, "param_became_required", f"'{pname}' lost its default", param=pname)
                 )
+            if op.has_default and np_.has_default and op.default is not None and np_.default is not None and op.default != np_.default:
+                # a behavior change a signature CAN show: callers that omit the argument now get a different value
+                changes.append(Change(name, "default_changed", f"'{pname}' default {op.default} -> {np_.default}",
+                                      breaking=False, param=pname))
 
         for pname, np_ in new_by.items():
             if pname not in old_by and not np_.has_default and np_.kind not in ("vararg", "varkw"):
                 changes.append(
-                    Change(name, "param_added_required", f"new required parameter '{pname}'")
+                    Change(name, "param_added_required", f"new required parameter '{pname}'", param=pname)
                 )
 
         old_pos = [p for p in _positional_names(o) if p in new_by]

@@ -219,6 +219,7 @@ def prepare_deps(
     image: str = "python:3.12-slim",
     timeout: int = 900,
     pip_args: list[str] | None = None,
+    wheels_only: bool = False,
 ) -> TestResult:
     """Install dependencies into ``deps_dir`` inside a container WITH network.
 
@@ -227,7 +228,10 @@ def prepare_deps(
     """
     deps_dir = Path(deps_dir)
     deps_dir.mkdir(parents=True, exist_ok=True)
-    cmd = ["pip", "install", "--quiet", "--no-input", "--target", "/work", *(pip_args or []), *packages]
+    # --only-binary=:all: never runs a package's setup.py: wheels are unpacked, not built, which removes most of the
+    # supply-chain exposure of this (networked) step.
+    only = ["--only-binary=:all:"] if wheels_only else []
+    cmd = ["pip", "install", "--quiet", "--no-input", "--target", "/work", *only, *(pip_args or []), *packages]
     if requirements_file:
         cmd += ["-r", f"/extra/0/{requirements_file}"]
     argv = docker_command(deps_dir, cmd, image=image, extra_paths=[repo], network=True, memory="2g")

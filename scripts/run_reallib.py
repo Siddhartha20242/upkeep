@@ -38,16 +38,19 @@ def main() -> int:
         return 0
     provider, nochange, repeat = opt("--provider", "baseten"), "--nochangelog" in sys.argv, int(opt("--repeat", "1"))
     behavior = "--behavior" in sys.argv
-    client = client_for(provider)
+    model = opt("--model", "")
+    client = client_for(provider, model or None)
+    pp = opt("--prober-provider", "")
+    prober = client_for(pp, opt("--prober-model", "") or None) if pp else None
     outs = []
     for i in range(repeat):
         for c in cases:
             o = run_agent_case(c, preps[c.name], client, use_changelog=not nochange, behavior_check=behavior,
                                focus_notes="--rawnotes" not in sys.argv,
-                               notes_mode=opt("--notes", "tool"), max_turns=int(opt("--max-turns", "14")))
+                               notes_mode=opt("--notes", "tool"), max_turns=int(opt("--max-turns", "14")), prober_client=prober)
             outs.append(o)
             print(f"[run {i + 1}] {o.name}: {o.outcome} ({o.model_calls} calls, {o.tokens} tokens, {o.seconds}s) {o.reason[:60]}", flush=True)
-    Path(f"eval_results/reallib_{provider}{'_nochangelog' if nochange else ''}{'_behavior' if behavior else '_lint2'}{opt('--tag', '')}.json").write_text(
+    Path(f"eval_results/reallib_{provider}{'_nochangelog' if nochange else ''}{'_' + model if model else ''}{'_behavior' if behavior else '_lint2'}{opt('--tag', '')}.json").write_text(
         json.dumps([o.to_dict() for o in outs], indent=2))
     print("done")
     return 0

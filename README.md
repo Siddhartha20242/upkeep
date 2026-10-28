@@ -7,157 +7,257 @@ evidence. **The code decides the verdict, not the model.** If it cannot show a f
 > Built for the Meta Global AI Developer Hackathon (Indie Developer track), Oct 26 – Nov 4, 2026.
 > Everything in this repository was written during the event. The main agent loop runs on
 > **Muse Spark Open** (`meta-models/muse-spark-open-1026`, served by Baseten).
+> **Try it on your own project in 5 minutes, no API key:** [`docs/TRY_IT.md`](docs/TRY_IT.md).
 
 ## The short, honest version
 
-- **What works:** a static radar that finds what an upgrade breaks, an agent that edits only those lines, a no-network
-  Docker sandbox for tests, and a proof bundle that says what was and was not verified.
-- **What the evidence shows:** on small benchmarks I wrote myself the agent is near-perfect (38/38 detectable cases in
-  the last run), which mostly shows those benchmarks are easy. On **real library releases** (PyYAML, Jinja2, Werkzeug,
-  apps and tests written by me) it is **mixed and noisy: 3 to 6 of 9 correct depending on configuration**, with the
-  Werkzeug case wrong in 12 of 12 runs until the behavior check turned them into honest declines (0 of 16 accepted).
-- **The result I trust most is a negative one:** a naive fix can pass every visible test and still change behavior.
-  Passing tests only prove what the tests exercise. The behavior check (the old library as an oracle) turns those
-  silent wrong fixes into honest declines.
-- **What is not shown:** real-world adoption. No real user or real downstream repository has used it yet. My attempt to
-  mine real fix commits from GitHub produced **0 of 4 usable cases** (their environments could not be rebuilt).
+- **What works:** a static radar that finds what an upgrade breaks (argument-aware, with local instance-method
+  tracking), an agent that edits only those lines, a no-network Docker sandbox for tests, a behavior check that uses
+  the **old library as an oracle**, and a proof file that says what was and was not verified.
+- **The core finding:** a naive fix can pass every visible test and still change behavior. On the real Werkzeug
+  upgrade, **every model I tried fell into that trap: 18 of 18 runs without the behavior check were green and wrong**,
+  across Muse Spark Open and Muse Spark 1.1, 1.2 and 1.3. A better model is not the fix; independent verification is.
+- **What the evidence shows about the agent:** on small benchmarks I wrote, it is near-perfect (a sign those are easy).
+  On **real library releases** (PyYAML, Jinja2, Werkzeug; apps and tests written by me) it is **mixed and noisy**.
+- **Real-world evidence for the radar:** on 60 real developer fix commits (read-only analysis) it flagged 66% of the
+  relevant changed lines in a held-out half; and about 28,000 public Python files still import APIs those upgrades removed.
+- **What is not shown:** real users. No outside person or project has used it yet. My attempt to mine real fix commits
+  and rebuild their environments produced **0 of 4 usable cases**.
 
 ## How it works
 
-1. **Radar (no model).** Parse the old and new library source with `ast` (never executed), diff the public API, and scan
-   your repo for calls, imports, decorators and base classes that touch changed symbols. Risk is green, amber (every
-   affected site is run by your tests) or red (some site is not, or coverage is unknown).
+1. **Radar (no model).** Parse the old and new library source with `ast` (never executed) and diff the public API:
+   removed symbols, removed/reordered/keyword-only parameters, required-argument changes, and **changed default
+   values**. Then scan your repo for calls, imports, decorators and base classes. The radar is **argument-aware**: a call
+   is flagged only if it actually trips the specific change (`yaml.load(x, Loader=L)` is not flagged; `yaml.load(x)` is).
+   It also types instances in simple local patterns (`c = lib.C(); c.m()`, `with lib.C() as c`, `self.cli = lib.C()`,
+   annotated parameters), and resolves methods inherited from base classes in the same package.
 2. **Agent (Muse Spark Open).** Tools: `list_affected`, `read_file`, `replace_lines`, `run_tests`, `check_behavior`,
-   `read_release_notes`, `finish`. Release notes are *pulled* on demand, not pushed into the prompt.
+   `read_release_notes`, `finish`. Release notes are pulled on demand. A failed model call is retried once, then ends
+   in an honest decline, never a crash.
 3. **Guards enforced in code, not by prompting.**
    - *Scope guard:* an edit may only touch the affected lines.
-   - *Content check:* no new `raise`, `eval`, `open`, dunder introspection, network/OS imports (`urllib.parse` is allowed), or
-     unsafe deserializers such as `yaml.Loader` (it told the model to use `yaml.SafeLoader` instead).
+   - *Content check:* no new `raise`, `eval`, `open`, dunder introspection, network/OS imports (`urllib.parse` is allowed),
+     or unsafe deserializers such as `yaml.Loader` (it told the model to use `yaml.SafeLoader`).
    - *Untrusted input:* changelogs and test output are screened, wrapped as data, and never obeyed.
    - *Sandbox:* tests run in Docker with no network, no secrets, dropped capabilities, and a read-only dependency folder.
-4. **Verdict by code.** The model's claim of success is ignored. The system re-runs the tests; "verified" requires green
+4. **Verdict by code.** The model's claim of success is ignored; the system re-runs the tests. "Verified" requires green
    tests, no behavior differences, and every affected site executed by a test **or by a behavior probe** (the proof says which).
-5. **Behavior check.** For each function the agent changed, a model proposes probe inputs (JSON only, never executed as
-   code). The original code runs on the old library and the patched code on the new one; any difference blocks "verified".
-6. **Proof bundle (`PROOF.md`).** API diff, affected sites, which sites tests execute, before/after results,
+5. **Behavior check.** For each function the agent changed, a model proposes probe inputs twice and the two sets are merged
+   (JSON only, never run as code; an optional `--prober-model` lets a different model do this);
+   Upkeep adds deterministic edge cases (empty, unicode, separators, `None` values, ...) one argument at a time, ignores
+   probes whose old-library output is not stable, then runs the original code on the **old** library and the patched code
+   on the **new** one. Any difference blocks "verified". `finish` is rejected while differences remain.
+6. **Proof bundle (`PROOF.md`).** API diff, affected sites, which sites tests or probes execute, before/after results,
    behavior-check results, known vulnerabilities (OSV), untrusted-input warnings, and **what this does not prove**.
 
-`upkeep fix` never modifies your repo: it writes `fix.patch`, `PROOF.md` and `result.json`. `--open-pr` proposes a
-**draft** pull request and is a dry run unless you add `--confirm`.
-
-A rehearsed 3-minute walkthrough with real commands is in [`docs/DEMO.md`](docs/DEMO.md).
+`upkeep fix` never modifies your repo: it writes `fix.patch`, `PROOF.md` and `result.json`, and shows each agent step
+live. `--open-pr` proposes a **draft** pull request and is a dry run unless you add `--confirm`.
 
 ## Quick start
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]" coverage mypy
-.venv/bin/python -m pytest -q                       # live OSV test: UPKEEP_LIVE=1
+.venv/bin/python -m pytest -q                       # 157 tests; live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
+upkeep check     --repo . --package PyYAML --from 5.4.1 --to 6.0.2 --module yaml      # no key; downloads the two releases
 upkeep radar     --repo R --old OLD_SRC --new NEW_SRC --package lib
-upkeep fix       --repo R --old OLD_SRC --new NEW_SRC --package lib --test-backend docker --deps DEPS_DIR [--behavior-check]
+upkeep fix       --repo R --old OLD_SRC --new NEW_SRC --package lib --test-backend docker --deps DEPS --behavior-check --old-deps OLD_DEPS
 upkeep vulns     --package requests --version 2.19.0
 upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 ```
 `--test-backend local --unsandboxed` runs the repo's tests on your machine without isolation; use it only on code you trust.
+A rehearsed 3-minute walkthrough is in [`docs/DEMO.md`](docs/DEMO.md); an example CI workflow (not yet run on GitHub
+Actions) is in [`docs/ci/upkeep-check.yml`](docs/ci/upkeep-check.yml).
 
-## Results (read the caveats under each)
+## Results (read the caveat under each)
 
-**1. Authored cases: 20 cases (19 detectable) with tiny fake libraries and hidden tests.** 38/38 on the detectable cases
-over two runs with release notes pulled on demand; earlier runs: 33/33 (dev set, 3 repeats) and 24/24 (held-out set, 3
-repeats). *Caveat: I wrote them, tuned parts of the agent against some of them, and the model saturates them.*
+**1. Authored cases: 20 cases (19 detectable), tiny fake libraries, hidden tests.** 38/38 on detectable cases for Muse
+Spark Open over two runs; one run each on the Meta API: `muse-spark-1.1` 19/19, `1.2` 19/19, `1.3` 19/19. Cost per case:
+1.1 about 13.8k tokens / 13 s, 1.2 15.4k / 20 s, 1.3 11.2k / 10 s, Open 13.4k / 11 s.
+*Caveat: I wrote them, tuned parts of the agent against some, and every model saturates them.*
 
-**2. Real library releases, authored apps** (PyYAML 5.4.1→6.0.2, Jinja2 3.0.3→3.1.4, Werkzeug 2.3.8→3.0.3), validated in
-Docker against the real libraries (passes on old, fails on new, reference fix passes).
+**2. Real library releases, authored apps** (PyYAML 5.4.1 to 6.0.2, Jinja2 3.0.3 to 3.1.4, Werkzeug 2.3.8 to 3.0.3),
+validated in Docker against the real libraries (passes on old, fails on new, reference fix passes).
 
 | Setting (3 runs per case) | PyYAML | Jinja2 | Werkzeug | Total |
 |---|---|---|---|---|
 | first run (content check blocked `urllib`) | 3/3 | 3/3 | 0/3 wrong-but-green | 6/9 |
 | `urllib.parse` allowed | 3/3 | 1/3 | 0/3 wrong-but-green | 4/9 |
-| + behavior check | 3/3 | 2/3 | 0/3 declined | 5/9 |
+| + behavior check (initial) | 3/3 | 2/3 | 0/3 declined | 5/9 |
 | focused release notes pushed | 3/3 | 3/3 | 0/3 wrong-but-green | 6/9 |
 | release notes pulled on demand | 3/3 | 0/3 | 0/3 wrong-but-green | 3/9 |
+| Meta API `muse-spark-1.1` / `1.2` / `1.3` (2 runs each, no check) | 2/2 each | 2/2 each | 0/2 each wrong-but-green | 4/6 each |
 
-Run-to-run variance is large (Jinja2 went 0/3 then 5/5 under the same setting). With 3 runs per cell, differences of one
-or two runs mean little.
-*Caveat: three libraries, apps written by me, a small sample.*
+Run-to-run variance is large (Jinja2 went 0/3 then 5/5 under the same setting), so differences of one or two runs mean
+little. *Caveat: three libraries, apps written by me, small samples.*
 
-**Werkzeug, with and without the behavior check (the clearest result in this repository).**
+**3. The Werkzeug trap, with and without the behavior check.**
 
-| Werkzeug 2.3.8 to 3.0.3 | Runs | Called "verified" but wrong | Correct fix | Honest decline |
+| Werkzeug 2.3.8 to 3.0.3 | Runs | Wrong but called "verified" | Correct fix | Honest decline |
 |---|---|---|---|---|
-| behavior check **off** (4 configurations x 3 runs) | 12 | **12** | 0 | 0 |
-| behavior check **on** (4 configurations, 3 + 5 + 5 + 3 runs) | 16 | **0** | 0 | 16 |
+| check **off** (Open x 12, Meta API versions x 6) | 18 | **18** | 0 | 0 |
+| check **on**, model-proposed probes only (Open x 16, Meta API versions x 9) | 25 | **1** | 0 | 24 |
+| check **on**, with edge-case expansion (Open x 3, `muse-spark-1.1` x 3) | 6 | **0** | 0 | 6 |
 
-Every naive replacement (`urllib.parse.quote`/`urlencode`, or a re-implementation from memory) passed all visible tests
-and was wrong on a case only my hidden test covers. With the check on, nothing wrong was ever accepted. In 8 of the 16
-runs the check named a concrete input where the new code differed from the old library (for example which characters
-`url_encode` leaves unescaped); the other runs made no edit or ran out of attempts. Nudges, a gate that rejects
-`finish` while differences remain, and a 30-turn budget did not produce a correct fix: **the model could not reconstruct
-Werkzeug's exact encoding rules from memory, and the system failed safe instead of failing silently.** I count that as a
-safety result, not a capability result. (The nudge, the finish gate and the turn budget were added after seeing this
-case, so treat them as demonstrations, not measurements.)
+The one wrong acceptance was `muse-spark-1.1` using `safe='/+'` where the old default was `safe='/:'`; neither the
+visible tests nor that model's probes contained a colon. Replaying that exact patch against the real library versions:
+accepted with four happy-path probes, **blocked** (6 mismatches in 23 probes) once edge cases are added. The expansion
+was added after seeing that miss; 6 later runs are too few to call it solved. In 8 of the first 16 runs the check named
+a concrete failing input (for example `None` values becoming the literal text `q=None`). No run produced a **correct**
+fix: the models could not reconstruct Werkzeug's exact encoding rules from memory, and the system failed safe.
 
+**4. Do release notes help?** Real Jinja2, 8 runs per setting: no notes **8/8**, raw notes pushed 4/8, focused notes
+pushed 6/8, pulled on demand 5/8 (pooled "any notes" 15/24 vs 8/8, p about 0.07: suggestive, not conclusive). On my
+authored libraries notes are essential (without them 15/19) because those facts cannot be known. Famous libraries are
+already known to the model, and long notes add noise. Takeaway: notes help for private or novel APIs, not necessarily
+for famous ones.
 
-**3. Do release notes help?** Real Jinja2, 8 runs per setting: no notes **8/8**, raw notes pushed 4/8, focused notes
-pushed 6/8, notes pulled on demand 5/8 (pooled "any notes" 15/24 vs 8/8, p about 0.07: suggestive, not conclusive).
-On my authored libraries, notes are essential (without them 15/19) because those facts cannot be known. The model already
-knows well-known libraries, and long release notes add noise. Takeaway: notes help for private or novel APIs, not
-necessarily for famous ones.
+**5. Ablations on the authored cases** (single runs, notes pushed): full 19/19; no signatures 18/19; one test run instead
+of three 19/19; no baseline test run 19/19; no notes 15/19. The benchmark is too easy to show the value of the retry
+budget or the baseline run.
 
-**4. Ablations on the authored cases** (single runs, notes pushed): full 19/19; no signatures 18/19; one test run
-instead of three 19/19; no baseline test run 19/19; no notes 15/19. `muse-spark-1.3` (Meta API) scored 18/19, about the
-same as Muse Spark Open, using roughly 20% fewer tokens. The benchmark is too easy to show the value of the retry budget
-or the baseline run.
+**6. Real developer fixes (retrospective, read-only).** For real public commits that fixed an upgrade break, I fetched
+each changed `.py` file as it was **before** the fix (nothing executed), ran the radar, and sorted every
+developer-changed line that mentions the library: *flagged* by the radar, *compliant* (the radar saw the symbol and judged
+the call fine, usually a refactor), or *unseen*. Commits were split by hash parity; I studied misses only in the dev half.
 
-**5. Mined real downstream repositories: 0 of 4 usable.** The validator (clone, install dependencies in a container,
-run tests with no network, require FAIL then PASS across the real fix commit) correctly rejected all four: an old
-dependency that needs a C compiler, tests that cannot import `six`, a Juju charm library that no requirements file
-provides, and tests containing scrubbed `***REMOVED***` placeholders.
+| | Commits | Lines flagged | Compliant | Unseen | Commits with a flagged line |
+|---|---|---|---|---|---|
+| **held-out half** | 37 | **48 (66%)** | 10 (14%) | 15 (21%) | **29 (78%)** |
+| dev half | 23 | 25 (48%) | 23 (44%) | 4 (8%) | 15 (65%) |
+| all 60 | 60 | 73 (58%) | 33 (26%) | 19 (15%) | 44 (73%) |
+
+The 33 "compliant" lines are calls like `yaml.load(f, Loader=yaml.FullLoader)` that developers changed to `safe_load` for
+security, not because the upgrade broke them. **Without argument-awareness, 33 of the 106 lines the radar sees (31%)
+would have been false alarms.** The "unseen" lines I inspected (dev half) were `import yaml` and similar, not real
+breaks, so 15% overstates the true blind spot. *Caveats: 55 of the 60 commits are PyYAML (Jinja2 1, Werkzeug 1, Flask 3,
+because those "fixes" are mostly version pins); commits come from keyword searches, so the sample favors well-described
+fixes; flagged-in-a-changed-line is not proof the break was real.*
+
+**7. Prevalence on public GitHub (read-only code search, 2026-10-28).** About **28,000** file matches across 8 searches
+still import APIs removed by these upgrades (for example `from jinja2 import Markup` 6,256; `from werkzeug.urls import
+url_encode` 8,576; `from flask import Markup` 1,956). *Caveat: counts are approximate, searches can overlap, and many of
+those files pin old versions or are vendored copies, so they are not broken today.* See `eval_results/prevalence_code_search.json`.
+
+**8. How big is the instance-method blind spot?** Counting **distinct** breaking changes across 12 real upgrades (chosen
+before looking at the result): 443 in total, **34% functions, 46% class constructors, 21% methods**; 5 of the 12
+upgrades have no method changes at all, and the per-upgrade share ranges from 0% to 67% (Flask 67%, redis 59%, click 42%).
+My first count said 51% methods; that was inflated, first by an inheritance bug (redis showed 222 "removed" methods that
+were only moved into base classes) and then by one changed base method being counted once per subclass. See
+`scripts/blindspot_census.py` and `eval_results/blindspot_census.txt`. *This counts API changes, not how often your code
+calls them.*
+
+**9. Mined real downstream repositories: 0 of 4 usable.** The validator (clone, install dependencies in a container, run
+tests with no network, require FAIL then PASS across the real fix commit) correctly rejected all four: an old dependency
+that needs a C compiler, tests that cannot import `six`, a Juju charm library that no requirements file provides, and
+tests containing scrubbed `***REMOVED***` placeholders. Rebuilding arbitrary environments is the fragile part of `fix`;
+`check` and `radar` need no environment.
+
+**10. Does an independent prober help? Asking twice does; a different model did not.** I replayed two known wrong
+Werkzeug fixes (the subtle `safe='/+'` rewrite and the naive default `urllib` swap) against the real library versions,
+with probe sets proposed by each of four Meta models (6 samples each, about 16 probes per set, **no** deterministic
+expansion, so only the model's own imagination is tested).
+
+| A model's own probes catch the wrong fix | `safe='/+'` rewrite | naive default swap |
+|---|---|---|
+| Muse Spark Open | 3/6 | 6/6 |
+| `muse-spark-1.1` / `1.2` / `1.3` | 5/6 / 4/6 / 5/6 | 5/6 / 6/6 / 5/6 |
+| **one probe set (all models)** | **71%** | **92%** |
+| two samples, **same** model | **93%** | 100% |
+| two samples, **different** models | **92%** | 100% |
+
+Taking a second sample raised the catch rate from 71% to 93%; having it come from a *different* model added nothing
+(92%). So probe generation now takes two samples by default, and `--prober-model` exists but is not claimed to help.
+*Caveats: 24 probe sets per variant, one library, two wrong fixes; Open was weakest (3/6) on the subtle case, which
+is too few samples to rank the models.* See `scripts/prober_experiment.py`, `eval_results/prober_experiment.json`.
+
+**11. Tool-calling conformance across Muse Spark versions (`scripts/toolcall_bench.py`).** Eight small tests an agent
+depends on (simple arguments, quotes/backslashes/newlines/unicode, an enum, nested arrays, several calls in one turn,
+*not* calling a tool when none is needed, choosing among five tools, reproducing 17 lines of code exactly), 8 trials at
+each of two temperatures: 128 calls per model, 512 in all.
+
+| Model | Exactly right | Invalid-JSON args | Schema-invalid | Mean latency | Tokens per call |
+|---|---|---|---|---|---|
+| Muse Spark Open (Baseten) | 108/128 (84%) | 0 | 0 | 1.7 s | 1,059 |
+| `muse-spark-1.1` | 124/128 (97%) | 0 | 0 | 2.3 s | 1,206 |
+| `muse-spark-1.2` | 127/128 (99%) | 0 | 0 | 2.7 s | 1,200 |
+| `muse-spark-1.3` | 128/128 (100%) | 0 | 0 | 3.3 s | 1,353 |
+
+No model produced malformed JSON or a schema violation in 512 calls. Most of the gap is **one** test: asked to "end the
+session", Muse Spark Open replied in plain text and **never called the `finish` tool** (0 of 16; confirmed by hand), while
+the Meta-API versions called it (13/16, 16/16, 16/16). That is the same "stops talking without finishing" behavior the
+agent's nudge exists for. Newer versions were slower and used more tokens. *Caveats: small prompts; one test accounts for
+most of the difference and its wording matters; Open and the others are served by different stacks (Baseten vs the Meta API).*
+See `eval_results/toolcall_bench.json`.
 
 ## What went wrong, and what caught it
 
 1. **A "must decline" case that leaked its own answer.** The visible test contained the removed function's whole formula,
-   so copying it inline was a legitimate fix and my case was invalid. Caught by reading the diff; the case now holds only
-   literal expected values.
+   so copying it inline was a legitimate fix. Caught by reading the diff; the case now holds only literal values.
 2. **My own safety rule caused wrong fixes.** The content check denied every `urllib` import (it contains
-   `urllib.request`). The model's natural fix was rejected, so it re-implemented `url_quote` inline from memory with the
-   wrong default. Caught by a behavior-trap test; `urllib.parse` is now allowed.
-3. **A claim that did not survive real libraries.** My toy ablation said release notes were essential. Real Jinja2 said
-   they did not help and may hurt. The claim is narrowed above and notes are now pulled on demand.
-4. **Tooling bugs that invalidated runs.** Dangling symlinks crashed the copy step (twice), a dependency folder was reused
-   across Python versions, and I edited a shell script while it was running. Each was found by reading the failure,
-   not by trusting a green summary.
-5. **"Verified" would have been wrong.** All three Werkzeug runs went green and wrong. This is why the proof bundle lists
-   which call sites tests actually execute, and why the behavior check exists.
+   `urllib.request`), so the model re-implemented `url_quote` inline from memory with the wrong default. Caught by a
+   behavior-trap test; `urllib.parse` is now allowed.
+3. **A claim that did not survive real libraries.** My toy ablation said release notes were essential; real Jinja2 said
+   they did not help. Narrowed above; notes are pulled on demand.
+4. **The radar over-reported.** It flagged every call to a changed function, including calls that already complied.
+   Real fix commits showed 31% of its flags would have been false alarms; it is now argument-aware.
+5. **An inheritance bug nearly shipped.** Methods moved into base classes looked "removed" (redis: 222 false removals), and
+   my first blind-spot number (51%) was wrong. Caught by looking at the listing instead of the total.
+6. **One malformed model reply crashed a whole benchmark run** (`muse-spark-1.1` returned an empty message and the next
+   request got HTTP 400). Now: never send an empty assistant message, retry once, then decline honestly; results save as
+   each case finishes.
+7. **The behavior check let one wrong fix through** (a happy-path-only probe set). Added deterministic edge-case expansion.
+8. **A "correct" reference fix that was not truly equivalent.** Stronger probes showed my toy library's reference solution
+   only matched on narrow inputs; the case was rebuilt.
+9. **Tooling bugs that invalidated runs.** Dangling symlinks crashed the copy step (twice), a dependency folder was
+   reused across Python versions, and I edited a shell script while it was running.
+10. **"Verified" would have been wrong** on the Werkzeug fixes. This is why the proof lists which sites tests or probes
+    actually execute.
+11. **Missing data silently looked like "nothing breaks".** The extracted library sources in my caches lost all their
+    `.py` files (I do not know what removed them), and the radar reported **no changes** instead of failing. I only
+    noticed because an experiment that depended on it returned zero probes. The radar now refuses to run on a library
+    folder with no Python source (exit code 3), and a cache of empty folders is re-downloaded, not trusted.
+12. **A hypothesis that did not hold.** I expected a different Meta model as the prober to catch more than the model that
+    wrote the fix. It did not; a second sample from the same model did just as well. I kept the finding, not the idea.
 
-## Known limitations
+## Known limitations and roadmap
 
-- Static analysis sees only signature-level breaks. A change that keeps signatures identical (return type, defaults) is
-  invisible; one authored case documents this.
-- Only module-level functions and class constructors are resolved. Instance-method calls are not.
-- The behavior check probes with model-chosen inputs: a clean result is evidence, not proof. Only module-level functions
-  are probed.
-- Results are small, authored by me, and noisy. There is no public benchmark and no real-world adoption evidence.
-- The content check is a heuristic denylist. The sandbox is the real boundary, and Docker is a strong boundary, not a
-  perfect one (the dependency-install step runs third-party build scripts inside a container with network access).
+- Python only. The radar sees signature-level breaks and literal default changes; a change that keeps the same
+  signature and defaults (return type, internal behavior) is invisible to it (one authored case documents this).
+- Instance-method calls are resolved only in simple local patterns. Not resolved: inheritance of your own classes,
+  reassigned variables, objects passed between files, `getattr`, factories and other dynamic calls.
+- The behavior check uses JSON-only probes of module-level functions, chosen by a model plus deterministic edge cases:
+  a clean result is evidence, not proof. It does not compare side effects, state, or performance.
+- The dependency-install step needs network access. It installs **wheels only** by default (no build scripts run); if no
+  wheel exists it falls back to a source build inside the container and says so. Docker is a strong boundary, not a perfect one.
+- The content check is a heuristic denylist; the sandbox is the real boundary.
+- Results are small, authored by me, and noisy; there is no public benchmark and no real-world adoption evidence.
+- **Roadmap (not built):** a real type checker for call resolution, dynamic call tracing during a baseline test run,
+  non-JSON probe inputs and stateful probing, partial fixes (accept the verified functions, decline the rest), a
+  CI action that comments on pull requests, and automatic Docker environment recovery for failing installs.
 
 ## Prior art (stated carefully)
 
 Dependabot and Renovate propose version bumps; codemod tools apply hand-written rules; general coding agents can edit
-code. Research on library-migration with language models exists. Upkeep's narrow claim is not a better editor: it ties the
-verdict to deterministic checks (scope guard, sandboxed tests, coverage of affected sites, and a differential check
+code. Research on library migration with language models exists. Upkeep's narrow claim is not a better editor: it ties
+the verdict to deterministic checks (scope guard, sandboxed tests, coverage of affected sites, and a differential check
 against the old library) and shows what was and was not verified. I have not benchmarked against those tools.
 
 ## Reproducing
 
-Needs Docker and your own keys (`BASETEN_API_KEY`; `META_API_KEY` only for the comparison). Results are in `eval_results/`.
+Needs Docker and your own keys (`BASETEN_API_KEY`; `META_API_KEY` only for the Meta API comparisons). Results are in
+`eval_results/`. Commands that call a model cost tokens.
 ```bash
-.venv/bin/python -I scripts/run_eval.py --set all --config full --repeat 2          # authored cases
-.venv/bin/python -I scripts/run_reallib.py --selfcheck                              # prove the real-library cases are sound
+.venv/bin/python -I scripts/run_eval.py --set all --config full --repeat 2                     # authored cases
+.venv/bin/python -I scripts/run_reallib.py --selfcheck                                         # prove the real-library cases are sound
 .venv/bin/python -I scripts/run_reallib.py --run --provider baseten --repeat 3 [--behavior]
-bash scripts/real_validation.sh                                                    # mined repos (review the script first)
+.venv/bin/python -I scripts/run_eval.py --set all --provider meta --model muse-spark-1.3       # another model version
+.venv/bin/python scripts/retro_eval.py --reuse                                                 # real fix commits (read-only, needs gh)
+.venv/bin/python scripts/blindspot_census.py                                                   # method vs function share
+bash scripts/real_validation.sh                                                                # mined repos (review the script first)
 ```
 
 ## Development notes

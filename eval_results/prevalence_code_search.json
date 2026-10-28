@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-28",
+  "note": "GitHub code-search total_count; approximate, counts files that contain the phrase, many pin old versions and are not broken today",
+  "rows": [
+    {
+      "library": "Jinja2 3.1 removed",
+      "removed_api": "jinja2.Markup (moved to markupsafe)",
+      "query": "\"from jinja2 import Markup\" language:Python",
+      "files_found": "6256"
+    },
+    {
+      "library": "Jinja2 3.1 removed",
+      "removed_api": "jinja2.escape (moved to markupsafe)",
+      "query": "\"from jinja2 import escape\" language:Python",
+      "files_found": "959"
+    },
+    {
+      "library": "Jinja2 3.1 removed",
+      "removed_api": "jinja2.contextfilter (renamed pass_context)",
+      "query": "\"from jinja2 import contextfilter\" language:Python",
+      "files_found": "1026"
+    },
+    {
+      "library": "Werkzeug 3.0 removed",
+      "removed_api": "werkzeug.urls.url_quote",
+      "query": "\"from werkzeug.urls import url_quote\" language:Python",
+      "files_found": "5216"
+    },
+    {
+      "library": "Werkzeug 3.0 removed",
+      "removed_api": "werkzeug.urls.url_encode",
+      "query": "\"from werkzeug.urls import url_encode\" language:Python",
+      "files_found": "8576"
+    },
+    {
+      "library": "Werkzeug 2.1 removed",
+      "removed_api": "werkzeug.security.safe_str_cmp",
+      "query": "\"from werkzeug.security import safe_str_cmp\" language:Python",
+      "files_found": "2904"
+    },
+    {
+      "library": "Flask 2.3 removed",
+      "removed_api": "flask.Markup",
+      "query": "\"from flask import Markup\" language:Python",
+      "files_found": "1956"
+    },
+    {
+      "library": "Flask 2.3 removed",
+      "removed_api": "flask.escape",
+      "query": "\"from flask import escape\" language:Python",
+      "files_found": "1070"
+    }
+  ]
+}

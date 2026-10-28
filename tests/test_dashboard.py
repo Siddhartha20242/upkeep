@@ -42,3 +42,16 @@ def test_step_trace_is_readable_not_raw():
     assert _step_text({"tool": "list_affected", "result": '[{"file": "a.py"}, {"file": "b.py"}]'}) == "2 affected site(s) reported"
     out = _step_text({"tool": "run_tests", "result": "tests PASSED: 1 passed\n<<<UNTRUSTED_CONTENT source='x'>>>\nbody"})
     assert "UNTRUSTED" not in out and "tests PASSED" in out
+
+
+def test_behavior_differences_are_shown_old_vs_new_and_escaped():
+    from upkeep.dashboard import behavior_section
+    b = {"inputs_checked": 8, "functions_checked": 1, "mismatches": [
+        {"function": "encode", "input": [{"colors": ["red", "green"]}],
+         "old": json.dumps({"ok": "'colors=red&colors=green'"}), "new": json.dumps({"ok": "'colors=%5B%27red%27'"})},
+        {"function": "<script>", "input": [], "old": json.dumps({"err": "TypeError"}), "new": "<b>x</b>"}]}
+    html_out = behavior_section(b)
+    assert "colors=red&amp;colors=green" in html_out and "colors=%5B%27red%27" in html_out and "raises TypeError" in html_out
+    assert "<script>" not in html_out and "&lt;script&gt;" in html_out
+    assert "2 difference(s)" in html_out and behavior_section(None) == ""
+    assert "0 difference(s)" in behavior_section({"inputs_checked": 16, "functions_checked": 2, "mismatches": []})

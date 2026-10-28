@@ -172,3 +172,49 @@ def test_release_notes_are_pulled_on_demand_not_pushed(world):
 def test_no_notes_tool_without_notes(world):
     repo, report, runner = world
     assert all(t["function"]["name"] != "read_release_notes" for t in Agent(Scripted([]), repo, report, runner).tools)
+
+
+class Flaky:
+    """Fails with an LLMError on chosen calls, otherwise follows a script."""
+
+    def __init__(self, script, fail_on, message="HTTP 500 from /chat/completions: boom"):
+        from upkeep.llm import LLMError
+        self.script, self.fail_on, self.n, self.err, self.message, self.seen = list(script), set(fail_on), 0, LLMError, message, []
+
+    def chat(self, messages, tools=None, **kw):
+        self.n += 1
+        self.seen.append(json.loads(json.dumps(messages)))
+        if self.n in self.fail_on:
+            raise self.err(self.message)
+        calls = self.script.pop(0) if self.script else []
+        msg = {"role": "assistant", "content": "", "tool_calls": calls} if calls else {"role": "assistant", "content": ""}
+        return Reply(msg, {"total_tokens": 5})
+
+
+def test_a_transient_model_failure_is_retried_once(world):
+    repo, report, runner = world
+    model = Flaky([[tc("finish", {"status": "decline", "summary": "x"})]], fail_on={1})
+    res = Agent(model, repo, report, runner).run()
+    assert model.n == 2 and "model call failed" not in res.reason  # the retry succeeded
+
+
+def test_a_persistent_model_failure_ends_in_an_honest_decline_not_a_crash(world):
+    repo, report, runner = world
+    model = Flaky([], fail_on={1, 2})
+    res = Agent(model, repo, report, runner).run()
+    assert res.status == "declined" and res.reason.startswith("model call failed: HTTP 500")
+
+
+def test_a_bad_request_is_not_retried(world):
+    repo, report, runner = world
+    model = Flaky([], fail_on={1, 2}, message="HTTP 400 from /chat/completions: bad")
+    res = Agent(model, repo, report, runner).run()
+    assert model.n == 1 and res.status == "declined" and "HTTP 400" in res.reason
+
+
+def test_an_empty_model_reply_is_never_sent_back_as_an_empty_assistant_message(world):
+    repo, report, runner = world
+    model = Flaky([[], [tc("finish", {"status": "decline", "summary": "x"})]], fail_on=())
+    Agent(model, repo, report, runner, max_nudges=1).run()
+    assistant = [m for m in model.seen[-1] if m.get("role") == "assistant"]
+    assert assistant and all(m.get("content") or m.get("tool_calls") for m in assistant)

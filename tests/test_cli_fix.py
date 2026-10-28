@@ -86,4 +86,24 @@ def test_behavior_check_flag_blocks_a_naive_fix_and_the_proof_says_so(tmp_path):
                      "--test-backend", "local", "--unsandboxed", "--behavior-check"], client=both)
     assert code == 1
     proof = (out / "PROOF.md").read_text()
-    assert "## Behavior check against the old library" in proof and "1 mismatch" in proof and "`declined`" in proof
+    assert "## Behavior check against the old library" in proof and "`declined`" in proof
+    assert "mismatch(es)" in proof and "; 0 mismatch(es)" not in proof  # expanded probes find several differences
+
+
+def test_an_independent_prober_model_proposes_the_probes_not_the_editing_model(tmp_path):
+    from tests.test_charact import FakeInputs, edit
+    from upkeep.evalcases import materialize
+    from upkeep.evalcases_behavior import CASES
+    old, new, repo = materialize(CASES[0], tmp_path)
+    naive = edit("app.py", 1, 1, "from urllib.parse import quote as url_quote")
+
+    class EditorOnly(Scripted):
+        def chat(self, messages, tools=None, **kw):
+            assert tools is not None, "the editing model must NOT be asked for probe inputs when a prober is given"
+            return super().chat(messages, tools=tools, **kw)
+
+    editor = EditorOnly([[naive], [tc("finish", {"status": "fixed", "summary": "x"}, "9")]])
+    prober = FakeInputs('[["a b/c:d"]]')
+    code = cli.main(["fix", "--repo", str(repo), "--old", str(old), "--new", str(new), "--package", "lib", "--out", str(tmp_path / "out"),
+                     "--test-backend", "local", "--unsandboxed", "--behavior-check"], client=editor, prober=prober)
+    assert prober.calls >= 1 and code == 1  # the prober's probes caught the naive fix

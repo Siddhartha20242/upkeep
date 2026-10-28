@@ -74,7 +74,7 @@ def test_behavior_check_accepts_a_correct_fix_and_caches_the_old_run(tmp_path):
     model = FakeInputs('[["a b"], ["a b/c:d"], [""]]')
     chk = BehaviorChecker(model, repo, sites, local(old), local(new))
     assert chk.check(good).ok
-    assert chk.check(good).ok and model.calls == 1  # probe inputs are proposed once
+    assert chk.check(good).ok and model.calls == chk.probe_samples == 2  # proposed once per sample, then cached
 
 
 def test_old_version_that_cannot_run_probes_is_skipped_not_trusted(tmp_path):
@@ -196,3 +196,60 @@ def test_sites_exercised_by_probes_count_toward_verified_but_are_stated(tmp_path
     # and a mismatch always means declined
     bad = {"probed_sites": rep.probed_sites, "mismatches": [{"function": "quote", "input": [], "old": "a", "new": "b"}]}
     assert ProofBundle("lib", "1", "2", report, ok, ok, behavior=bad).status() == "declined"
+
+
+def test_expansion_keeps_the_models_inputs_first_and_adds_edge_cases():
+    from upkeep.charact import expand_inputs
+    out = expand_inputs([["a b"], ["x", 3]])
+    assert out[:2] == [["a b"], ["x", 3]]                         # the model's own probes come first
+    assert ["a/b:c"] in out and [""] in out and ["x", 0] in out    # strings and ints are varied one argument at a time
+    assert len(out) <= 28 and len({json.dumps(o) for o in out}) == len(out)
+    assert expand_inputs([]) == [] and expand_inputs([[None]]) == [[None]]
+
+
+def test_a_happy_path_only_model_still_cannot_get_a_wrong_fix_through(tmp_path):
+    """The model proposes ONLY 'a b' (it never thinks of ':'). Expansion supplies it, so the naive fix is still caught."""
+    old, new, repo, report, sites, local, runner = world(QUOTE, tmp_path)
+    naive = patched(repo, tmp_path, {"app.py": "from urllib.parse import quote as url_quote\n\n\ndef quote(s):\n    return url_quote(s)\n"})
+    rep = BehaviorChecker(FakeInputs('[["a b"]]'), repo, sites, local(old), local(new)).check(naive)
+    assert not rep.ok and any(":" in json.dumps(m["input"]) for m in rep.mismatches)
+
+
+def test_correct_fix_is_not_blocked_by_the_extra_probes(tmp_path):
+    old, new, repo, report, sites, local, runner = world(QUOTE, tmp_path)
+    good = patched(repo, tmp_path, QUOTE.solution)
+    rep = BehaviorChecker(FakeInputs('[["a b"]]'), repo, sites, local(old), local(new)).check(good)
+    assert rep.ok and rep.inputs_checked > 10
+
+
+def test_nondeterministic_probes_are_ignored_not_reported_as_differences(tmp_path):
+    from upkeep.evalcases import Case
+    case = Case("flaky", "x", "fix", {"lib/__init__.py": "import random\n\ndef roll(s):\n    return s + str(random.random())\n"},
+                {"lib/__init__.py": ""}, {"app.py": "from lib import roll\n\n\ndef go(s):\n    return roll(s)\n",
+                                          "test_app.py": "def test_x():\n    assert True\n"}, {}, {})
+    old, new, repo, report, sites, local, runner = world(case, tmp_path)
+    fixed = patched(repo, tmp_path, {"app.py": "import random\n\n\ndef go(s):\n    return s + str(random.random())\n"})
+    rep = BehaviorChecker(FakeInputs('[["a"]]'), repo, sites, local(old), local(new)).check(fixed)
+    assert rep.ok and any("non-deterministic" in s for s in rep.skipped)
+
+
+def test_two_probe_samples_are_merged_without_duplicates_and_cost_two_calls(tmp_path):
+    old, new, repo, report, sites, local, runner = world(QUOTE, tmp_path)
+
+    class Varied:
+        def __init__(self):
+            self.replies = ['[["a b"], ["x"]]', '[["x"], ["a b/c:d"]]']  # the second sample thinks of the colon
+            self.calls = 0
+
+        def chat(self, messages, **kw):
+            text = self.replies[min(self.calls, 1)]
+            self.calls += 1
+            return Reply({"role": "assistant", "content": text}, {"total_tokens": 3})
+
+    m = Varied()
+    chk = BehaviorChecker(m, repo, sites, local(old), local(new), probe_samples=2)
+    naive = patched(repo, tmp_path, {"app.py": "from urllib.parse import quote as url_quote\n\n\ndef quote(s):\n    return url_quote(s)\n"})
+    assert not chk.check(naive).ok and m.calls == 2
+    assert [a for a in chk._inputs[("app", "quote")] if a == ["x"]] == [["x"]]  # "x" appeared in both samples, kept once
+    one = BehaviorChecker(Varied(), repo, sites, local(old), local(new), probe_samples=1)
+    assert one.probe_samples == 1 and BehaviorChecker(Varied(), repo, sites, local(old), local(new), probe_samples=0).probe_samples == 1

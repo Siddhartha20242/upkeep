@@ -10,8 +10,10 @@ from .charact import BehaviorChecker
 from .dashboard import build as build_dashboard
 from .llm import client_for, load_env
 from .pr import PRError, open_draft_pr
+from .pypi import PyPIError, sources_for
+from .progress import paint, run_with_progress, use_color
 from .proof import ProofBundle
-from .radar import run_radar
+from .radar import RadarInputError, run_radar
 from .sandbox import SandboxRefused, run_python, run_tests
 from .vuln import query_osv
 
@@ -33,7 +35,11 @@ def _radar(args) -> int:
             print(f"warning: no coverage data ({res.backend}): {res.output[-300:]}", file=sys.stderr)
         executed = res.executed_lines
 
-    report = run_radar(args.repo, args.old, args.new, args.package, executed)
+    try:
+        report = run_radar(args.repo, args.old, args.new, args.package, executed)
+    except RadarInputError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
     if args.json:
         print(json.dumps(report.to_dict(), indent=2))
     else:
@@ -46,6 +52,35 @@ def _radar(args) -> int:
         unused = len(report.changes) - len(report.affected)
         if unused:
             print(f"  {unused} breaking change(s) do not touch code in this repo")
+    return {"green": 0, "amber": 1, "red": 2}[report.risk]
+
+
+def _check(args) -> int:
+    """One command: download two real releases from PyPI and show what the upgrade breaks in a repo."""
+    try:
+        old_src, new_src, module = sources_for(args.package, args.from_version, args.to_version, args.module)
+    except PyPIError as e:
+        print(f"could not prepare the two releases: {e}", file=sys.stderr)
+        return 3
+    try:
+        report = run_radar(args.repo, old_src, new_src, module)
+    except RadarInputError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2))
+    else:
+        print(f"{args.package} {args.from_version} -> {args.to_version}: " + paint(report.risk.upper(), {"green": "green", "amber": "yellow", "red": "red"}[report.risk], use_color())
+              + ("  (coverage not measured)" if not report.coverage_known else ""))
+        for change, sites in report.affected:
+            print(f"  {change.symbol}: {change.kind} ({change.detail})")
+            for s in sites:
+                print(f"    {s.kind:9} {s.file}:{s.line}")
+        unused = len(report.changes) - len(report.affected)
+        print(f"  {len(report.affected)} breaking change(s) touch this repo; {unused} do not."
+              + ("" if report.affected else " Nothing to fix (behavior changes that keep signatures are invisible to a static check)."))
+        for lim in report.limitations:
+            print(f"  note: {lim}")
     return {"green": 0, "amber": 1, "red": 2}[report.risk]
 
 
@@ -64,12 +99,16 @@ def _vulns(args) -> int:
     return 1
 
 
-def _fix(args, client=None) -> int:
+def _fix(args, client=None, prober=None) -> int:
     if args.test_backend == "local" and not args.unsandboxed:
         print("refused: --test-backend local runs this repo's tests on this machine, NOT isolated. "
               "Pass --unsandboxed to allow it, or use --test-backend docker.", file=sys.stderr)
         return 2
-    report = run_radar(args.repo, args.old, args.new, args.package)
+    try:
+        report = run_radar(args.repo, args.old, args.new, args.package)
+    except RadarInputError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
     if not report.affected:
         print(f"{args.package}: nothing to fix. The static radar found no breaking change touching this repo.")
         print("(Behavior changes that keep signatures identical are invisible to the radar.)")
@@ -95,9 +134,13 @@ def _fix(args, client=None) -> int:
         world = lambda paths, deps: (lambda d, script: run_python(  # noqa: E731
             d, script, backend=args.test_backend, allow_unsandboxed=args.unsandboxed,
             extra_paths=paths, deps_dir=deps, image=args.image))
-        checker = BehaviorChecker(client, args.repo, sites, world(old_paths, args.old_deps), world(new_paths, args.deps))
+        # An INDEPENDENT prober (a different model than the one editing) avoids shared blind spots.
+        prober = prober or (client_for(args.prober_provider, args.prober_model) if args.prober_provider else None)
+        checker = BehaviorChecker(prober or client, args.repo, sites, world(old_paths, args.old_deps), world(new_paths, args.deps))
     agent = Agent(client, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker)
-    res = agent.run()
+    print(paint("\nupkeep: agent working (the model proposes; code decides)", "bold", use_color()), flush=True)
+    res = run_with_progress(agent)
+    print()
 
     bundle = ProofBundle(
         args.package, args.old_version, args.new_version, report,
@@ -116,8 +159,9 @@ def _fix(args, client=None) -> int:
     (args.out / "result.json").write_text(json.dumps(
         {"status": res.status, "reason": res.reason, "model_calls": res.model_calls,
          "tokens": res.total_tokens, "guard_rejections": res.guard_rejections,
-         "injection_flags": res.injection_flags, "steps": res.steps}, indent=2))
-    print(f"{args.package}: {res.status.upper()}  ({res.reason})")
+         "injection_flags": res.injection_flags, "steps": res.steps, "behavior": res.behavior}, indent=2))
+    shade = {"verified": "green", "declined": "red"}.get(res.status, "yellow")
+    print(f"{args.package}: " + paint(res.status.upper(), shade, use_color()) + f"  ({res.reason})")
     if args.open_pr:
         status = bundle.status()
         try:
@@ -134,7 +178,7 @@ def _fix(args, client=None) -> int:
     return 0 if res.status == "verified" else 1
 
 
-def main(argv: list[str] | None = None, client=None) -> int:
+def main(argv: list[str] | None = None, client=None, prober=None) -> int:
     p = argparse.ArgumentParser(prog="upkeep")
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -165,19 +209,31 @@ def main(argv: list[str] | None = None, client=None) -> int:
     f.add_argument("--unsandboxed", action="store_true", help="allow --test-backend local (NOT isolated)")
     f.add_argument("--deps", type=Path, help="read-only dependency dir holding the NEW library, for the docker test run")
     f.add_argument("--old-deps", type=Path, help="dependency dir holding the OLD library (for --behavior-check)")
+    f.add_argument("--prober-provider", choices=["baseten", "meta"],
+                   help="use a DIFFERENT model to propose probe inputs (default: the editing model)")
+    f.add_argument("--prober-model", help="model name for --prober-provider")
     f.add_argument("--behavior-check", action="store_true",
                    help="compare patched code on the new library with the original on the old one (needs probe inputs from the model)")
     f.add_argument("--image", default="python:3.12-slim")
     f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
     f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")
     f.add_argument("--base", default="main", help="base branch for --open-pr")
-    f.set_defaults(fn=lambda a: _fix(a, client))
+    f.set_defaults(fn=lambda a: _fix(a, client, prober))
 
     d = sub.add_parser("dashboard", help="write a self-contained HTML page for a fix run and/or benchmark results")
     d.add_argument("--run", type=Path, help="output folder of `upkeep fix` (result.json, fix.patch, PROOF.md)")
     d.add_argument("--evals", type=Path, help="folder with benchmark result JSON files")
     d.add_argument("--out", type=Path, default=Path("dashboard.html"))
     d.set_defaults(fn=lambda a: (print(f"wrote {build_dashboard(a.run, a.evals, a.out)}"), 0)[1])
+
+    k = sub.add_parser("check", help="download two PyPI releases and show what upgrading would break in your repo (no model)")
+    k.add_argument("--repo", required=True, type=Path)
+    k.add_argument("--package", required=True, help="PyPI name, e.g. PyYAML")
+    k.add_argument("--from", dest="from_version", required=True)
+    k.add_argument("--to", dest="to_version", required=True)
+    k.add_argument("--module", help="import name if it differs from the PyPI name (PyYAML -> yaml)")
+    k.add_argument("--json", action="store_true")
+    k.set_defaults(fn=_check)
 
     v = sub.add_parser("vulns", help="known vulnerabilities for a pinned version (OSV)")
     v.add_argument("--package", required=True)

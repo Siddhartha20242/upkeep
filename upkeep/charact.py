@@ -101,7 +101,7 @@ def _extract_json_list(text: str) -> list | None:
     return None
 
 
-def propose_inputs(client: _Chat, target: Target, n: int = 8) -> tuple[list[list], int]:
+def propose_inputs(client: _Chat, target: Target, n: int = 8, temperature: float = 0.0) -> tuple[list[list], int]:
     prompt = (
         f"Here is a Python function from an application:\n\n{target.source}\n\n"
         f"Propose up to {n} diverse argument lists to test it, as ONE JSON array of arrays, one inner array per call "
@@ -109,7 +109,7 @@ def propose_inputs(client: _Chat, target: Target, n: int = 8) -> tuple[list[list
         "objects). Include edge cases that matter for what it does: empty values, unicode, special characters, "
         "separators, and typical values. Reply with the JSON array only."
     )
-    reply = client.chat([{"role": "user", "content": prompt}], max_tokens=4000)
+    reply = client.chat([{"role": "user", "content": prompt}], max_tokens=4000, temperature=temperature)
     tokens = int((getattr(reply, "usage", None) or {}).get("total_tokens", 0))
     data = _extract_json_list(getattr(reply, "text", "") or "")
     out: list[list] = []
@@ -117,6 +117,52 @@ def propose_inputs(client: _Chat, target: Target, n: int = 8) -> tuple[list[list
         if isinstance(item, list) and len(item) == len(target.params):
             out.append(item)
     return out[:n], tokens
+
+
+EDGE_STR = ["", " ", "a b", "a/b:c", "ünï©ødé", "x" * 40, "!@#$%^&*()_+-=[]{}|;':\",./<>?", "line1\nline2", "%20", "+", "a=1&b=2"]
+EDGE_INT = [0, 1, -1, 2 ** 31]
+
+
+def _variants(value) -> list:
+    """Deterministic edge cases of the same JSON type as ``value`` (the model's input is always kept first)."""
+    if isinstance(value, bool):
+        return [not value]
+    if isinstance(value, str):
+        return EDGE_STR
+    if isinstance(value, int):
+        return EDGE_INT
+    if isinstance(value, float):
+        return [0.0, -1.5, 1e10]
+    if isinstance(value, list):
+        return [[], value[:1], value + value[:1], [None], ["", " "]]
+    if isinstance(value, dict):
+        k = next(iter(value), "k")
+        v = value.get(k, "v")
+        return [{}, {**value, "extra": None}, {**value, "empty": ""}, {k: [v, v]}, {k: None}]
+    return []
+
+
+def expand_inputs(inputs: list[list], max_total: int = 28) -> list[list]:
+    """The model's own probes first, then edge-case variants of the first few, varying ONE argument at a time.
+
+    A model that only proposes happy-path inputs would make the oracle weak; this keeps the check from depending
+    on the model's imagination alone (it is still not exhaustive)."""
+    out: list[list] = []
+    seen: set[str] = set()
+
+    def add(args: list) -> None:
+        key = json.dumps(args, sort_keys=True, default=str)
+        if key not in seen and len(out) < max_total:
+            seen.add(key)
+            out.append(args)
+
+    for a in inputs:
+        add(a)
+    for base in inputs[:3]:
+        for i, val in enumerate(base):
+            for var in _variants(val):
+                add(base[:i] + [var] + base[i + 1:])
+    return out
 
 
 def probe_script(target: Target, inputs: list[list]) -> str:
@@ -151,13 +197,16 @@ def _parse(out: str):
 
 class BehaviorChecker:
     def __init__(self, client: _Chat, original_repo: Path, sites: list[CallSite],
-                 run_old: Runner, run_new: Runner, n_inputs: int = 8):
+                 run_old: Runner, run_new: Runner, n_inputs: int = 8, probe_samples: int = 2):
         self.client, self.original, self.run_old, self.run_new, self.n = client, Path(original_repo), run_old, run_new, n_inputs
+        self.probe_samples = max(1, probe_samples)  # measured: two samples catch 93% of a subtle wrong fix, one catches 71%
         self.sites = list(sites)
         self.targets = find_targets(self.original, sites)
         self._inputs: dict[tuple[str, str], list[list]] = {}
         self._old: dict[tuple[str, str], list | None] = {}
+        self._unstable: dict[tuple[str, str], set[int]] = {}
         self.tokens = 0
+        self._expanded: dict[tuple[str, str], list[list]] = {}
 
     def check(self, patched_repo: Path) -> BehaviorReport:
         rep = BehaviorReport()
@@ -166,17 +215,34 @@ class BehaviorChecker:
         for t in self.targets:
             key = (t.module, t.name)
             if key not in self._inputs:
-                self._inputs[key], used = propose_inputs(self.client, t, self.n)
-                self.tokens += used
-                rep.tokens += used
+                merged: list[list] = []
+                seen_probe: set[str] = set()
+                for i in range(self.probe_samples):  # first sample deterministic, later ones sampled for diversity
+                    got, used = propose_inputs(self.client, t, self.n, temperature=0.0 if i == 0 else 0.8)
+                    self.tokens += used
+                    rep.tokens += used
+                    for a in got:
+                        k = json.dumps(a, sort_keys=True, default=str)
+                        if k not in seen_probe:
+                            seen_probe.add(k)
+                            merged.append(a)
+                self._inputs[key] = merged
             inputs = self._inputs[key]
             if not inputs:
                 rep.skipped.append(f"{t.name}: no usable probe inputs proposed")
                 continue
+            if key not in self._expanded:
+                self._expanded[key] = expand_inputs(inputs)
+            inputs = self._expanded[key]
             script = probe_script(t, inputs)
-            if key not in self._old:  # the old world never changes, so run it once
+            if key not in self._old:  # the old world never changes, so run it twice, once
                 ok, out = self.run_old(self.original, script)
-                self._old[key] = _parse(out) if ok else None
+                first = _parse(out) if ok else None
+                ok2, out2 = self.run_old(self.original, script)
+                second = _parse(out2) if ok2 else None
+                self._old[key] = first
+                self._unstable[key] = ({i for i, (a, b) in enumerate(zip(first, second)) if a != b}
+                                       if isinstance(first, list) and isinstance(second, list) else set())
             old = self._old[key]
             ok, out = self.run_new(Path(patched_repo), script)
             new = _parse(out) if ok else None
@@ -186,11 +252,17 @@ class BehaviorChecker:
             if not isinstance(new, list):
                 rep.mismatches.append({"function": t.name, "input": [], "old": "ran", "new": f"did not run ({str(new or out)[:80]})"})
                 continue
+            unstable = self._unstable.get(key, set())
+            if unstable:
+                rep.skipped.append(f"{t.name}: {len(unstable)} probe(s) ignored because the OLD library gave different "
+                                   "results on two identical runs (non-deterministic)")
             rep.functions_checked += 1
-            rep.inputs_checked += len(inputs)
+            rep.inputs_checked += len(inputs) - len(unstable)
             rep.probed_sites += [[s.file, s.line] for s in self.sites
                                  if s.file == t.file and t.start <= s.line <= t.end and [s.file, s.line] not in rep.probed_sites]
-            for args, o, n in zip(inputs, old, new):
+            for idx, (args, o, n) in enumerate(zip(inputs, old, new)):
+                if idx in unstable:
+                    continue
                 if o != n:
                     rep.mismatches.append({"function": t.name, "input": args, "old": json.dumps(o), "new": json.dumps(n)})
         return rep

@@ -8,12 +8,12 @@ from .evalcases import Case
 
 CASES: list[Case] = [
     Case("b_quote_default", "removed helper; stdlib replacement has different defaults", "fix",
-         {"lib/__init__.py": "def url_quote(s):\n    return s.replace(' ', '%20')\n"},
+         {"lib/__init__.py": "from urllib.parse import quote\n\n\ndef url_quote(s):\n    return quote(s, safe='/:')\n"},
          {"lib/__init__.py": ""},
          {"app.py": "from lib import url_quote\n\n\ndef quote(s):\n    return url_quote(s)\n",
           "test_app.py": "import app\n\n\ndef test_simple():\n    assert app.quote('a b') == 'a%20b'\n"},
          {"test_hidden.py": "import app\n\n\ndef test_h():\n    assert app.quote('a b/c:d') == 'a%20b/c:d'\n"},
-         {"app.py": "from urllib.parse import quote as _quote\n\n\ndef quote(s):\n    return _quote(s, safe='/:').replace('%20', '%20')\n"},
+         {"app.py": "from urllib.parse import quote as _quote\n\n\ndef quote(s):\n    return _quote(s, safe='/:')\n"},
          "lib.url_quote was removed; use urllib.parse.quote instead."),
     Case("b_strip_slug", "removed helper; naive inline version forgets whitespace stripping", "fix",
          {"lib/__init__.py": "def slug(s):\n    return s.strip().lower().replace(' ', '-')\n"},

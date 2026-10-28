@@ -184,3 +184,36 @@ def test_radar_reports_old_and_new_signatures(tmp_path):
     sigs = run_radar(repo, old, new, "lib").signatures
     assert sigs["lib.area"] == ("lib.area(width, height, unit=...)", "lib.area(height, width, *, unit=...)")
     assert sigs["lib.gone"] == ("lib.gone(x)", None)
+
+
+def test_extract_api_can_include_methods_for_measuring_the_blind_spot(tmp_path):
+    write(tmp_path, "lib/__init__.py",
+          "class C:\n    def __init__(self, a):\n        pass\n    def run(self, x, y=1):\n        pass\n"
+          "    @staticmethod\n    def make(a):\n        pass\n    def _private(self):\n        pass\n")
+    plain = extract_api(tmp_path, "lib")
+    assert "lib.C" in plain and "lib.C.run" not in plain  # default: functions and constructors only
+    full = extract_api(tmp_path, "lib", include_methods=True)
+    assert [p.name for p in full["lib.C.run"].params] == ["x", "y"] and full["lib.C.run"].is_method   # self is skipped
+    assert [p.name for p in full["lib.C.make"].params] == ["a"]                                       # staticmethod keeps its first arg
+    assert "lib.C._private" not in full
+
+
+def test_methods_moved_to_a_base_class_are_not_reported_as_removed(tmp_path):
+    old, new = tmp_path / "old", tmp_path / "new"
+    write(old, "lib/__init__.py", "from .client import Client\n")
+    write(old, "lib/client.py", "class Client:\n    def get(self, key, default=None):\n        pass\n    def put(self, key, value):\n        pass\n")
+    write(new, "lib/__init__.py", "from .client import Client\n")
+    write(new, "lib/client.py", "from .mixins import Commands\n\n\nclass Client(Commands):\n    pass\n")
+    write(new, "lib/mixins.py", "class Commands:\n    def get(self, key, *, default):\n        pass\n    def put(self, key, value):\n        pass\n")
+    changes = diff_api(extract_api(old, "lib", include_methods=True), extract_api(new, "lib", include_methods=True))
+    got = {(c.symbol, c.kind) for c in changes}
+    assert not any(k == "removed" for _, k in got), got                 # nothing was removed, only moved
+    assert ("lib.client.Client.get", "param_kind_changed") in got       # a REAL change on the moved method is still found
+    assert not any(s.endswith(".put") for s, _ in got)                  # an unchanged moved method is quiet
+    assert any(s == "lib.Client.get" for s, _ in got)                   # and the public alias works too
+
+
+def test_inheritance_cycles_and_unknown_bases_do_not_crash(tmp_path):
+    write(tmp_path, "lib/__init__.py", "class A(B):\n    def x(self):\n        pass\nclass B(A):\n    def y(self):\n        pass\nclass C(Unknown, object):\n    def z(self):\n        pass\n")
+    api = extract_api(tmp_path, "lib", include_methods=True)
+    assert "lib.A.x" in api and "lib.C.z" in api

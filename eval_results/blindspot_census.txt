@@ -1,0 +1,15 @@
+PyYAML         5.4.1 -> 6.0.2    functions=  3 classes=  1 methods=  0
+Jinja2         3.0.3 -> 3.1.4    functions= 16 classes=  4 methods=  0
+Werkzeug       2.3.8 -> 3.0.3    functions= 36 classes= 13 methods= 11
+Flask          2.2.5 -> 2.3.3    functions=  3 classes=  2 methods= 10
+click          7.1.2 -> 8.0.4    functions=  4 classes= 14 methods= 13
+urllib3      1.26.18 -> 2.0.7    functions= 24 classes= 44 methods= 13
+redis          3.5.3 -> 4.0.0    functions=  7 classes=  2 methods= 13
+jsonschema     3.2.0 -> 4.0.0    functions=  2 classes=  0 methods=  0
+Markdown      2.6.11 -> 3.0      functions= 37 classes= 31 methods=  6
+requests      2.25.1 -> 2.31.0   functions=  1 classes=  0 methods=  0
+attrs         21.4.0 -> 23.1.0   functions=  0 classes=  0 methods=  0
+docutils      0.17.1 -> 0.20.1   functions= 17 classes= 91 methods= 25
+
+ALL 12 upgrades: 443 breaking changes: function=150 (34%), class=202 (46%), method=91 (21%)
+per-upgrade method share: PyYAML=0%, Jinja2=0%, Werkzeug=18%, Flask=67%, click=42%, urllib3=16%, redis=59%, jsonschema=0%, Markdown=8%, requests=0%, attrs=0%, docutils=19%

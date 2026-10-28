@@ -30,6 +30,7 @@ from .evalharness import Outcome
 from .radar import run_radar
 from .sandbox import prepare_deps, run_python, run_tests
 
+BUILT_FROM_SOURCE: list[tuple] = []  # dependency sets that needed a source build (reported, never silent)
 IMAGE = "python:3.9-slim"  # old releases (PyYAML 5.4.1) still ship wheels for 3.9
 
 
@@ -102,8 +103,9 @@ def _urlopen_read(url: str, timeout: int = 45, tries: int = 6) -> bytes:
 
 def _download_sdist(dist: str, ver: str, dest: Path) -> Path:
     root = dest / f"{dist}-{ver}"
-    if root.exists() and any(root.iterdir()):
+    if root.exists() and any(root.rglob("*.py")):  # a cache of empty folders is NOT a cache (it has happened)
         return root
+    shutil.rmtree(root, ignore_errors=True)
     data = json.loads(_urlopen_read(f"https://pypi.org/pypi/{dist}/{ver}/json"))
     url = next(u["url"] for u in data["urls"] if u["packagetype"] == "sdist")
     blob = _urlopen_read(url)  # download fully BEFORE creating the folder, so a failure leaves nothing behind
@@ -160,7 +162,11 @@ def _deps(pins: list[str], cache: Path) -> Path:
     d = cache / f"deps-cov-{IMAGE.replace(':', '_')}-{key}"
     if not d.exists():
         dummy = Path(tempfile.mkdtemp())
-        res = prepare_deps(dummy, d, ["pytest", "coverage", *pins], image=IMAGE)
+        res = prepare_deps(dummy, d, ["pytest", "coverage", *pins], image=IMAGE, wheels_only=True)
+        if not res.ok:  # no wheel exists: fall back to building from source, and SAY so
+            BUILT_FROM_SOURCE.append(tuple(pins))
+            print(f"warning: no wheels for {pins}; building from source inside the container", flush=True)
+            res = prepare_deps(dummy, d, ["pytest", "coverage", *pins], image=IMAGE, wheels_only=False)
         shutil.rmtree(dummy, ignore_errors=True)
         if not res.ok:
             shutil.rmtree(d, ignore_errors=True)
@@ -213,7 +219,8 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 
 
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
-                   focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14) -> Outcome:
+                   focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
+                   prober_client=None) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -230,7 +237,7 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
         if behavior_check:
             sites = [s for _, ss in report.affected for s in ss]
             world = lambda deps: (lambda d, script: run_python(d, script, backend="docker", image=IMAGE, deps_dir=deps))  # noqa: E731
-            checker = BehaviorChecker(client, repo, sites, world(prep.old_deps), world(prep.new_deps))
+            checker = BehaviorChecker(prober_client or client, repo, sites, world(prep.old_deps), world(prep.new_deps))
         agent = Agent(client, repo, report, runner, changelog=prep.changelog if use_changelog else None,
                       behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=max_turns)
         t0 = time.monotonic()

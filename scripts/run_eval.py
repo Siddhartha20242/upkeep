@@ -22,6 +22,13 @@ def pop_opt(args: list[str], flag: str, default: str) -> tuple[str, list[str]]:
     return default, args
 
 
+def _save(outs, config, which, provider, model):
+    out = Path("eval_results")
+    out.mkdir(exist_ok=True)
+    name = f"synth_{which}_{config}_{provider}{'_' + model if model else ''}.json"
+    (out / name).write_text(json.dumps([o.to_dict() for o in outs], indent=2))
+
+
 def main() -> int:
     args = sys.argv[1:]
     config, args = pop_opt(args, "--config", "full")
@@ -42,6 +49,7 @@ def main() -> int:
             o = run_case(BY_NAME[n], client, config)
             outcomes.append(o)
             tally[n].append(o.outcome)
+            _save(all_outcomes + outcomes, config, which, provider, model)  # partial results survive a later crash
             print(f"[{config} run {r + 1}] {o.name}: {o.outcome} ({o.model_calls} calls, {o.tokens} tokens, "
                   f"rejections {o.guard_rejections})", flush=True)
         all_outcomes += outcomes
@@ -51,7 +59,7 @@ def main() -> int:
         print(f"{n:20} {BY_NAME[n].expect:13} " + ", ".join(f"{k}:{outs.count(k)}" for k in sorted(set(outs))))
     out = Path("eval_results")
     out.mkdir(exist_ok=True)
-    (out / f"synth_{which}_{config}_{provider}.json").write_text(json.dumps([o.to_dict() for o in all_outcomes], indent=2))
+    (out / f"synth_{which}_{config}_{provider}{'_' + model if model else ''}.json").write_text(json.dumps([o.to_dict() for o in all_outcomes], indent=2))
     return 0
 
 

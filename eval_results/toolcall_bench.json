@@ -1,0 +1,5142 @@
+{
+  "open": {
+    "label": "Muse Spark Open (Baseten)",
+    "trials": [
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.35,
+        "tokens": 833
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.05,
+        "tokens": 802
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.38,
+        "tokens": 802
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.96,
+        "tokens": 836
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.07,
+        "tokens": 802
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.31,
+        "tokens": 837
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.06,
+        "tokens": 802
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.13,
+        "tokens": 802
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.22,
+        "tokens": 834
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.16,
+        "tokens": 824
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.1,
+        "tokens": 800
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.07,
+        "tokens": 801
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.13,
+        "tokens": 797
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.11,
+        "tokens": 805
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.21,
+        "tokens": 834
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.37,
+        "tokens": 803
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.37,
+        "tokens": 1534
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.05,
+        "tokens": 1218
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.94,
+        "tokens": 1182
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.71,
+        "tokens": 1118
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.65,
+        "tokens": 1387
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.59,
+        "tokens": 1334
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.0,
+        "tokens": 1191
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.32,
+        "tokens": 1556
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.46,
+        "tokens": 1332
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.21,
+        "tokens": 1550
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": false,
+        "seconds": 3.67,
+        "tokens": 1627
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.38,
+        "tokens": 1291
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.25,
+        "tokens": 1246
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.17,
+        "tokens": 1570
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.0,
+        "tokens": 1551
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.15,
+        "tokens": 2117
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.32,
+        "tokens": 845
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.36,
+        "tokens": 858
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.23,
+        "tokens": 847
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.45,
+        "tokens": 881
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.53,
+        "tokens": 897
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.44,
+        "tokens": 885
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.42,
+        "tokens": 884
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.45,
+        "tokens": 894
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.23,
+        "tokens": 830
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.38,
+        "tokens": 881
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.27,
+        "tokens": 839
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.71,
+        "tokens": 936
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.98,
+        "tokens": 1033
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.37,
+        "tokens": 849
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.51,
+        "tokens": 908
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.38,
+        "tokens": 834
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.43,
+        "tokens": 959
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.32,
+        "tokens": 956
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.38,
+        "tokens": 907
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.3,
+        "tokens": 962
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 960
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 960
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.81,
+        "tokens": 1002
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.3,
+        "tokens": 948
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.43,
+        "tokens": 989
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 966
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.34,
+        "tokens": 923
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.37,
+        "tokens": 964
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.4,
+        "tokens": 973
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.4,
+        "tokens": 985
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 1.56,
+        "tokens": 866
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.49,
+        "tokens": 990
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 919
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.35,
+        "tokens": 907
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.29,
+        "tokens": 907
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.52,
+        "tokens": 907
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.56,
+        "tokens": 920
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.39,
+        "tokens": 913
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.52,
+        "tokens": 919
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.51,
+        "tokens": 919
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.66,
+        "tokens": 993
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.42,
+        "tokens": 905
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.42,
+        "tokens": 921
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.52,
+        "tokens": 905
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.55,
+        "tokens": 967
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.67,
+        "tokens": 974
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.38,
+        "tokens": 906
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.28,
+        "tokens": 877
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.07,
+        "tokens": 789
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.06,
+        "tokens": 806
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.14,
+        "tokens": 789
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.44,
+        "tokens": 912
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.57,
+        "tokens": 787
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.07,
+        "tokens": 793
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.23,
+        "tokens": 810
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.61,
+        "tokens": 865
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.48,
+        "tokens": 951
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.18,
+        "tokens": 823
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.16,
+        "tokens": 815
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.18,
+        "tokens": 847
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.51,
+        "tokens": 932
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.91,
+        "tokens": 1024
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.21,
+        "tokens": 856
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 7.24,
+        "tokens": 4715
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.99,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.99,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.02,
+        "tokens": 932
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.07,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.02,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.05,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.01,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.01,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.02,
+        "tokens": 928
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.05,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.0,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.07,
+        "tokens": 934
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.02,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.43,
+        "tokens": 929
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.28,
+        "tokens": 923
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.04,
+        "tokens": 932
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.2,
+        "tokens": 1501
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.88,
+        "tokens": 1388
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.91,
+        "tokens": 1451
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.97,
+        "tokens": 1437
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.45,
+        "tokens": 1409
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.0,
+        "tokens": 1449
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.82,
+        "tokens": 1411
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.07,
+        "tokens": 1465
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.49,
+        "tokens": 1500
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.45,
+        "tokens": 1648
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.81,
+        "tokens": 1406
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.73,
+        "tokens": 1386
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.86,
+        "tokens": 1421
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.39,
+        "tokens": 1548
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.87,
+        "tokens": 1416
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.87,
+        "tokens": 1426
+      }
+    ]
+  },
+  "1.1": {
+    "label": "muse-spark-1.1",
+    "trials": [
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.17,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.17,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.11,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.24,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.02,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.0,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.22,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.63,
+        "tokens": 725
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.27,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.09,
+        "tokens": 739
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 720
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.22,
+        "tokens": 732
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.09,
+        "tokens": 724
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.52,
+        "tokens": 862
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.11,
+        "tokens": 719
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.71,
+        "tokens": 717
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.18,
+        "tokens": 2209
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.71,
+        "tokens": 2272
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.79,
+        "tokens": 2481
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.7,
+        "tokens": 2419
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 7.38,
+        "tokens": 2626
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.11,
+        "tokens": 2091
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.63,
+        "tokens": 2173
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.32,
+        "tokens": 1681
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.31,
+        "tokens": 1257
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.09,
+        "tokens": 1928
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.04,
+        "tokens": 1824
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.28,
+        "tokens": 2452
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.03,
+        "tokens": 1830
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.36,
+        "tokens": 1853
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.76,
+        "tokens": 2024
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": false,
+        "seconds": 3.94,
+        "tokens": 1693
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 5,
+        "exact": false,
+        "seconds": 3.44,
+        "tokens": 1479
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.65,
+        "tokens": 1407
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.72,
+        "tokens": 1117
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.92,
+        "tokens": 1199
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.29,
+        "tokens": 1083
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.97,
+        "tokens": 1083
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 5,
+        "exact": false,
+        "seconds": 3.35,
+        "tokens": 1479
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 5,
+        "exact": false,
+        "seconds": 3.77,
+        "tokens": 1479
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.93,
+        "tokens": 1196
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.27,
+        "tokens": 1213
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.53,
+        "tokens": 1135
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.63,
+        "tokens": 1387
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.23,
+        "tokens": 1457
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.43,
+        "tokens": 1309
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.07,
+        "tokens": 998
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.08,
+        "tokens": 1241
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.44,
+        "tokens": 950
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.63,
+        "tokens": 950
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.88,
+        "tokens": 1032
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.6,
+        "tokens": 975
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.67,
+        "tokens": 950
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.4,
+        "tokens": 975
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.84,
+        "tokens": 975
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.84,
+        "tokens": 975
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.11,
+        "tokens": 993
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.68,
+        "tokens": 910
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.77,
+        "tokens": 945
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.37,
+        "tokens": 887
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.24,
+        "tokens": 878
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.66,
+        "tokens": 956
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.39,
+        "tokens": 918
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.78,
+        "tokens": 986
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.45,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.47,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.3,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.2,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.4,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.19,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.41,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.63,
+        "tokens": 899
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.44,
+        "tokens": 862
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 896
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.5,
+        "tokens": 869
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.23,
+        "tokens": 853
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.4,
+        "tokens": 815
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.3,
+        "tokens": 890
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.64,
+        "tokens": 819
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 2.12,
+        "tokens": 870
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.46,
+        "tokens": 858
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.41,
+        "tokens": 858
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.39,
+        "tokens": 807
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.39,
+        "tokens": 858
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.35,
+        "tokens": 858
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.58,
+        "tokens": 858
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.66,
+        "tokens": 807
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.32,
+        "tokens": 808
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.98,
+        "tokens": 945
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.77,
+        "tokens": 921
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.73,
+        "tokens": 891
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 6.1,
+        "tokens": 2107
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.74,
+        "tokens": 944
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.71,
+        "tokens": 916
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.7,
+        "tokens": 874
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.62,
+        "tokens": 913
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.18,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.14,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.96,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.89,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.33,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.98,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.19,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.55,
+        "tokens": 848
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.53,
+        "tokens": 849
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.56,
+        "tokens": 851
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.98,
+        "tokens": 851
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.06,
+        "tokens": 851
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.88,
+        "tokens": 851
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.09,
+        "tokens": 853
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.16,
+        "tokens": 842
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.08,
+        "tokens": 853
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.91,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.02,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.95,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.94,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.13,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.09,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.73,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.92,
+        "tokens": 1573
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.06,
+        "tokens": 1920
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.85,
+        "tokens": 2862
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 7.24,
+        "tokens": 3404
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.23,
+        "tokens": 1605
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.7,
+        "tokens": 1664
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.89,
+        "tokens": 2840
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.84,
+        "tokens": 2217
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.46,
+        "tokens": 2333
+      }
+    ]
+  },
+  "1.2": {
+    "label": "muse-spark-1.2",
+    "trials": [
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.82,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.3,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.83,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.68,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.33,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.33,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.54,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.54,
+        "tokens": 747
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.46,
+        "tokens": 769
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.88,
+        "tokens": 849
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 731
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.11,
+        "tokens": 781
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.37,
+        "tokens": 738
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.78,
+        "tokens": 775
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.81,
+        "tokens": 748
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.14,
+        "tokens": 800
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.44,
+        "tokens": 2716
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.34,
+        "tokens": 2716
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 7.01,
+        "tokens": 2345
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.33,
+        "tokens": 2133
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.6,
+        "tokens": 2716
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.37,
+        "tokens": 1887
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 10.22,
+        "tokens": 2946
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.31,
+        "tokens": 2294
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.89,
+        "tokens": 1834
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.24,
+        "tokens": 1884
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.72,
+        "tokens": 1527
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.62,
+        "tokens": 1900
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.67,
+        "tokens": 1467
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.2,
+        "tokens": 1337
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.32,
+        "tokens": 1943
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.65,
+        "tokens": 1584
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.6,
+        "tokens": 1067
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.35,
+        "tokens": 962
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.57,
+        "tokens": 1067
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.77,
+        "tokens": 962
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.56,
+        "tokens": 1067
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.06,
+        "tokens": 962
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.27,
+        "tokens": 962
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.38,
+        "tokens": 962
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.65,
+        "tokens": 889
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.28,
+        "tokens": 970
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.6,
+        "tokens": 1035
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.48,
+        "tokens": 1019
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.03,
+        "tokens": 1030
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.29,
+        "tokens": 1098
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.67,
+        "tokens": 1014
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.32,
+        "tokens": 954
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.42,
+        "tokens": 911
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.81,
+        "tokens": 880
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.8,
+        "tokens": 922
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.96,
+        "tokens": 922
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.77,
+        "tokens": 922
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.4,
+        "tokens": 880
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.42,
+        "tokens": 880
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.82,
+        "tokens": 880
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.58,
+        "tokens": 885
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.63,
+        "tokens": 929
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.59,
+        "tokens": 887
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.94,
+        "tokens": 893
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.33,
+        "tokens": 920
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.6,
+        "tokens": 900
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.61,
+        "tokens": 910
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.54,
+        "tokens": 902
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.05,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.53,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.5,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.5,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.43,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.51,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.48,
+        "tokens": 821
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 2.41,
+        "tokens": 960
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.86,
+        "tokens": 933
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.6,
+        "tokens": 860
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.52,
+        "tokens": 863
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.59,
+        "tokens": 856
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.66,
+        "tokens": 862
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.85,
+        "tokens": 938
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 1.38,
+        "tokens": 800
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.88,
+        "tokens": 908
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.25,
+        "tokens": 938
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.62,
+        "tokens": 908
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.94,
+        "tokens": 908
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.04,
+        "tokens": 938
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.86,
+        "tokens": 908
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.89,
+        "tokens": 908
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.86,
+        "tokens": 908
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.92,
+        "tokens": 811
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.19,
+        "tokens": 959
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.27,
+        "tokens": 956
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.42,
+        "tokens": 861
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.86,
+        "tokens": 827
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.12,
+        "tokens": 900
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.91,
+        "tokens": 900
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.77,
+        "tokens": 863
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.16,
+        "tokens": 838
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.11,
+        "tokens": 838
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.11,
+        "tokens": 838
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.28,
+        "tokens": 842
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.19,
+        "tokens": 842
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.01,
+        "tokens": 842
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.41,
+        "tokens": 842
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.99,
+        "tokens": 842
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.2,
+        "tokens": 843
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.28,
+        "tokens": 839
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.14,
+        "tokens": 843
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.47,
+        "tokens": 843
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.53,
+        "tokens": 844
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.56,
+        "tokens": 843
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.22,
+        "tokens": 843
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.87,
+        "tokens": 848
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.39,
+        "tokens": 1583
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.93,
+        "tokens": 1758
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.42,
+        "tokens": 1583
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.99,
+        "tokens": 1758
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.29,
+        "tokens": 1758
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.26,
+        "tokens": 1758
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.58,
+        "tokens": 1758
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.11,
+        "tokens": 1758
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.06,
+        "tokens": 2660
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.67,
+        "tokens": 1936
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 10.01,
+        "tokens": 3897
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": false,
+        "seconds": 13.64,
+        "tokens": 4782
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.92,
+        "tokens": 3460
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.11,
+        "tokens": 1385
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.26,
+        "tokens": 1783
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.1,
+        "tokens": 2703
+      }
+    ]
+  },
+  "1.3": {
+    "label": "muse-spark-1.3",
+    "trials": [
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.1,
+        "tokens": 866
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.65,
+        "tokens": 866
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.14,
+        "tokens": 903
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.17,
+        "tokens": 1022
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.69,
+        "tokens": 1315
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.82,
+        "tokens": 850
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.04,
+        "tokens": 882
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.23,
+        "tokens": 933
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.83,
+        "tokens": 917
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.44,
+        "tokens": 854
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.99,
+        "tokens": 868
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.58,
+        "tokens": 879
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.21,
+        "tokens": 846
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.07,
+        "tokens": 995
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.75,
+        "tokens": 934
+      },
+      {
+        "test": "simple_args",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.25,
+        "tokens": 770
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.6,
+        "tokens": 1728
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 7.1,
+        "tokens": 2322
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.56,
+        "tokens": 2089
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 9.18,
+        "tokens": 2502
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.35,
+        "tokens": 2273
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.32,
+        "tokens": 1290
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.65,
+        "tokens": 1827
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.58,
+        "tokens": 1653
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.71,
+        "tokens": 2766
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.72,
+        "tokens": 1992
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 6.14,
+        "tokens": 2144
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 9.36,
+        "tokens": 3076
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.1,
+        "tokens": 2016
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.17,
+        "tokens": 1787
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 8.4,
+        "tokens": 2707
+      },
+      {
+        "test": "tricky_string",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 7.62,
+        "tokens": 2329
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.98,
+        "tokens": 1084
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.06,
+        "tokens": 986
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.38,
+        "tokens": 1165
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.36,
+        "tokens": 1204
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.44,
+        "tokens": 1116
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.28,
+        "tokens": 1237
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.1,
+        "tokens": 986
+      },
+      {
+        "test": "enum",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.43,
+        "tokens": 1095
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.21,
+        "tokens": 1050
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.59,
+        "tokens": 1188
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.03,
+        "tokens": 1181
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.26,
+        "tokens": 1006
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.01,
+        "tokens": 1165
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.45,
+        "tokens": 1359
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.66,
+        "tokens": 1091
+      },
+      {
+        "test": "enum",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.36,
+        "tokens": 1341
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.98,
+        "tokens": 1259
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.13,
+        "tokens": 1676
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.17,
+        "tokens": 1259
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.13,
+        "tokens": 1716
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.44,
+        "tokens": 1471
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 10.15,
+        "tokens": 1171
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.69,
+        "tokens": 1676
+      },
+      {
+        "test": "nested",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.59,
+        "tokens": 1676
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.87,
+        "tokens": 1181
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.98,
+        "tokens": 1154
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.63,
+        "tokens": 1389
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.26,
+        "tokens": 1015
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.77,
+        "tokens": 1972
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.5,
+        "tokens": 1200
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.83,
+        "tokens": 1230
+      },
+      {
+        "test": "nested",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.94,
+        "tokens": 1874
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 4.08,
+        "tokens": 1490
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 4.62,
+        "tokens": 1687
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 4.76,
+        "tokens": 1595
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 5.02,
+        "tokens": 1632
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 5.17,
+        "tokens": 1677
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 3.6,
+        "tokens": 1490
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 2.98,
+        "tokens": 1156
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 5.14,
+        "tokens": 1796
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 3.72,
+        "tokens": 1570
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 3.63,
+        "tokens": 1385
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 2.83,
+        "tokens": 1210
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 2.73,
+        "tokens": 1168
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 5.89,
+        "tokens": 2061
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 6.46,
+        "tokens": 1996
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 3.64,
+        "tokens": 1379
+      },
+      {
+        "test": "parallel_in_one_turn",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 3,
+        "exact": true,
+        "seconds": 3.66,
+        "tokens": 1449
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.03,
+        "tokens": 904
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.03,
+        "tokens": 841
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.0,
+        "tokens": 866
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.42,
+        "tokens": 846
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.01,
+        "tokens": 816
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 2.21,
+        "tokens": 882
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.87,
+        "tokens": 882
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.74,
+        "tokens": 841
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 786
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.69,
+        "tokens": 780
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.23,
+        "tokens": 801
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.94,
+        "tokens": 859
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.44,
+        "tokens": 803
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.76,
+        "tokens": 890
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.54,
+        "tokens": 844
+      },
+      {
+        "test": "no_tool_needed",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": null,
+        "n_calls": 0,
+        "exact": true,
+        "seconds": 1.86,
+        "tokens": 897
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.2,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.41,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.08,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.08,
+        "tokens": 846
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.03,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.03,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.21,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.43,
+        "tokens": 846
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.45,
+        "tokens": 846
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.1,
+        "tokens": 846
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.26,
+        "tokens": 846
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.12,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 846
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.2,
+        "tokens": 845
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 1.36,
+        "tokens": 869
+      },
+      {
+        "test": "pick_the_right_tool",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 0.99,
+        "tokens": 846
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.98,
+        "tokens": 1822
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.27,
+        "tokens": 2532
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.97,
+        "tokens": 2073
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.96,
+        "tokens": 1627
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.66,
+        "tokens": 1524
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.02,
+        "tokens": 1766
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.88,
+        "tokens": 1736
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.0,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.74,
+        "tokens": 2311
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.87,
+        "tokens": 1613
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.63,
+        "tokens": 1841
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.54,
+        "tokens": 2139
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 2.79,
+        "tokens": 1564
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 3.84,
+        "tokens": 2013
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.11,
+        "tokens": 1891
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 5.81,
+        "tokens": 2528
+      },
+      {
+        "test": "long_exact_code",
+        "temp": 0.7,
+        "json_ok": true,
+        "schema_ok": true,
+        "n_calls": 1,
+        "exact": true,
+        "seconds": 4.77,
+        "tokens": 2052
+      }
+    ]
+  }
+}

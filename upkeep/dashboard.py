@@ -99,7 +99,37 @@ def run_section(result: dict, patch: str, proof_md: str) -> str:
     return (f'<h2>Run</h2><div class="card"><span class="badge {cls}">{e(shown)}</span> '
             f'<span class="mut">{e(result.get("reason", ""))}</span><div class="kv" style="margin-top:12px">{kv}</div></div>'
             f'<h2>What the agent did</h2><div class="card">{steps or "<span class=mut>no steps recorded</span>"}</div>'
-            f'<h2>Patch</h2>{diff_html(patch)}<h2>Proof</h2><div class="card">{md_to_html(proof_md)}</div>')
+            f'<h2>Patch</h2>{diff_html(patch)}{behavior_section(result.get("behavior"))}<h2>Proof</h2><div class="card">{md_to_html(proof_md)}</div>')
+
+
+def _pretty(raw) -> str:
+    """Probe results are stored as JSON like {"ok": "'a=1'"} or {"err": "TypeError"}; show the value, not the wrapper."""
+    try:
+        d = json.loads(raw) if isinstance(raw, str) else raw
+    except ValueError:
+        return str(raw)
+    if isinstance(d, dict) and "ok" in d:
+        return str(d["ok"])
+    if isinstance(d, dict) and "err" in d:
+        return f"raises {d['err']}"
+    return str(raw)
+
+
+def behavior_section(behavior: dict | None) -> str:
+    if not behavior:
+        return ""
+    mm = behavior.get("mismatches", [])
+    head = (f"<h2>Behavior check against the old library</h2><p class='mut'>{e(behavior.get('inputs_checked', 0))} probe inputs over "
+            f"{e(behavior.get('functions_checked', 0))} function(s): "
+            f"<b class='{'bad' if mm else 'ok'}'>{len(mm)} difference(s)</b></p>")
+    if not mm:
+        return head
+    rows = "".join(
+        f"<tr><td><code>{e(m.get('function'))}({e(', '.join(json.dumps(a) for a in m.get('input', [])))})</code></td>"
+        f"<td class='ok'><code>{e(_pretty(m.get('old')))}</code></td><td class='bad'><code>{e(_pretty(m.get('new')))}</code></td></tr>"
+        for m in mm[:8])
+    return head + ("<div class='card'><table><tr><th>call</th><th>old library</th><th>patched code on the new library</th></tr>"
+                   + rows + "</table></div>")
 
 
 def bench_section(name: str, rows: list[dict]) -> str:

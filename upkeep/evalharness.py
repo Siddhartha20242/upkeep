@@ -88,7 +88,10 @@ def run_case(case: Case, client: ChatClient, config: str = "full") -> Outcome:
                       baseline_run=cfg.get("baseline_run", True), behavior_checker=checker,
                       notes_mode=cfg.get("notes_mode", "tool"))
         t0 = time.monotonic()
-        res = agent.run()
+        try:
+            res = agent.run()
+        except Exception as e:  # one broken case must not lose the whole run
+            return Outcome(**base, outcome="error", status="error", reason=f"{type(e).__name__}: {str(e)[:150]}")
         dt = time.monotonic() - t0
 
         hidden_ok = None
