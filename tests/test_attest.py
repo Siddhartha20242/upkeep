@@ -64,3 +64,14 @@ def test_signing_roundtrip_and_tamper(tmp_path):
     m["status"] = "verified-lie"
     (d / "MANIFEST.json").write_text(json.dumps(m))
     assert not attest.verify_signature(d, pub)[0]
+
+
+def test_proof_integrity_section_has_patch_and_archive_hashes(tmp_path):
+    import hashlib
+    from upkeep.pypi import DIGEST_FILE
+    (tmp_path / "old" / "pkg" / "lib").mkdir(parents=True)
+    (tmp_path / "old" / DIGEST_FILE).write_text("ab" * 32 + "\n")
+    md = cli._integrity_section("diff body", tmp_path / "old" / "pkg" / "lib", tmp_path / "nowhere")
+    assert hashlib.sha256(b"diff body").hexdigest() in md
+    assert "ab" * 32 in md and "new library archive SHA-256 (verified against PyPI at download): not recorded" in md
+    assert "not that it is what you deploy" in md

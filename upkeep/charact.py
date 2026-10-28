@@ -17,7 +17,9 @@ are skipped; exception messages are ignored (types only).
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
+import random
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,6 +46,14 @@ class Target:
     end: int = 0
 
 
+def where(m: dict) -> str:
+    """'app/routing.py:42 (url_quote) ' for a mismatch, or '' when the call site is not known."""
+    sites = m.get("sites") or []
+    if not m.get("file") or not sites:
+        return ""
+    return f"{m['file']}:{sites[0]['line']} ({sites[0]['symbol']}) "
+
+
 @dataclass
 class BehaviorReport:
     functions_checked: int = 0
@@ -57,19 +67,22 @@ class BehaviorReport:
     def ok(self) -> bool:
         return not self.mismatches
 
+    random_inputs: int = 0  # seeded random probes per function added on top of the model's and the edge cases
+
     def summary(self) -> str:
         head = (f"behavior check: {self.inputs_checked} probe inputs over {self.functions_checked} function(s), "
                 f"{len(self.mismatches)} mismatch(es)")
         lines = [head]
         for m in self.mismatches[:8]:
-            lines.append(f"- {m['function']}({', '.join(json.dumps(a) for a in m['input'])}): "
+            lines.append(f"- {where(m)}{m['function']}({', '.join(json.dumps(a) for a in m['input'])}): "
                          f"old library -> {m['old']} ; new code -> {m['new']}")
         lines += [f"- skipped: {s}" for s in self.skipped[:5]]
         return "\n".join(lines)
 
     def to_dict(self) -> dict:
         return {"functions_checked": self.functions_checked, "inputs_checked": self.inputs_checked,
-                "mismatches": self.mismatches, "skipped": self.skipped, "probed_sites": self.probed_sites}
+                "mismatches": self.mismatches, "skipped": self.skipped, "probed_sites": self.probed_sites,
+                "random_inputs": self.random_inputs}
 
 
 def find_targets(repo: Path, sites: list[CallSite]) -> list[Target]:
@@ -165,6 +178,66 @@ def expand_inputs(inputs: list[list], max_total: int = 28) -> list[list]:
     return out
 
 
+SPECIAL = list("/:?&=%+#@!~*'\"()[]{}<>\\;,.-_ \n\t") + ["ü", "é", "©", "日"]
+WORD = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+
+def _mutate(rng: random.Random, value):
+    """A random value of the same JSON type, often built from ``value`` (one character or element changed)."""
+    if isinstance(value, bool):
+        return rng.random() < 0.5
+    if isinstance(value, str):
+        if value and rng.random() < 0.6:  # tweak the model's own string: insert, replace or delete one character
+            i = rng.randrange(len(value) + 1)
+            op = rng.choice("ird")
+            ch = rng.choice(SPECIAL if rng.random() < 0.7 else WORD)
+            if op == "i" or i >= len(value):
+                return value[:i] + ch + value[i:]
+            return value[:i] + ch + value[i + 1:] if op == "r" else value[:i] + value[i + 1:]
+        return "".join(rng.choice(SPECIAL if rng.random() < 0.4 else WORD) for _ in range(rng.randint(0, 16)))
+    if isinstance(value, int):
+        return rng.choice([rng.randint(-1000, 1000), rng.randint(-2 ** 33, 2 ** 33), 0, 1, -1])
+    if isinstance(value, float):
+        return round(rng.uniform(-1e6, 1e6), rng.randint(0, 6))
+    if isinstance(value, list):
+        out = [_mutate(rng, v) if rng.random() < 0.4 else v for v in value]
+        if out and rng.random() < 0.3:
+            out.pop(rng.randrange(len(out)))
+        if rng.random() < 0.3:
+            out.append(_mutate(rng, out[0] if out else ""))
+        return out
+    if isinstance(value, dict):
+        out = {k: (_mutate(rng, v) if rng.random() < 0.4 else v) for k, v in value.items()}
+        if out and rng.random() < 0.3:
+            out.pop(rng.choice(list(out)))
+        return out
+    return value
+
+
+def random_inputs(inputs: list[list], n: int, seed_text: str) -> list[list]:
+    """Up to ``n`` seeded-random argument lists, derived from the model's probes (types follow the originals).
+
+    Deterministic: the same function name and probes always give the same list, so a verdict can be reproduced.
+    Standard library only. Still not exhaustive, and it cannot prove equivalence."""
+    if n <= 0 or not inputs:
+        return []
+    rng = random.Random(int(hashlib.sha256(seed_text.encode()).hexdigest()[:12], 16))
+    out: list[list] = []
+    seen: set[str] = set()
+    for _ in range(n * 20):
+        if len(out) >= n:
+            break
+        base = list(rng.choice(inputs))
+        idxs = [rng.randrange(len(base))] if len(base) == 1 or rng.random() < 0.7 else list(range(len(base)))
+        for i in idxs:
+            base[i] = _mutate(rng, base[i])
+        key = json.dumps(base, sort_keys=True, default=str)
+        if key not in seen:
+            seen.add(key)
+            out.append(base)
+    return out
+
+
 def probe_script(target: Target, inputs: list[list]) -> str:
     return f"""
 import importlib, json, sys
@@ -197,9 +270,10 @@ def _parse(out: str):
 
 class BehaviorChecker:
     def __init__(self, client: _Chat, original_repo: Path, sites: list[CallSite],
-                 run_old: Runner, run_new: Runner, n_inputs: int = 8, probe_samples: int = 2):
+                 run_old: Runner, run_new: Runner, n_inputs: int = 8, probe_samples: int = 2, n_random: int = 0):
         self.client, self.original, self.run_old, self.run_new, self.n = client, Path(original_repo), run_old, run_new, n_inputs
         self.probe_samples = max(1, probe_samples)  # measured: two samples catch 93% of a subtle wrong fix, one catches 71%
+        self.n_random = max(0, n_random)  # 0 keeps the original fixed probe set (what the published benchmark numbers used)
         self.sites = list(sites)
         self.targets = find_targets(self.original, sites)
         self._inputs: dict[tuple[str, str], list[list]] = {}
@@ -232,9 +306,15 @@ class BehaviorChecker:
                 rep.skipped.append(f"{t.name}: no usable probe inputs proposed")
                 continue
             if key not in self._expanded:
-                self._expanded[key] = expand_inputs(inputs)
+                base = expand_inputs(inputs)
+                seen_e = {json.dumps(a, sort_keys=True, default=str) for a in base}
+                self._expanded[key] = base + [a for a in random_inputs(inputs, self.n_random, f"{t.module}.{t.name}")
+                                              if json.dumps(a, sort_keys=True, default=str) not in seen_e]
             inputs = self._expanded[key]
             script = probe_script(t, inputs)
+            rep.random_inputs = max(rep.random_inputs, min(self.n_random, len(inputs)))
+            at = [{"line": x.line, "symbol": x.symbol} for x in self.sites if x.file == t.file and t.start <= x.line <= t.end]
+            loc = {"file": t.file, "sites": at[:3]}
             if key not in self._old:  # the old world never changes, so run it twice, once
                 ok, out = self.run_old(self.original, script)
                 first = _parse(out) if ok else None
@@ -250,7 +330,7 @@ class BehaviorChecker:
                 rep.skipped.append(f"{t.name}: the old version does not run these probes (cannot be used as an oracle)")
                 continue
             if not isinstance(new, list):
-                rep.mismatches.append({"function": t.name, "input": [], "old": "ran", "new": f"did not run ({str(new or out)[:80]})"})
+                rep.mismatches.append({"function": t.name, "input": [], "old": "ran", "new": f"did not run ({str(new or out)[:80]})", **loc})
                 continue
             unstable = self._unstable.get(key, set())
             if unstable:
@@ -264,5 +344,5 @@ class BehaviorChecker:
                 if idx in unstable:
                     continue
                 if o != n:
-                    rep.mismatches.append({"function": t.name, "input": args, "old": json.dumps(o), "new": json.dumps(n)})
+                    rep.mismatches.append({"function": t.name, "input": args, "old": json.dumps(o), "new": json.dumps(n), **loc})
         return rep

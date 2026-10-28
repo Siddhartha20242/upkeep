@@ -1,0 +1,36 @@
+[
+  {
+    "name": "werkzeug_urls",
+    "kind": "helpers removed; stdlib replacement has different defaults",
+    "expect": "fix",
+    "config": "real-behavior",
+    "outcome": "declined_failure",
+    "radar_risk": "red",
+    "status": "declined",
+    "reason": "behavior differs from the old version: app.py:9 (werkzeug.urls.url_encode) encode([[\"k\", \"v1\"], [\"k\", \"v2\"], [\"a b\", \"c+d%e/f?g=h&i\"]]) old={\"ok\": \"'k=v1&k=v2&a+b=c%2Bd%25e%2Ff%3Fg%3Dh%26i'\"} new={\"err\": \"TypeError\"}",
+    "model_calls": 14,
+    "tokens": 68662,
+    "seconds": 116.1,
+    "guard_rejections": 0,
+    "injection_flags": [],
+    "hidden_ok": null,
+    "tampered": false,
+    "tools": [
+      "list_affected",
+      "read_file",
+      "read_release_notes",
+      "read_release_notes",
+      "read_release_notes",
+      "read_file",
+      "read_release_notes",
+      "read_file",
+      "replace_lines",
+      "run_tests",
+      "check_behavior",
+      "read_file",
+      "read_file",
+      "read_file"
+    ],
+    "diff": "--- a/app.py\n+++ b/app.py\n@@ -1,4 +1,4 @@\n-from werkzeug.urls import url_encode, url_quote\n+from urllib.parse import quote as url_quote, urlencode as url_encode\n \n \n def quote(s):\n"
+  }
+]

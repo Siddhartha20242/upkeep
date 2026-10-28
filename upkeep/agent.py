@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Protocol
 
+from .charact import where
 from .guard import allowed_ranges, check_diff
 from .llm import LLMError, Reply
 from .patchlint import check_edit
@@ -341,7 +342,7 @@ class Agent:
         if rep is not None and not rep.ok:
             m = rep.mismatches[0]
             return ("You stopped, but check_behavior reported that your edit changes behavior "
-                    f"(for example {m['function']} with input {m['input']}: old library gave {m['old']}, new code gave {m['new']}). "
+                    f"(for example {where(m)}{m['function']} with input {m['input']}: old library gave {m['old']}, new code gave {m['new']}). "
                     "Fix the edit so it matches the old behavior, run check_behavior again, or call finish with status 'decline' and explain.")
         if self.edits == 0:
             return ("You have not made any edit. Make the smallest edit at the affected lines, or call finish with status "
@@ -364,7 +365,7 @@ class Agent:
             common["behavior"] = rep.to_dict()
             if not rep.ok:
                 m = rep.mismatches[0]
-                return AgentResult("declined", f"behavior differs from the old version: {m['function']}"
+                return AgentResult("declined", f"behavior differs from the old version: {where(m)}{m['function']}"
                                    f"({', '.join(json.dumps(a) for a in m['input'])}) old={m['old']} new={m['new']}",
                                    diff, final_tests=final, **common)
         if final.ok:

@@ -223,7 +223,7 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
                    focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
-                   prober_client=None) -> Outcome:
+                   prober_client=None, n_random: int = 0) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -240,7 +240,8 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
         if behavior_check:
             sites = [s for _, ss in report.affected for s in ss]
             world = lambda deps: (lambda d, script: run_python(d, script, backend="docker", image=IMAGE, deps_dir=deps))  # noqa: E731
-            checker = BehaviorChecker(prober_client or client, repo, sites, world(prep.old_deps), world(prep.new_deps))
+            checker = BehaviorChecker(prober_client or client, repo, sites, world(prep.old_deps), world(prep.new_deps),
+                                     n_random=n_random)
         agent = Agent(client, repo, report, runner, changelog=prep.changelog if use_changelog else None,
                       behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=max_turns)
         t0 = time.monotonic()

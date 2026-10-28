@@ -58,7 +58,7 @@ live. `--open-pr` proposes a **draft** pull request and is a dry run unless you 
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]" coverage mypy
-.venv/bin/python -m pytest -q                       # 166 tests; live OSV test: UPKEEP_LIVE=1
+.venv/bin/python -m pytest -q                       # 170 tests; live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
@@ -248,9 +248,22 @@ See `eval_results/toolcall_bench.json`.
   wheel exists it falls back to a source build inside the container and says so. Docker is a strong boundary, not a perfect one.
 - The content check is a heuristic denylist; the sandbox is the real boundary.
 - Results are small, authored by me, and noisy; there is no public benchmark and no real-world adoption evidence.
-- **Roadmap (not built):** a real type checker for call resolution, dynamic call tracing during a baseline test run,
-  non-JSON probe inputs and stateful probing, partial fixes (accept the verified functions, decline the rest), a
-  CI action that comments on pull requests, and automatic Docker environment recovery for failing installs.
+- **Built late, measured once:** `--fuzz-inputs N` adds seeded-random probe inputs per function (standard library, same
+  seed gives the same inputs; default 100 in `upkeep fix`, 0 in the benchmark scripts so the published numbers above
+  still describe the fixed probe set). A unit test shows it finding a change the fixed probe set misses. On the real
+  Werkzeug case (3 runs, 150 random inputs, Muse Spark Open) it did **not** produce a correct fix: 2 runs declined on
+  a behavior difference and 1 made no edit (`eval_results/reallib_baseten_behavior_fuzz150*.json`). What it did change is
+  the decline: it now names the file, line and library symbol, and the exact input where old and new differ (for
+  example `url_encode` giving `+` for a space on the old library and `%20` on the new one).
+- **Roadmap (not built), in the order I would do it:**
+  1. Let the agent see the diverging input during editing (today only the first difference is fed back, and the model
+     still failed to use it on Werkzeug).
+  2. Dynamic call tracing during a baseline test run, non-JSON probe inputs and stateful probing (WSGI-style contexts
+     and other implicit state are invisible to the current check).
+  3. Partial fixes (accept the verified functions, decline the rest), a real type checker for call resolution, a CI
+     action that comments on pull requests, and automatic Docker environment recovery for failing installs.
+  Not planned: whole-library control-flow or dataflow graphs. Finding behavior changes that keep the same signature is
+  an open research problem, and I would rather be honest that the current check cannot see them.
 
 ## Prior art (stated carefully)
 

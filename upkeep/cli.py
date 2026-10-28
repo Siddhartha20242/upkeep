@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -14,6 +15,7 @@ from .pypi import PyPIError, sources_for
 from .progress import paint, run_with_progress, use_color
 from .attest import AttestError, generate_key, sign_manifest, verify_manifest, verify_signature, write_manifest
 from .proof import ProofBundle
+from .pypi import release_digest
 from .radar import RadarInputError, run_radar
 from .sandbox import SandboxRefused, run_python, run_tests
 from .vuln import query_osv
@@ -137,7 +139,8 @@ def _fix(args, client=None, prober=None) -> int:
             extra_paths=paths, deps_dir=deps, image=args.image))
         # An INDEPENDENT prober (a different model than the one editing) avoids shared blind spots.
         prober = prober or (client_for(args.prober_provider, args.prober_model) if args.prober_provider else None)
-        checker = BehaviorChecker(prober or client, args.repo, sites, world(old_paths, args.old_deps), world(new_paths, args.deps))
+        checker = BehaviorChecker(prober or client, args.repo, sites, world(old_paths, args.old_deps), world(new_paths, args.deps),
+                                  n_random=args.fuzz_inputs)
     agent = Agent(client, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker)
     print(paint("\nupkeep: agent working (the model proposes; code decides)", "bold", use_color()), flush=True)
     res = run_with_progress(agent)
@@ -156,6 +159,7 @@ def _fix(args, client=None, prober=None) -> int:
     md += ("\n## Agent run\n"
            f"- model calls: {res.model_calls}, tokens: {res.total_tokens}, guard rejections: {res.guard_rejections}\n"
            "- tool trace: " + " > ".join(s["tool"] for s in res.steps) + "\n")
+    md += _integrity_section(res.diff, args.old, args.new)
     (args.out / "PROOF.md").write_text(md)
     (args.out / "result.json").write_text(json.dumps(
         {"status": res.status, "reason": res.reason, "model_calls": res.model_calls,
@@ -183,6 +187,16 @@ def _fix(args, client=None, prober=None) -> int:
     print(f"wrote {args.out}/fix.patch, PROOF.md, result.json, MANIFEST.json  (the repo itself was NOT modified)")
     agent.cleanup()
     return 0 if res.status == "verified" else 1
+
+
+def _integrity_section(diff: str, old_src: Path, new_src: Path) -> str:
+    lines = ["", "## Integrity", f"- fix.patch SHA-256: `{hashlib.sha256(diff.encode()).hexdigest()}`"]
+    for label, src in (("current", old_src), ("new", new_src)):
+        d = release_digest(src)
+        lines.append(f"- {label} library archive SHA-256 (verified against PyPI at download): " + (f"`{d}`" if d else "not recorded"))
+    lines.append("- `MANIFEST.json` hashes this file too; `upkeep verify --run <folder>` re-checks everything. "
+                 "This shows the patch is the one that was checked, not that it is what you deploy.")
+    return "\n".join(lines) + "\n"
 
 
 def _verify(args) -> int:
@@ -251,6 +265,8 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
     f.add_argument("--prober-model", help="model name for --prober-provider")
     f.add_argument("--behavior-check", action="store_true",
                    help="compare patched code on the new library with the original on the old one (needs probe inputs from the model)")
+    f.add_argument("--fuzz-inputs", type=int, default=100,
+                   help="with --behavior-check: extra seeded-random probe inputs per function (0 = only the model's and edge cases)")
     f.add_argument("--image", default="python:3.12-slim")
     f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
     f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")

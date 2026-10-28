@@ -10,6 +10,7 @@ from upkeep.evalcases import _w, materialize
 from upkeep.evalcases_behavior import CASES
 from upkeep.llm import Reply
 from upkeep.radar import run_radar
+from upkeep.scan import CallSite
 from upkeep.sandbox import run_python, run_tests
 
 
@@ -253,3 +254,48 @@ def test_two_probe_samples_are_merged_without_duplicates_and_cost_two_calls(tmp_
     assert [a for a in chk._inputs[("app", "quote")] if a == ["x"]] == [["x"]]  # "x" appeared in both samples, kept once
     one = BehaviorChecker(Varied(), repo, sites, local(old), local(new), probe_samples=1)
     assert one.probe_samples == 1 and BehaviorChecker(Varied(), repo, sites, local(old), local(new), probe_samples=0).probe_samples == 1
+
+
+def test_random_inputs_are_seeded_typed_and_deterministic():
+    from upkeep.charact import random_inputs
+    base = [["a b/c", 3, ["x"], {"k": "v"}, True]]
+    a = random_inputs(base, 60, "mod.fn")
+    assert a == random_inputs(base, 60, "mod.fn")          # reproducible
+    assert a != random_inputs(base, 60, "mod.other")       # seed depends on the function
+    assert len(a) == 60 and len({json.dumps(x) for x in a}) == 60
+    for args in a:                                          # arity and JSON types follow the original probe
+        assert len(args) == 5
+        assert isinstance(args[0], str) and isinstance(args[1], int) and isinstance(args[2], list)
+        assert isinstance(args[3], dict) and isinstance(args[4], bool)
+        json.dumps(args)
+    assert random_inputs(base, 0, "x") == [] and random_inputs([], 10, "x") == []
+
+
+def test_random_inputs_catch_a_change_the_model_never_proposed(tmp_path):
+    """The new library changed behavior only for the character '~'. The model proposed plain words and the fixed edge
+    cases contain no '~', so only the seeded random inputs can find the difference."""
+    repo, old, new = tmp_path / "repo", tmp_path / "old", tmp_path / "new"
+    for d in (repo, old, new):
+        d.mkdir()
+    (old / "lib.py").write_text("def enc(s):\n    return s\n")
+    (new / "lib.py").write_text("def enc(s):\n    return s.replace('~', '%7E')\n")
+    (repo / "app.py").write_text("import lib\n\n\ndef go(s):\n    return lib.enc(s)\n")
+    sites = [CallSite("app.py", 5, 5, "lib.enc", "call", 1, (), False)]
+    local = lambda lib: (lambda d, script: run_python(d, script, backend="local", allow_unsandboxed=True, extra_paths=[lib]))  # noqa: E731
+    plain = BehaviorChecker(FakeInputs('[["abc"], ["def"]]'), repo, sites, local(old), local(new))
+    fuzzed = BehaviorChecker(FakeInputs('[["abc"], ["def"]]'), repo, sites, local(old), local(new), n_random=300)
+    p = plain.check(repo)
+    assert p.ok                                              # the fixed probe set is blind to this change
+    rep = fuzzed.check(repo)
+    assert not rep.ok and rep.inputs_checked > p.inputs_checked and rep.random_inputs > 0
+    for m in rep.mismatches:                                 # every difference names the call site
+        assert m["file"] == "app.py" and m["sites"][0]["line"] == 5
+
+
+def test_mismatch_names_the_call_site_in_summary_and_proof(tmp_path):
+    from upkeep.charact import BehaviorReport, where
+    m = {"function": "go", "input": ["a b"], "old": '{"ok": "1"}', "new": '{"ok": "2"}', "file": "app/routing.py",
+         "sites": [{"line": 42, "symbol": "utils.url_quote"}]}
+    assert where(m) == "app/routing.py:42 (utils.url_quote) "
+    assert where({"function": "go"}) == ""
+    assert "app/routing.py:42 (utils.url_quote) go(" in BehaviorReport(mismatches=[m]).summary()

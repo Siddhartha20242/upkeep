@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 
+from .charact import where
 from .radar import RadarReport
 from .sandbox import TestResult
 from .vuln import Advisory
@@ -91,10 +93,13 @@ class ProofBundle:
         if b is None:
             lines.append("- not run (only the repo's own tests were used)")
         else:
+            if b.get("random_inputs"):
+                lines.append(f"- includes up to {b['random_inputs']} seeded-random inputs per function (reproducible; not exhaustive)")
             lines.append(f"- {b['inputs_checked']} probe inputs over {b['functions_checked']} function(s); "
                          f"{len(b['mismatches'])} mismatch(es)")
             for m in b["mismatches"][:5]:
-                lines.append(f"  - {m['function']}({', '.join(str(a) for a in m['input'])}): old {m['old']} vs new {m['new']}")
+                lines.append(f"  - {where(m)}{m['function']}({', '.join(json.dumps(a) for a in m['input'])}): "
+                             f"old library {m['old']} vs patched code on new library {m['new']}")
             lines += [f"  - skipped: {x}" for x in b["skipped"][:3]]
             lines.append("- probes are model-chosen: a clean result is evidence, not proof")
 
