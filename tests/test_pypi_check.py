@@ -1,3 +1,4 @@
+import hashlib
 import io
 import json
 import tarfile
@@ -28,7 +29,8 @@ def fake_pypi(monkeypatch, tmp_path):
     def fake_read(url, timeout=45, tries=4):
         if url.endswith("/json"):
             v = url.split("/")[-2]
-            return json.dumps({"urls": [{"packagetype": "sdist", "url": f"https://files.pythonhosted.org/mylib-{v}.tar.gz"}]}).encode()
+            return json.dumps({"urls": [{"packagetype": "sdist", "url": f"https://files.pythonhosted.org/mylib-{v}.tar.gz",
+                                         "digests": {"sha256": hashlib.sha256(archives[v]).hexdigest()}}]}).encode()
         return archives[url.split("mylib-")[1].replace(".tar.gz", "")]
     monkeypatch.setattr(pypi, "_read", fake_read)
     monkeypatch.setattr(pypi, "DEFAULT_CACHE", tmp_path / "cache")
@@ -74,3 +76,35 @@ def test_helpful_error_when_the_module_name_is_wrong(fake_pypi, capsys, monkeypa
     repo = make_repo(fake_pypi, "x = 1\n")
     code = cli.main(["check", "--repo", str(repo), "--package", "mylib", "--from", "1.0", "--to", "2.0", "--module", "nothere"])
     assert code == 3 and "pass --module" in capsys.readouterr().err
+
+
+def test_tampered_download_is_rejected_and_nothing_extracted(fake_pypi, monkeypatch):
+    real = pypi._read
+
+    def evil(url, timeout=45, tries=4):
+        data = real(url, timeout, tries)
+        return data if url.endswith("/json") else data + b"x"
+    monkeypatch.setattr(pypi, "_read", evil)
+    with pytest.raises(pypi.PyPIError, match="SHA-256 mismatch"):
+        pypi.fetch_sdist("MyLib", "1.0", cache=fake_pypi / "cache")
+    assert not (fake_pypi / "cache" / "MyLib-1.0").exists()
+
+
+def test_archive_without_a_published_digest_is_refused(fake_pypi, monkeypatch):
+    real = pypi._read
+
+    def nodigest(url, timeout=45, tries=4):
+        data = real(url, timeout, tries)
+        if url.endswith("/json"):
+            j = json.loads(data)
+            j["urls"][0].pop("digests")
+            return json.dumps(j).encode()
+        return data
+    monkeypatch.setattr(pypi, "_read", nodigest)
+    with pytest.raises(pypi.PyPIError, match="no SHA-256"):
+        pypi.fetch_sdist("MyLib", "1.0", cache=fake_pypi / "cache")
+
+
+def test_good_download_records_its_digest(fake_pypi):
+    root = pypi.fetch_sdist("MyLib", "1.0", cache=fake_pypi / "cache")
+    assert len(pypi.release_digest(root)) == 64

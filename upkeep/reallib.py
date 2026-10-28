@@ -27,6 +27,7 @@ from .charact import BehaviorChecker
 from .apidiff import diff_api, extract_api  # noqa: F401  (diff used by radar)
 from .evalcases import _w
 from .evalharness import Outcome
+from .pypi import check_sha256
 from .radar import run_radar
 from .sandbox import prepare_deps, run_python, run_tests
 
@@ -107,8 +108,10 @@ def _download_sdist(dist: str, ver: str, dest: Path) -> Path:
         return root
     shutil.rmtree(root, ignore_errors=True)
     data = json.loads(_urlopen_read(f"https://pypi.org/pypi/{dist}/{ver}/json"))
-    url = next(u["url"] for u in data["urls"] if u["packagetype"] == "sdist")
+    entry = next(u for u in data["urls"] if u["packagetype"] == "sdist")
+    url = entry["url"]
     blob = _urlopen_read(url)  # download fully BEFORE creating the folder, so a failure leaves nothing behind
+    check_sha256(blob, entry, f"{dist}=={ver}")
     tmp = dest / f".tmp-{dist}-{ver}"
     shutil.rmtree(tmp, ignore_errors=True)
     tmp.mkdir(parents=True)

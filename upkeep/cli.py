@@ -12,6 +12,7 @@ from .llm import client_for, load_env
 from .pr import PRError, open_draft_pr
 from .pypi import PyPIError, sources_for
 from .progress import paint, run_with_progress, use_color
+from .attest import AttestError, generate_key, sign_manifest, verify_manifest, verify_signature, write_manifest
 from .proof import ProofBundle
 from .radar import RadarInputError, run_radar
 from .sandbox import SandboxRefused, run_python, run_tests
@@ -160,6 +161,12 @@ def _fix(args, client=None, prober=None) -> int:
         {"status": res.status, "reason": res.reason, "model_calls": res.model_calls,
          "tokens": res.total_tokens, "guard_rejections": res.guard_rejections,
          "injection_flags": res.injection_flags, "steps": res.steps, "behavior": res.behavior}, indent=2))
+    write_manifest(args.out, args.package, args.old_version, args.new_version, bundle.status(), args.old, args.new)
+    if args.sign_key:
+        try:
+            print(f"signed manifest with key {sign_manifest(args.out, args.sign_key)}")
+        except (AttestError, OSError, ValueError) as e:
+            print(f"not signed: {e}", file=sys.stderr)
     shade = {"verified": "green", "declined": "red"}.get(res.status, "yellow")
     print(f"{args.package}: " + paint(res.status.upper(), shade, use_color()) + f"  ({res.reason})")
     if args.open_pr:
@@ -173,9 +180,39 @@ def _fix(args, client=None, prober=None) -> int:
                 print(f"  draft PR: {plan.url}")
         except PRError as e:
             print(f"PR not opened: {e}", file=sys.stderr)
-    print(f"wrote {args.out}/fix.patch, PROOF.md, result.json  (the repo itself was NOT modified)")
+    print(f"wrote {args.out}/fix.patch, PROOF.md, result.json, MANIFEST.json  (the repo itself was NOT modified)")
     agent.cleanup()
     return 0 if res.status == "verified" else 1
+
+
+def _verify(args) -> int:
+    problems = verify_manifest(args.run)
+    for x in problems:
+        print(f"FAIL {x}")
+    if problems:
+        return 2
+    print("OK   every file matches the SHA-256 manifest")
+    if args.pubkey or (args.run / "MANIFEST.sig").exists():
+        try:
+            trusted = args.pubkey.read_text().strip() if args.pubkey else None
+            ok, msg = verify_signature(args.run, trusted)
+        except (AttestError, OSError) as e:
+            print(f"FAIL {e}")
+            return 2
+        print(("OK   " if ok else "FAIL ") + msg)
+        return 0 if ok else 2
+    print("note: not signed, so this shows the files are unchanged, not who produced them")
+    return 0
+
+
+def _keygen(args) -> int:
+    try:
+        fp = generate_key(args.key)
+    except (AttestError, OSError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    print(f"wrote {args.key} (private, keep secret) and {args.key}.pub (share this); key id {fp}")
+    return 0
 
 
 def main(argv: list[str] | None = None, client=None, prober=None) -> int:
@@ -218,7 +255,17 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
     f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
     f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")
     f.add_argument("--base", default="main", help="base branch for --open-pr")
+    f.add_argument("--sign-key", type=Path, help="Ed25519 private key (from `upkeep keygen`) to sign the run manifest")
     f.set_defaults(fn=lambda a: _fix(a, client, prober))
+
+    vf = sub.add_parser("verify", help="check that a `upkeep fix` output folder was not edited after it was written")
+    vf.add_argument("--run", required=True, type=Path)
+    vf.add_argument("--pubkey", type=Path, help="public key file you trust, to check WHO signed it")
+    vf.set_defaults(fn=_verify)
+
+    kg = sub.add_parser("keygen", help="create an Ed25519 signing key (needs the optional 'cryptography' package)")
+    kg.add_argument("--key", required=True, type=Path)
+    kg.set_defaults(fn=_keygen)
 
     d = sub.add_parser("dashboard", help="write a self-contained HTML page for a fix run and/or benchmark results")
     d.add_argument("--run", type=Path, help="output folder of `upkeep fix` (result.json, fix.patch, PROOF.md)")

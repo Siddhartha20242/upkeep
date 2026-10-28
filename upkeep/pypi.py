@@ -6,6 +6,8 @@ only ever parsed (never imported or executed).
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import io
 import json
 import shutil
@@ -19,8 +21,33 @@ from pathlib import Path
 DEFAULT_CACHE = Path(tempfile.gettempdir()) / "upkeep-pypi-cache"
 
 
+DIGEST_FILE = ".upkeep-sha256"
+
+
 class PyPIError(RuntimeError):
     pass
+
+
+def check_sha256(blob: bytes, entry: dict, label: str) -> str:
+    """Compare a download with the SHA-256 PyPI publishes for it; fail closed. Returns the verified digest."""
+    expected = ((entry.get("digests") or {}).get("sha256") or "").lower()
+    if not expected:
+        raise PyPIError(f"PyPI published no SHA-256 for {label}; refusing to use an unverifiable archive")
+    actual = hashlib.sha256(blob).hexdigest()
+    if not hmac.compare_digest(actual, expected):
+        raise PyPIError(f"SHA-256 mismatch for {label}: PyPI says {expected[:16]}..., downloaded {actual[:16]}...; "
+                        "the download was corrupted or tampered with, nothing was extracted")
+    return actual
+
+
+def release_digest(path: Path) -> str | None:
+    """SHA-256 of the archive this source tree came from (recorded at download), searching up a few folders."""
+    p = Path(path).resolve()
+    for d in [p, *list(p.parents)[:4]]:
+        f = d / DIGEST_FILE
+        if f.is_file():
+            return f.read_text().strip() or None
+    return None
 
 
 def _read(url: str, timeout: int = 45, tries: int = 4) -> bytes:
@@ -44,10 +71,12 @@ def fetch_sdist(dist: str, version: str, cache: Path = DEFAULT_CACHE) -> Path:
         meta = json.loads(_read(f"https://pypi.org/pypi/{dist}/{version}/json"))
     except ValueError as e:
         raise PyPIError(f"could not read PyPI metadata for {dist}=={version}") from e
-    urls = [u["url"] for u in meta.get("urls", []) if u.get("packagetype") == "sdist"]
-    if not urls:
+    files = [u for u in meta.get("urls", []) if u.get("packagetype") == "sdist"]
+    if not files:
         raise PyPIError(f"{dist}=={version} has no source archive on PyPI")
+    urls = [files[0]["url"]]
     blob = _read(urls[0])
+    actual = check_sha256(blob, files[0], f"{dist}=={version}")
     tmp = Path(cache) / f".tmp-{dist}-{version}"
     shutil.rmtree(tmp, ignore_errors=True)
     tmp.mkdir(parents=True)
@@ -60,6 +89,7 @@ def fetch_sdist(dist: str, version: str, cache: Path = DEFAULT_CACHE) -> Path:
     else:
         with tarfile.open(fileobj=io.BytesIO(blob)) as t:
             t.extractall(tmp, filter="data")
+    (tmp / DIGEST_FILE).write_text(actual + "\n")
     shutil.rmtree(root, ignore_errors=True)
     tmp.rename(root)
     return root

@@ -1,3 +1,4 @@
+import hashlib
 import io
 import json
 import tarfile
@@ -55,7 +56,8 @@ def test_a_cache_of_empty_folders_is_redownloaded_not_trusted(monkeypatch, tmp_p
     def fake(url, **kw):
         downloads.append(url)
         if url.endswith("/json"):
-            return json.dumps({"urls": [{"packagetype": "sdist", "url": "https://files.example/p-1.0.tar.gz"}]}).encode()
+            return json.dumps({"urls": [{"packagetype": "sdist", "url": "https://files.example/p-1.0.tar.gz",
+                                         "digests": {"sha256": hashlib.sha256(blob).hexdigest()}}]}).encode()
         return blob
 
     monkeypatch.setattr(module, attr, fake)

@@ -58,7 +58,7 @@ live. `--open-pr` proposes a **draft** pull request and is a dry run unless you 
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]" coverage mypy
-.venv/bin/python -m pytest -q                       # 157 tests; live OSV test: UPKEEP_LIVE=1
+.venv/bin/python -m pytest -q                       # 166 tests; live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
@@ -192,6 +192,19 @@ the Meta-API versions called it (13/16, 16/16, 16/16). That is the same "stops t
 agent's nudge exists for. Newer versions were slower and used more tokens. *Caveats: small prompts; one test accounts for
 most of the difference and its wording matters; Open and the others are served by different stacks (Baseten vs the Meta API).*
 See `eval_results/toolcall_bench.json`.
+
+## Integrity of what it downloads and produces
+
+- **Downloads are verified.** Every PyPI release is checked against the SHA-256 PyPI publishes for it. A mismatch, or a
+  release with no published digest, is refused before anything is extracted (fail closed).
+- **Runs are tamper-evident.** `upkeep fix` writes `MANIFEST.json` with the SHA-256 of `fix.patch`, `PROOF.md` and
+  `result.json`. `upkeep verify --run upkeep-out` fails if any of them was edited afterwards.
+- **Runs can be signed (optional).** `pip install -e .[sign]`, `upkeep keygen --key my.pem`, then
+  `upkeep fix ... --sign-key my.pem`. `upkeep verify --run upkeep-out --pubkey my.pem.pub` checks the Ed25519 signature
+  and that it came from the key you trust.
+- What this does **not** do: it does not show the fix is correct (PROOF.md says what is and is not proven), and the
+  hashes use the standard library only, so the default install still has zero dependencies. There is no encryption
+  because Upkeep stores no secrets and no data at rest; adding some would be decoration.
 
 ## What went wrong, and what caught it
 
