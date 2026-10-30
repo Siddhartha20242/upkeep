@@ -102,3 +102,62 @@ def test_missing_package_folder_gives_an_actionable_message(monkeypatch, tmp_pat
     monkeypatch.setattr(pypi, "fetch_sdist", lambda *a, **k: tmp_path / "a")
     with pytest.raises(pypi.PyPIError, match="pass --module"):
         pypi.sources_for("PyYAML", "1", "2")
+
+
+def _http_error(code):
+    import io
+    return pypi.urllib.error.HTTPError("https://pypi.org/x", code, "msg", {}, io.BytesIO(b""))
+
+
+def test_a_404_is_reported_at_once_and_a_500_is_retried(monkeypatch):
+    calls = []
+    monkeypatch.setattr(pypi.time, "sleep", lambda s: None)
+
+    def always(code):
+        def f(url, timeout=0):
+            calls.append(code)
+            raise _http_error(code)
+        return f
+    monkeypatch.setattr(pypi.urllib.request, "urlopen", always(404))
+    with pytest.raises(pypi.PyPIError, match="not found on PyPI"):
+        pypi._read("https://pypi.org/x", tries=4)
+    assert calls == [404]
+    calls.clear()
+    monkeypatch.setattr(pypi.urllib.request, "urlopen", always(503))
+    with pytest.raises(pypi.PyPIError, match="download failed after 4 tries"):
+        pypi._read("https://pypi.org/x", tries=4)
+    assert calls == [503] * 4
+
+
+def test_unusable_archives_become_pypi_errors_not_crashes(monkeypatch, tmp_path):
+    import hashlib, io, json, tarfile
+    link = tarfile.TarInfo("pkg-1.0/l")
+    link.type, link.linkname = tarfile.SYMTYPE, "/etc/passwd"
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as t:
+        t.addfile(link)
+    for blob in (buf.getvalue(), b"\x1f\x8b not really gzip"):
+        meta = json.dumps({"urls": [{"packagetype": "sdist", "url": "https://f/x.tar.gz", "size": len(blob),
+                                     "digests": {"sha256": hashlib.sha256(blob).hexdigest()}}]}).encode()
+        monkeypatch.setattr(pypi, "_read", lambda url, b=blob, m=meta, **k: m if url.endswith("/json") else b)
+        with pytest.raises(pypi.PyPIError, match="could not unpack"):
+            pypi.fetch_sdist("x", "1", cache=tmp_path / "c")
+        assert not list((tmp_path / "c").glob(".tmp-*"))     # nothing half-extracted is left behind
+
+
+def test_two_fetches_never_share_a_temp_folder(monkeypatch, tmp_path):
+    import hashlib, io, json, tarfile
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as t:
+        i = tarfile.TarInfo("pkg-1.0/lib/__init__.py")
+        i.size = 2
+        t.addfile(i, io.BytesIO(b"x\n"))
+    blob = buf.getvalue()
+    meta = json.dumps({"urls": [{"packagetype": "sdist", "url": "https://f/x.tar.gz", "size": len(blob),
+                                 "digests": {"sha256": hashlib.sha256(blob).hexdigest()}}]}).encode()
+    monkeypatch.setattr(pypi, "_read", lambda url, **k: meta if url.endswith("/json") else blob)
+    a = pypi.fetch_sdist("x", "1", cache=tmp_path / "c")
+    import shutil
+    shutil.rmtree(a)
+    b = pypi.fetch_sdist("x", "1", cache=tmp_path / "c")
+    assert a == b and any(b.rglob("*.py"))

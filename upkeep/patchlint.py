@@ -34,7 +34,10 @@ DENY_REFS = (DENY_CALLS - {"dir", "input"}) | {"__builtins__"}
 # String-driven attribute access that would bypass the dunder check.
 DENY_NAMES_ANYWHERE = {"attrgetter", "methodcaller"}
 DENY_ATTRS = {"__path__", "__code__", "__file__", "__dict__", "__globals__", "__builtins__",
-              "__subclasses__", "__class__", "__bases__", "__mro__", "__closure__", "__module__"}
+              "__subclasses__", "__class__", "__bases__", "__mro__", "__closure__", "__module__",
+              # frame and function internals: the usual ways to reach globals or builtins without a dunder
+              "gi_frame", "gi_code", "cr_frame", "cr_code", "ag_frame", "ag_code", "f_globals", "f_locals", "f_builtins",
+              "f_back", "f_code", "tb_frame", "__self__", "__loader__", "__spec__"}
 
 
 def _denied_module(name: str) -> str | None:
@@ -56,6 +59,8 @@ def _census(tree: ast.AST) -> Counter:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             yaml_names |= {a.asname for a in node.names if a.name.split(".")[0] == "yaml" and a.asname}
+        elif isinstance(node, ast.ImportFrom) and not node.level and node.module and node.module.split(".")[0] == "yaml":
+            yaml_names |= {a.asname or a.name for a in node.names if a.name != "*"}  # `from yaml import loader` -> loader.Loader
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
@@ -63,7 +68,7 @@ def _census(tree: ast.AST) -> Counter:
                 if d:
                     c[f"import {d}"] += 1
         elif isinstance(node, ast.ImportFrom):
-            if node.module and node.module.split(".")[0] == "yaml":
+            if node.module and not node.level and node.module.split(".")[0] == "yaml":
                 for a in node.names:
                     if a.name == "*":
                         c["star import of yaml (could pull in an unsafe loader)"] += 1
@@ -73,7 +78,7 @@ def _census(tree: ast.AST) -> Counter:
                 for a in node.names:
                     if a.name in DENY_NAMES_ANYWHERE:
                         c[f"operator.{a.name}"] += 1
-            if node.module:
+            if node.module and not node.level:  # `from .http import X` is the repo's own module, not the stdlib one
                 for a in node.names:  # check "module.name" so `from urllib import parse` is allowed, `request` is not
                     d = _denied_module(f"{node.module}.{a.name}")
                     if d:

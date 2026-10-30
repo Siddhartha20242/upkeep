@@ -1,5 +1,7 @@
 # Upkeep
 
+![tests](https://github.com/Siddhartha20242/upkeep/actions/workflows/tests.yml/badge.svg)
+
 **A verified, security-aware dependency upgrade agent for Python projects.**
 When a library ships a breaking change, Upkeep finds what it breaks in your code, proposes a fix, and attaches the
 evidence. **The code decides the verdict, not the model.** If it cannot show a fix is safe, it says so.
@@ -57,7 +59,7 @@ live. `--open-pr` proposes a **draft** pull request and is a dry run unless you 
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev,sign]" coverage mypy
-.venv/bin/python -m pytest -q                       # 270 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
+.venv/bin/python -m pytest -q                       # 292 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
@@ -166,11 +168,14 @@ url_encode` 8,576; `from flask import Markup` 1,956). *Caveat: counts are approx
 those files pin old versions or are vendored copies, so they are not broken today.* See `eval_results/prevalence_code_search.json`.
 
 **8. How big is the instance-method blind spot?** Counting **distinct** breaking changes across 12 real upgrades (chosen
-before looking at the result): 443 in total, **34% functions, 46% class constructors, 21% methods**; 5 of the 12
-upgrades have no method changes at all, and the per-upgrade share ranges from 0% to 67% (Flask 67%, redis 59%, click 42%).
+before looking at the result): 412 in total, **38% functions, 41% class constructors, 20% methods**; 5 of the 12
+upgrades have no method changes at all, and the per-upgrade share ranges from 0% to 59% (Flask 59%, redis 59%, click 40%).
 My first count said 51% methods; that was inflated, first by an inheritance bug (redis showed 222 "removed" methods that
-were only moved into base classes) and then by one changed base method being counted once per subclass. See
-`scripts/blindspot_census.py` and `eval_results/blindspot_census.txt`. *This counts API changes, not how often your code
+were only moved into base classes) and then by one changed base method being counted once per subclass. After later radar
+changes the census briefly read 646 changes for the same reason applied to constructors and re-exported names (a changed
+base constructor counted once per subclass, a re-exported function under two keys); it now counts each underlying
+definition once, and the older 443 and 21% were re-measured as 412 and 20%. See `scripts/blindspot_census.py` and
+`eval_results/blindspot_census.txt`. *This counts API changes, not how often your code
 calls them.*
 
 **9. Mined real downstream repositories: 0 of 4 usable.** The validator (clone, install dependencies in a container, run
@@ -224,15 +229,15 @@ GitHub code search returned them, and ran `audit` against the newest release (`s
 | | Repos | Library pins analysed | Pins with a flagged line | Flagged sites |
 |---|---|---|---|---|
 | Set A (used to find and fix false alarms) | 17 | 74 | 6 | 52 |
-| Set B (fresh: different pins, no code changed after I read it) | 18 | 62 | 3 | 11 |
+| Set B (fresh: different pins, no code changed after I read it) | 18 | 58 | 4 | 12 |
 
-- **Most pinned-old repos are not hit.** Only 9 of 136 pins (7%) had any flagged line; the rest are green (or the break
+- **Most pinned-old repos are not hit.** Only 10 of 132 pins (8%) had any flagged line; the rest are green (or the break
   is invisible to the radar, see below).
 - **Two kinds of flag with very different precision.** *Will fail* (removed names, removed or newly required
   parameters): 41 of 42 flagged sites were real on set A (one I could not judge), for example Flask's `send_file(...,
   cache_timeout=0)`, marshmallow 4 ignoring `ValidationError(field_names=...)`, and `from pydantic import BaseSettings`.
-  None appeared on set B. *Default changed* (a default value changed and the call relies on it): only 10 of 21 mattered,
-  because 11 were `marshmallow.fields.Nested(many=...)` going from `False` to `None`, which behaves the same. `audit` now
+  None appeared on set B. *Default changed* (a default value changed and the call relies on it): only 10 of 22 mattered,
+  because 12 were `marshmallow.fields.Nested(many=...)` going from `False` to `None`, which behaves the same. `audit` now
   prints these separately as "will fail" and "default change to review".
 - **The first run was bad, and that was the useful part.** On set A it flagged 299 lines, most of them false. After the
   first round of fixes it was 95 sites, which I labeled by hand at about **50% precision** (47 real). The remaining false
@@ -241,7 +246,7 @@ GitHub code search returned them, and ran `audit` against the newest release (`s
   (marshmallow 4, SQLAlchemy 2), and calls that still work after a *parameter rename* (positional arguments, bare
   decorators, subclass declarations, constructors inherited from private base classes). Each is fixed with a test; the
   same set then gave 52 sites at 94% precision. That number is on the set I tuned on. The fair test is set B, and it is
-  small (11 sites: 2 real behavior changes, 0 will-fail).
+  small (12 sites: 2 real behavior changes, 0 will-fail).
 - **Misses are not measured here.** Reading code to find breaks the radar missed is slow, so I did not do it, except by
   accident: in one earlier repo (`cristianzsh/freki`) a call passes `method="sha256"`, which Werkzeug 3 rejects, and the
   radar cannot see a parameter that stops accepting a value. The radar-versus-real-fixes numbers in result 6 are the
@@ -306,7 +311,7 @@ GitHub code search returned them, and ran `audit` against the newest release (`s
 
 - Python only. The radar sees signature-level breaks and literal default changes; a change that keeps the same
   signature and defaults (return type, internal behavior) is invisible to it (one authored case documents this).
-- The radar cannot see a parameter that stops accepting a value it used to accept (Werkzeug 3 rejecting `method="sha256"`), and a flagged *default change* is often benign (11 of 21 on public repos).
+- The radar cannot see a parameter that stops accepting a value it used to accept (Werkzeug 3 rejecting `method="sha256"`), and a flagged *default change* is often benign (12 of 22 on public repos).
 - Instance-method calls are resolved only in simple local patterns. Not resolved: inheritance of your own classes,
   reassigned variables, objects passed between files, `getattr`, factories and other dynamic calls.
 - The behavior check uses JSON-only probes of module-level functions, chosen by a model plus deterministic edge cases:
@@ -355,8 +360,8 @@ bash scripts/real_validation.sh                                                 
 
 ## Testing
 
-- **270 tests, 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10 to 3.12; it has not
-  run on GitHub yet). No test needs the network, Docker or a model key: model replies are scripted, Docker is faked, and
+- **292 tests, about 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10, 3.11 and 3.12;
+  the first run passed on GitHub with no Docker, network or keys). No test needs the network, Docker or a model key: model replies are scripted, Docker is faked, and
   the HTTP client is tested against a local server. The uncovered code is mostly the benchmark runners (`reallib.py`,
   `evalharness.py`), which need Docker and a model.
 - **A ground-truth test for the radar** (`tests/radar_oracle_lib.py`, `scripts/radar_oracle.py`). It generates random

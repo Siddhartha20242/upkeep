@@ -13,7 +13,7 @@ from .llm import client_for, load_env
 from .pr import PRError, open_draft_pr
 from .pypi import PyPIError, sources_for
 from .progress import paint, run_with_progress, use_color
-from .audit import audit, worst
+from .audit import audit, count_unpinned, worst
 from .attest import AttestError, generate_key, sign_manifest, verify_manifest, verify_signature, write_manifest
 from .proof import ProofBundle
 from .pypi import release_digest
@@ -110,9 +110,15 @@ def _audit(args) -> int:
             else:
                 print(f"{r.dist} {r.old}: SKIPPED ({r.reason})")
         done = [r for r in results if r.status == "checked"]
+        loose = count_unpinned(args.repo)
+        if loose:
+            print(f"\n{loose} requirement(s) without an exact pin (ranges, bare names) were not analysed.")
         print(f"\n{len(done)} of {len(results)} pinned dependencies analysed; "
               f"{sum(1 for r in done if r.hard)} have lines that will fail, {sum(1 for r in done if r.review and not r.hard)} only default changes "
               "to review. Skipped ones were NOT checked.")
+    if not any(r.status == "checked" for r in results) and any(r.status == "skipped" for r in results):
+        print("error: no dependency could be analysed (see the SKIPPED reasons above); this is not a clean result", file=sys.stderr)
+        return 3
     return {"green": 0, "amber": 1, "red": 2}[worst(results)]
 
 

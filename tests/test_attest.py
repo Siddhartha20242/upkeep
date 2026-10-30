@@ -75,3 +75,18 @@ def test_proof_integrity_section_has_patch_and_archive_hashes(tmp_path):
     assert hashlib.sha256(b"diff body").hexdigest() in md
     assert "ab" * 32 in md and "new library archive SHA-256 (verified against PyPI at download): not recorded" in md
     assert "not that it is what you deploy" in md
+
+
+def test_encrypted_or_non_ed25519_keys_are_a_clear_error_not_a_crash(tmp_path):
+    pytest.importorskip("cryptography")
+    from cryptography.hazmat.primitives import serialization as s
+    from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
+    d = run_dir(tmp_path)
+    (tmp_path / "enc.pem").write_bytes(ed25519.Ed25519PrivateKey.generate().private_bytes(
+        s.Encoding.PEM, s.PrivateFormat.PKCS8, s.BestAvailableEncryption(b"pw")))
+    (tmp_path / "rsa.pem").write_bytes(rsa.generate_private_key(65537, 2048).private_bytes(
+        s.Encoding.PEM, s.PrivateFormat.PKCS8, s.NoEncryption()))
+    (tmp_path / "junk.pem").write_text("not a key")
+    for name in ("enc.pem", "rsa.pem", "junk.pem"):
+        with pytest.raises(attest.AttestError):
+            attest.sign_manifest(d, tmp_path / name)

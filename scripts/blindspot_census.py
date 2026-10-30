@@ -28,7 +28,7 @@ def main() -> int:
             print(f"{dist} {old}->{new}: skipped ({type(e).__name__}: {str(e)[:60]})", flush=True)
             continue
         changes = diff_api(oa, na)
-        kinds, seen_methods = Counter(), set()
+        kinds, seen_methods, seen_defs = Counter(), set(), set()
         for c in changes:
             sig = oa.get(c.symbol)
             if sig is None:
@@ -43,10 +43,14 @@ def main() -> int:
                     continue
                 seen_methods.add(key)
                 kinds["method"] += 1
-            elif sig.is_class:
-                kinds["class"] += 1
             else:
-                kinds["function"] += 1
+                # a re-exported name appears under several keys, and one changed base constructor under every subclass:
+                # count each underlying definition and change once
+                key = (sig.ctor_from or sig.qualname, c.kind, c.param)
+                if key in seen_defs:
+                    continue
+                seen_defs.add(key)
+                kinds["class" if sig.is_class else "function"] += 1
         total += kinds
         rows.append((dist, old, new, kinds))
         print(f"{dist:11} {old:>8} -> {new:<8} functions={kinds['function']:3} classes={kinds['class']:3} methods={kinds['method']:3}", flush=True)

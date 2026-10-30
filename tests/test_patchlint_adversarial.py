@@ -78,3 +78,30 @@ def test_a_construct_already_in_the_file_is_not_blamed_on_the_edit():
     old = "import os\n\n\ndef f():\n    return os.getcwd()\n"
     assert check_edit(old, old + "\n\ndef g():\n    return 1\n")[0]
     assert not check_edit(old, old + "import subprocess\n")[0]
+
+
+MORE_REJECT = {
+    "generator frame globals": "g = (x for x in []).gi_frame.f_globals\n",
+    "frame walk": "import types\n",
+    "bound builtin __self__": "m = print.__self__\n",
+    "loader": "l = load.__loader__\n",
+    "yaml submodule via from-import": "from yaml import loader\nL = loader.Loader\n",
+    "yaml submodule aliased": "from yaml import loader as ld\nL = ld.UnsafeLoader\n",
+}
+MORE_ACCEPT = {
+    "relative import of the repo's own http module": "from .http import Client\n",
+    "relative import of own types module": "from .types import Thing\n",
+    "relative import of own os helpers": "from ..os import helper\n",
+    "yaml safe through a submodule alias": "from yaml import loader\nS = loader.SafeLoader\n",
+}
+
+
+@pytest.mark.parametrize("name", sorted(MORE_REJECT))
+def test_more_bypasses_are_rejected(name):
+    assert not edit(MORE_REJECT[name])[0], name
+
+
+@pytest.mark.parametrize("name", sorted(MORE_ACCEPT))
+def test_repo_local_relative_imports_are_not_mistaken_for_the_stdlib(name):
+    ok, why = edit(MORE_ACCEPT[name])
+    assert ok, why

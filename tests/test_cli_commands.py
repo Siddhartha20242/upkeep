@@ -115,7 +115,9 @@ def test_audit_json_lists_skipped_and_checked_dependencies(tmp_path, capsys, mon
             raise au.PyPIError("no source archive")
         raise au.PyPIError("module folder not found")
     monkeypatch.setattr(au, "sources_for", fake_sources)
-    assert cli.main(["audit", "--repo", str(repo), "--json"]) == 0
-    rows = json.loads(capsys.readouterr().out)
+    assert cli.main(["audit", "--repo", str(repo), "--json"]) == 3   # nothing could be analysed: never a clean exit
+    cap = capsys.readouterr()
+    assert "not a clean result" in cap.err
+    rows = json.loads(cap.out)
     assert {r["dist"]: r["status"] for r in rows} == {"alpha": "skipped", "beta": "skipped"}
     assert all(r["reason"] for r in rows)

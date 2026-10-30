@@ -30,6 +30,8 @@ class Signature:
     is_class: bool = False
     is_method: bool = False  # a method of a public class (only extracted with include_methods=True)
     opaque: bool = False  # exists (exposed lazily through a module-level __getattr__) but its signature is unknown
+    ctor_unknown: bool = False  # a class whose constructor is GENERATED from fields (@dataclass, attrs, pydantic ...): not comparable
+    ctor_from: str = ""  # for a class that INHERITS its constructor: the class that defines it (one change, many subclasses)
 
 
 @dataclass(frozen=True)
@@ -78,6 +80,20 @@ def _is_public(dotted: str) -> bool:
     return not any(part.startswith("_") or part in _NON_API_PARTS for part in parts)
 
 
+_GENERATED_DECORATORS = {"dataclass", "define", "frozen", "mutable", "attrs", "attributes", "s"}
+_GENERATED_BASES = {"BaseModel", "BaseSettings", "NamedTuple", "TypedDict", "Struct"}
+
+
+def _generates_constructor(cls: ast.ClassDef) -> bool:
+    """@dataclass / attrs / pydantic-style classes have no `__init__` in their body: the signature comes from the fields."""
+    for d in cls.decorator_list:
+        d = d.func if isinstance(d, ast.Call) else d
+        name = d.id if isinstance(d, ast.Name) else d.attr if isinstance(d, ast.Attribute) else None
+        if name in _GENERATED_DECORATORS:
+            return True
+    return any(_base_name(b) in _GENERATED_BASES for b in cls.bases)
+
+
 def _base_name(b: ast.expr) -> str | None:
     """Simple name of a base class expression: ``Base``, ``mod.Base`` and ``Base[T]`` (generic)."""
     e: ast.expr = b.value if isinstance(b, ast.Subscript) else b
@@ -117,6 +133,7 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
     class_methods: dict[str, dict[str, Signature]] = {}  # class qualname -> its OWN public methods (by name)
     imported: dict[str, dict[str, str]] = {}          # module -> {local name: canonical dotted name} from `from x import y [as z]`
     own_init: dict[str, tuple[Param, ...]] = {}       # class qualname -> parameters of its OWN __init__
+    generated: set[str] = set()                       # classes whose constructor is generated from fields
 
     for file in sorted(pkg_dir.rglob("*.py")):
         try:
@@ -150,8 +167,10 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
                     if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                         params = _params_from_args(item.args, skip_first=True)
                         own_init[qual] = params
+                if qual not in own_init and _generates_constructor(node):
+                    generated.add(qual)
                 if _is_public(qual):
-                    api[qual] = Signature(qual, params, is_class=True)
+                    api[qual] = Signature(qual, params, is_class=True, ctor_unknown=qual in generated)
                 class_bases[qual] = [n for n in map(_base_name, node.bases) if n]
                 if include_methods:  # private classes too: a public class inherits their public methods
                     class_methods[qual] = {k.rsplit(".", 1)[1]: v for k, v in _method_sigs(node, qual).items()}
@@ -187,22 +206,26 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
             out += [c for c in (same or cands)[:1] if c != q]
         return out
 
-    def inherited_init(q: str, seen: tuple[str, ...] = ()) -> tuple[Param, ...] | None:
+    def inherited_init(q: str, seen: tuple[str, ...] = ()) -> tuple[tuple[Param, ...], str] | str | None:
         for b in base_quals(q):
             if b in seen:
                 continue
             if b in own_init:
-                return own_init[b]
+                return own_init[b], b
+            if b in generated:
+                return "unknown"  # the nearest constructor is generated from fields: do not pretend to know it
             got = inherited_init(b, seen + (q,))
             if got is not None:
                 return got
         return None
 
     for q in class_bases:  # a class without its own __init__ takes the constructor of its nearest base that has one
-        if q not in own_init and q in api:
+        if q not in own_init and q not in generated and q in api:
             got = inherited_init(q)
-            if got is not None:
-                api[q] = Signature(q, got, is_class=True)
+            if got == "unknown":
+                api[q] = Signature(q, (), is_class=True, ctor_unknown=True)
+            elif got is not None and not isinstance(got, str):
+                api[q] = Signature(q, got[0], is_class=True, ctor_from=got[1])
 
     if include_methods:
         def effective(q: str, seen: tuple[str, ...] = ()) -> dict[str, Signature]:
@@ -238,7 +261,7 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
         for public, canonical in reexports:
             if canonical in api and _is_public(public) and (sweep == 0 or public not in api):
                 sig = api[canonical]
-                api[public] = Signature(sig.qualname, sig.params, sig.is_class, sig.is_method, sig.opaque)
+                api[public] = Signature(sig.qualname, sig.params, sig.is_class, sig.is_method, sig.opaque, sig.ctor_unknown, sig.ctor_from)
                 grew = grew or sweep > 0
                 if include_methods and sig.is_class:
                     for k, m in [(k, v) for k, v in api.items() if k.startswith(canonical + ".")]:
@@ -280,8 +303,8 @@ def diff_api(old: dict[str, Signature], new: dict[str, Signature]) -> list[Chang
         if n is None:
             changes.append(Change(name, "removed", "symbol no longer exists"))
             continue
-        if n.opaque:
-            continue  # lazily exposed: it still exists, but a static scan cannot compare its signature
+        if n.opaque or o.ctor_unknown or n.ctor_unknown:
+            continue  # lazily exposed, or a constructor generated from fields: it exists, but a static scan cannot compare it
         old_by = {p.name: p for p in o.params}
         new_by = {p.name: p for p in n.params}
         new_has_varkw = any(p.kind == "varkw" for p in n.params)

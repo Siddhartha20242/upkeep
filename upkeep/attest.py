@@ -106,8 +106,14 @@ def generate_key(path: Path) -> str:
 
 
 def sign_manifest(out: Path, key_path: Path) -> str:
-    ser, _, _ = _ed25519()
-    key = ser.load_pem_private_key(Path(key_path).read_bytes(), password=None)
+    ser, ed, _ = _ed25519()
+    try:
+        key = ser.load_pem_private_key(Path(key_path).read_bytes(), password=None)
+    except (TypeError, ValueError) as e:
+        raise AttestError("could not load the signing key (a passphrase-protected or non-PEM key? "
+                          "only unencrypted Ed25519 PEM keys from `upkeep keygen` are supported)") from e
+    if not isinstance(key, ed.Ed25519PrivateKey):
+        raise AttestError("the signing key is not an Ed25519 key")
     data = (Path(out) / MANIFEST).read_bytes()
     pub = _raw_pub(key.public_key())
     (Path(out) / SIGNATURE).write_text(json.dumps({"alg": "ed25519", "public_key": pub.hex(), "signature": key.sign(data).hex()}, indent=2) + "\n")

@@ -65,7 +65,7 @@
     "reason": "",
     "risk": "green",
     "flagged": [],
-    "n_changes": 14828,
+    "n_changes": 14821,
     "hard": 0,
     "review": 0
   },
@@ -385,6 +385,27 @@
     "review": 0
   },
   {
+    "repo": "python-desert/desert",
+    "split": "fresh",
+    "dist": "marshmallow",
+    "old": "3.18.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "src/desert/_make.py",
+        318,
+        "marshmallow.fields.Nested",
+        "default_changed"
+      ]
+    ],
+    "n_changes": 251,
+    "hard": 0,
+    "review": 1
+  },
+  {
     "repo": "KOSASIH/stable-pi-core",
     "split": "fresh",
     "dist": "flask",
@@ -667,76 +688,6 @@
     "risk": "green",
     "flagged": [],
     "n_changes": 4,
-    "hard": 0,
-    "review": 0
-  },
-  {
-    "repo": "crypto-code/Stock-Market-AI-GUI",
-    "split": "fresh",
-    "dist": "click",
-    "old": "7.1.2",
-    "new": "8.5.0",
-    "status": "checked",
-    "reason": "",
-    "risk": "green",
-    "flagged": [],
-    "n_changes": 218,
-    "hard": 0,
-    "review": 0
-  },
-  {
-    "repo": "crypto-code/Stock-Market-AI-GUI",
-    "split": "fresh",
-    "dist": "flask",
-    "old": "1.1.2",
-    "new": "3.1.3",
-    "status": "checked",
-    "reason": "",
-    "risk": "green",
-    "flagged": [],
-    "n_changes": 189,
-    "hard": 0,
-    "review": 0
-  },
-  {
-    "repo": "crypto-code/Stock-Market-AI-GUI",
-    "split": "fresh",
-    "dist": "jinja2",
-    "old": "2.11.3",
-    "new": "3.1.6",
-    "status": "checked",
-    "reason": "",
-    "risk": "green",
-    "flagged": [],
-    "n_changes": 181,
-    "hard": 0,
-    "review": 0
-  },
-  {
-    "repo": "crypto-code/Stock-Market-AI-GUI",
-    "split": "fresh",
-    "dist": "pyyaml",
-    "old": "5.4",
-    "new": "6.0.3",
-    "status": "checked",
-    "reason": "",
-    "risk": "green",
-    "flagged": [],
-    "n_changes": 4,
-    "hard": 0,
-    "review": 0
-  },
-  {
-    "repo": "crypto-code/Stock-Market-AI-GUI",
-    "split": "fresh",
-    "dist": "werkzeug",
-    "old": "1.0.1",
-    "new": "3.1.9",
-    "status": "checked",
-    "reason": "",
-    "risk": "green",
-    "flagged": [],
-    "n_changes": 1300,
     "hard": 0,
     "review": 0
   },

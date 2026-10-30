@@ -85,3 +85,38 @@ def test_audit_separates_hard_breaks_from_default_changes_to_review(fake, capsys
     cli.main(["audit", "--repo", str(r)])
     out = capsys.readouterr().out
     assert "1 will fail, 1 default change(s) to review" in out and "review: default changed" in out
+
+
+def test_pip_compile_style_pins_with_hashes_and_continuations_are_parsed(tmp_path):
+    r = tmp_path / "r"
+    r.mkdir()
+    (r / "requirements.txt").write_text(
+        "foo==1.0 \\\n    --hash=sha256:abc \\\n    --hash=sha256:def\nbar==2.0 --hash=sha256:def\nbaz==3.0\n"
+        "qux>=1.0\n-r more.txt\n--index-url https://example.invalid/simple\n")
+    (r / "more.txt").write_text("included==4.5  # from -r\nloose\n")
+    assert au.parse_pins(r) == [("bar", "2.0"), ("baz", "3.0"), ("foo", "1.0"), ("included", "4.5")]
+    assert au.count_unpinned(r) == 2     # qux (range) and loose (bare name) are reported, not silently ignored
+
+
+def test_requirement_includes_cannot_loop_forever(tmp_path):
+    (tmp_path / "requirements.txt").write_text("-r requirements-dev.txt\na==1\n")
+    (tmp_path / "requirements-dev.txt").write_text("-r requirements.txt\nb==2\n")
+    assert au.parse_pins(tmp_path) == [("a", "1"), ("b", "2")]
+
+
+def test_version_ordering_follows_pep440_closely_enough_for_pins():
+    order = ["1.0.dev1", "1.0a1", "1.0b2", "1.0rc1", "1.0", "1.0.post1", "1.1", "2.0.0rc1", "2.0.0", "1!0.5"]
+    keys = [au._ver(v) for v in order]
+    assert keys == sorted(keys)
+    assert au._ver("1.0") == au._ver("1.0.0") and au._ver("2.0.0rc1") < au._ver("2.0.0")
+
+
+def test_a_pinned_prerelease_is_audited_against_the_final_release(fake, monkeypatch):
+    r = repo_with(fake, "mylib==1.0rc1\n", "import mylib\nmylib.fetch('u', 5)\n")
+    monkeypatch.setattr(au, "latest_version", lambda d: "1.0")
+
+    def no_sources(*a, **k):
+        raise au.PyPIError("probe: the audit did try to analyse it")
+    monkeypatch.setattr(au, "sources_for", no_sources)
+    res = au.audit(r)[0]
+    assert res.status == "skipped" and "did try" in res.reason   # i.e. it was NOT dismissed as already the latest

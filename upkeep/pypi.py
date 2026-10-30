@@ -13,9 +13,12 @@ import json
 import os
 import shutil
 import tarfile
+import tempfile
 import time
+import urllib.error
 import urllib.request
 import zipfile
+import zlib
 from pathlib import Path
 
 # Not the temp folder: macOS clears old files from temp folders and can leave empty directories behind, which is the most
@@ -58,6 +61,11 @@ def _read(url: str, timeout: int = 45, tries: int = 4) -> bytes:
         try:
             with urllib.request.urlopen(url, timeout=timeout) as r:  # noqa: S310 - https PyPI URLs only
                 return r.read()
+        except urllib.error.HTTPError as e:
+            if 400 <= e.code < 500 and e.code != 429:  # a permanent answer (404: no such version): retrying only waits
+                raise PyPIError(f"HTTP {e.code} for {url}" + (" (not found on PyPI)" if e.code == 404 else "")) from None
+            last = e
+            time.sleep(1.5 * (i + 1))
         except (TimeoutError, OSError) as e:
             last = e
             time.sleep(1.5 * (i + 1))
@@ -76,26 +84,36 @@ def fetch_sdist(dist: str, version: str, cache: Path = DEFAULT_CACHE, max_bytes:
     files = [u for u in meta.get("urls", []) if u.get("packagetype") == "sdist"]
     if not files:
         raise PyPIError(f"{dist}=={version} has no source archive on PyPI")
-    urls = [files[0]["url"]]
-    if max_bytes and int(files[0].get("size") or 0) > max_bytes:
-        raise PyPIError(f"{dist}=={version} source archive is {int(files[0]['size']) // 1_000_000} MB (limit {max_bytes // 1_000_000} MB)")
-    blob = _read(urls[0])
-    actual = check_sha256(blob, files[0], f"{dist}=={version}")
-    tmp = Path(cache) / f".tmp-{dist}-{version}"
-    shutil.rmtree(tmp, ignore_errors=True)
-    tmp.mkdir(parents=True)
-    if urls[0].endswith(".zip"):
-        with zipfile.ZipFile(io.BytesIO(blob)) as z:
-            for n in z.namelist():
-                if n.startswith("/") or ".." in Path(n).parts:
-                    raise PyPIError("unsafe path in archive")
-            z.extractall(tmp)
-    else:
-        with tarfile.open(fileobj=io.BytesIO(blob)) as t:
-            t.extractall(tmp, filter="data")
-    (tmp / DIGEST_FILE).write_text(actual + "\n")
-    shutil.rmtree(root, ignore_errors=True)
-    tmp.rename(root)
+    entry = files[0]
+    if max_bytes and int(entry.get("size") or 0) > max_bytes:
+        raise PyPIError(f"{dist}=={version} source archive is {int(entry['size']) // 1_000_000} MB (limit {max_bytes // 1_000_000} MB)")
+    blob = _read(entry["url"])
+    actual = check_sha256(blob, entry, f"{dist}=={version}")
+    Path(cache).mkdir(parents=True, exist_ok=True)
+    tmp = Path(tempfile.mkdtemp(prefix=f".tmp-{dist}-{version}-", dir=cache))  # unique: two processes never share it
+    try:
+        if entry["url"].endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(blob)) as z:
+                for n in z.namelist():
+                    if n.startswith("/") or ".." in Path(n).parts:
+                        raise PyPIError("unsafe path in archive")
+                z.extractall(tmp)
+        else:
+            with tarfile.open(fileobj=io.BytesIO(blob)) as t:
+                t.extractall(tmp, filter="data")
+        (tmp / DIGEST_FILE).write_text(actual + "\n")
+        shutil.rmtree(root, ignore_errors=True)
+        try:
+            tmp.rename(root)
+        except OSError:
+            if not any(root.rglob("*.py")):  # another process may have won the race with a good copy
+                raise
+    except PyPIError:
+        raise
+    except (tarfile.TarError, zipfile.BadZipFile, zlib.error, EOFError, OSError, ValueError) as e:
+        raise PyPIError(f"could not unpack the {dist}=={version} source archive ({type(e).__name__}: {str(e)[:100]})") from e
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     return root
 
 

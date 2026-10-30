@@ -133,6 +133,10 @@ class RadarReport:
         default_factory=lambda: [
             "Instance method calls are resolved only for simple local patterns (variable, with-statement, self attribute, "
             "annotated parameter); inheritance, reassigned variables, other files and dynamic calls are not resolved.",
+            "The static diff cannot see a parameter that stops accepting a value it used to accept, behavior that changes behind "
+            "an unchanged signature, or constructor changes of classes generated from fields (@dataclass, attrs, pydantic).",
+            "Names a package exposes lazily (module __getattr__) are assumed to still exist; a renamed parameter is not flagged "
+            "for a positional call that still lands in the same slot; a changed default is listed for review, not as a certain break.",
         ]
     )
 

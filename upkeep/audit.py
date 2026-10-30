@@ -38,24 +38,66 @@ class DepResult:
         return self.__dict__.copy()
 
 
+def _requirement_lines(f: Path, seen: set[Path], depth: int = 0) -> list[str]:
+    """Logical requirement lines of a file: continuations joined, comments removed, `-r other.txt` followed (3 levels)."""
+    try:
+        text = f.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    seen.add(f.resolve())
+    out: list[str] = []
+    for line in text.replace("\\\r\n", " ").replace("\\\n", " ").splitlines():  # `foo==1.0 \` + `--hash=...` is ONE requirement
+        line = line.strip()
+        m = re.match(r"^(?:-r|--requirement)\s*=?\s*(\S+)", line)
+        if m and depth < 3:
+            inc = (f.parent / m.group(1)).resolve()
+            if inc.is_file() and inc not in seen:
+                out += _requirement_lines(inc, seen, depth + 1)
+            continue
+        if line and not line.startswith(("#", "-")):
+            out.append(re.sub(r"\s+--?[A-Za-z][\w-]*(?:[= ]\S+)?(?=\s|$)", "", line))  # drop trailing options such as --hash=sha256:...
+    return out
+
+
+def _all_requirements(repo: Path) -> list[str]:
+    seen: set[Path] = set()
+    files = sorted({*Path(repo).glob("requirements*.txt"), *Path(repo).glob("*/requirements*.txt")})
+    return [ln for f in files if f.resolve() not in seen for ln in _requirement_lines(f, seen)]
+
+
 def parse_pins(repo: Path) -> list[tuple[str, str]]:
     """Exact pins from requirements*.txt (top two folder levels). Ranges and unpinned names are not analysable."""
     pins: dict[str, str] = {}
-    files = sorted({*Path(repo).glob("requirements*.txt"), *Path(repo).glob("*/requirements*.txt")})
-    for f in files:
-        try:
-            lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
-            continue
-        for line in lines:
-            m = PIN.match(line)
-            if m:
-                pins.setdefault(m.group(1).lower().replace("_", "-"), m.group(2))
+    for line in _all_requirements(repo):
+        m = PIN.match(line)
+        if m:
+            pins.setdefault(m.group(1).lower().replace("_", "-"), m.group(2))
     return sorted(pins.items())
 
 
-def _ver(v: str) -> tuple[int, ...]:
-    return tuple(int(x) for x in re.findall(r"\d+", v.split("+")[0])[:4])
+def count_unpinned(repo: Path) -> int:
+    """Requirements that are NOT exact pins (ranges, bare names, VCS urls): listed by the CLI, never analysed."""
+    names = {m.group(1).lower() for ln in _all_requirements(repo) if not PIN.match(ln) and (m := re.match(r"^([A-Za-z0-9][A-Za-z0-9._-]*)", ln))}
+    return len(names - {n for n, _ in parse_pins(repo)})
+
+
+_VERSION = re.compile(
+    r"^(?:(?P<epoch>\d+)!)?(?P<rel>\d+(?:\.\d+)*)(?:[-_.]?(?P<pre>a|alpha|b|beta|c|rc|pre|preview)[-_.]?(?P<pren>\d*))?"
+    r"(?:[-_.]?(?:post|rev|r)[-_.]?(?P<post>\d*))?(?:[-_.]?(?P<dev>dev)[-_.]?(?P<devn>\d*))?(?:\+.*)?$", re.I)
+_PRE = {"a": -3, "alpha": -3, "b": -2, "beta": -2, "c": -1, "rc": -1, "pre": -1, "preview": -1}
+
+
+def _ver(v: str) -> tuple:
+    """Sort key following PEP 440 closely enough for pins: 2.0.0rc1 < 2.0.0 < 2.0.0.post1, epochs and dev releases included."""
+    m = _VERSION.match(v.strip())
+    if not m:
+        return (0, tuple(int(x) for x in re.findall(r"\d+", v)), 0, 0, 0, 1)
+    rel = [int(x) for x in m["rel"].split(".")]
+    while len(rel) > 1 and rel[-1] == 0:
+        rel.pop()  # 1.0 == 1.0.0
+    pre = _PRE[m["pre"].lower()] if m["pre"] else (-4 if m["dev"] and m.group("post") is None else 0)  # 1.0.dev1 < 1.0a1
+    return (int(m["epoch"] or 0), tuple(rel), pre, int(m["pren"] or 0) if m["pre"] else 0,
+            (int(m["post"] or 0) + 1) if m.group("post") is not None else 0, 0 if m["dev"] else 1)
 
 
 def audit(repo: Path, max_mb: int = 15, only: set[str] | None = None, limit: int | None = None) -> list[DepResult]:
