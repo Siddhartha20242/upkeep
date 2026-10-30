@@ -12,7 +12,7 @@ from pathlib import Path
 from upkeep.evalcases import _w
 from upkeep.reallib import BY_NAME, prepare
 
-CACHE = Path(tempfile.gettempdir()) / "upkeep-reallib-cache"
+CACHE = Path.home() / ".cache" / "upkeep" / "reallib"  # not /tmp: macOS clears old files there
 DEMO = Path("demo")
 CASES = {"pyyaml_load": "yaml", "werkzeug_urls": "werkzeug"}  # case -> import package
 

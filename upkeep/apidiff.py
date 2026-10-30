@@ -29,6 +29,7 @@ class Signature:
     params: tuple[Param, ...]
     is_class: bool = False
     is_method: bool = False  # a method of a public class (only extracted with include_methods=True)
+    opaque: bool = False  # exists (exposed lazily through a module-level __getattr__) but its signature is unknown
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,12 @@ def _is_public(dotted: str) -> bool:
     return not any(part.startswith("_") or part in _NON_API_PARTS for part in parts)
 
 
+def _base_name(b: ast.expr) -> str | None:
+    """Simple name of a base class expression: ``Base``, ``mod.Base`` and ``Base[T]`` (generic)."""
+    e: ast.expr = b.value if isinstance(b, ast.Subscript) else b
+    return e.id if isinstance(e, ast.Name) else e.attr if isinstance(e, ast.Attribute) else None
+
+
 def _module_name(root: Path, file: Path) -> str:
     rel = file.relative_to(root).with_suffix("")
     parts = list(rel.parts)
@@ -108,6 +115,8 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
     reexports: list[tuple[str, str]] = []  # (public alias, canonical name)
     class_bases: dict[str, list[str]] = {}            # class qualname -> simple names of its bases
     class_methods: dict[str, dict[str, Signature]] = {}  # class qualname -> its OWN public methods (by name)
+    imported: dict[str, dict[str, str]] = {}          # module -> {local name: canonical dotted name} from `from x import y [as z]`
+    own_init: dict[str, tuple[Param, ...]] = {}       # class qualname -> parameters of its OWN __init__
 
     for file in sorted(pkg_dir.rglob("*.py")):
         try:
@@ -116,6 +125,18 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
             continue
         module = _module_name(root, file)
         is_init = file.name == "__init__.py"
+        here = module if is_init else module.rsplit(".", 1)[0] if "." in module else ""
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.names:
+                if node.level:
+                    parts = here.split(".") if here else []
+                    up = parts[: len(parts) - (node.level - 1)] if node.level - 1 <= len(parts) else []
+                    src = ".".join([*up, *([node.module] if node.module else [])])
+                else:
+                    src = node.module or ""
+                for a in node.names:
+                    if a.name != "*" and src:
+                        imported.setdefault(module, {})[a.asname or a.name] = f"{src}.{a.name}"
 
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -124,55 +145,106 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
                     api[qual] = Signature(qual, _params_from_args(node.args))
             elif isinstance(node, ast.ClassDef):
                 qual = f"{module}.{node.name}"
-                if not _is_public(qual):
-                    continue
                 params: tuple[Param, ...] = ()
                 for item in node.body:
                     if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                         params = _params_from_args(item.args, skip_first=True)
-                api[qual] = Signature(qual, params, is_class=True)
-                if include_methods:
-                    class_bases[qual] = [b.id if isinstance(b, ast.Name) else b.attr for b in node.bases
-                                         if isinstance(b, (ast.Name, ast.Attribute))]
+                        own_init[qual] = params
+                if _is_public(qual):
+                    api[qual] = Signature(qual, params, is_class=True)
+                class_bases[qual] = [n for n in map(_base_name, node.bases) if n]
+                if include_methods:  # private classes too: a public class inherits their public methods
                     class_methods[qual] = {k.rsplit(".", 1)[1]: v for k, v in _method_sigs(node, qual).items()}
-            elif is_init and isinstance(node, ast.ImportFrom) and node.level == 1:
-                base = module if module else package
-                target_mod = f"{base}.{node.module}" if node.module else base
+            elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name) \
+                    and isinstance(node.value, (ast.Name, ast.Attribute)):
+                # `NoResultFound = sa_exc.NoResultFound` / `Alias = imported_name`: the public name is an alias
+                chain: list[str] = []
+                v: ast.expr = node.value
+                while isinstance(v, ast.Attribute):
+                    chain.append(v.attr)
+                    v = v.value
+                if isinstance(v, ast.Name) and v.id in imported.get(module, {}):
+                    reexports.append((f"{module}.{node.targets[0].id}", ".".join([imported[module][v.id], *reversed(chain)])))
+            elif isinstance(node, ast.ImportFrom):
+                # `from .x import Y [as Z]` or `from pkg.x import Y` inside the package: Y is also public as this module's Z
                 for alias in node.names:
-                    if alias.name == "*":
-                        continue
-                    public = f"{module}.{alias.asname or alias.name}"
-                    reexports.append((public, f"{target_mod}.{alias.name}"))
+                    canonical = imported.get(module, {}).get(alias.asname or alias.name)
+                    if alias.name != "*" and canonical and canonical.startswith(package + "."):
+                        reexports.append((f"{module}.{alias.asname or alias.name}", canonical))
+
+    by_simple: dict[str, list[str]] = {}
+    for q in class_bases:
+        by_simple.setdefault(q.rsplit(".", 1)[1], []).append(q)
+
+    def base_quals(q: str) -> list[str]:
+        """The classes in this package that ``q`` lists as bases (follows `from .x import Base as Alias` exactly)."""
+        out: list[str] = []
+        mod = q.rsplit(".", 1)[0]
+        for base in class_bases.get(q, []):
+            via_import = imported.get(mod, {}).get(base)
+            cands = [via_import] if via_import in class_bases else by_simple.get(base, [])
+            same = [c for c in cands if c.rsplit(".", 1)[0] == mod]  # prefer the same module, else the first match
+            out += [c for c in (same or cands)[:1] if c != q]
+        return out
+
+    def inherited_init(q: str, seen: tuple[str, ...] = ()) -> tuple[Param, ...] | None:
+        for b in base_quals(q):
+            if b in seen:
+                continue
+            if b in own_init:
+                return own_init[b]
+            got = inherited_init(b, seen + (q,))
+            if got is not None:
+                return got
+        return None
+
+    for q in class_bases:  # a class without its own __init__ takes the constructor of its nearest base that has one
+        if q not in own_init and q in api:
+            got = inherited_init(q)
+            if got is not None:
+                api[q] = Signature(q, got, is_class=True)
 
     if include_methods:
-        by_simple: dict[str, list[str]] = {}
-        for q in class_methods:
-            by_simple.setdefault(q.rsplit(".", 1)[1], []).append(q)
-
         def effective(q: str, seen: tuple[str, ...] = ()) -> dict[str, Signature]:
             """Own methods plus inherited ones from base classes defined in this package (nearest wins)."""
             out: dict[str, Signature] = {}
-            for base in class_bases.get(q, []):
-                cands = by_simple.get(base, [])
-                # prefer a base in the same module, else the only/first match in the package
-                same = [c for c in cands if c.rsplit(".", 1)[0] == q.rsplit(".", 1)[0]]
-                for c in (same or cands)[:1]:
-                    if c != q and c not in seen:
-                        out.update(effective(c, seen + (q,)))
+            for c in base_quals(q):
+                if c not in seen:
+                    out.update(effective(c, seen + (q,)))
             out.update(class_methods.get(q, {}))
             return out
 
         for q in class_methods:
+            if not _is_public(q):
+                continue
             for name, sig in effective(q).items():
                 api[f"{q}.{name}"] = Signature(f"{q}.{name}", sig.params, False, True)
 
-    for public, canonical in reexports:
-        if canonical in api and _is_public(public):
-            sig = api[canonical]
-            api[public] = Signature(sig.qualname, sig.params, sig.is_class, sig.is_method)
-            if include_methods and sig.is_class:
-                for k, m in [(k, v) for k, v in api.items() if k.startswith(canonical + ".")]:
-                    api[public + k[len(canonical):]] = m
+    for file in sorted(pkg_dir.rglob("__init__.py")):
+        try:
+            tree = ast.parse(file.read_text(encoding="utf-8"))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+        if any(isinstance(n, ast.FunctionDef) and n.name == "__getattr__" for n in tree.body):
+            module = _module_name(root, file)  # lazily exposed names (e.g. pydantic 2) appear only as string constants
+            for c in ast.walk(tree):
+                if isinstance(c, ast.Constant) and isinstance(c.value, str) and c.value.isidentifier():
+                    qual = f"{module}.{c.value}"
+                    if qual not in api and _is_public(qual):
+                        api[qual] = Signature(qual, (), opaque=True)
+
+    for sweep in range(6):  # re-exports of re-exports (a -> b -> c): repeat until nothing new appears
+        grew = False
+        for public, canonical in reexports:
+            if canonical in api and _is_public(public) and (sweep == 0 or public not in api):
+                sig = api[canonical]
+                api[public] = Signature(sig.qualname, sig.params, sig.is_class, sig.is_method, sig.opaque)
+                grew = grew or sweep > 0
+                if include_methods and sig.is_class:
+                    for k, m in [(k, v) for k, v in api.items() if k.startswith(canonical + ".")]:
+                        api[public + k[len(canonical):]] = m
+        if not grew and sweep > 0:
+            break
     return api
 
 
@@ -202,10 +274,14 @@ def diff_api(old: dict[str, Signature], new: dict[str, Signature]) -> list[Chang
     """Breaking changes between two extracted APIs (symbols present in ``old``)."""
     changes: list[Change] = []
     for name, o in sorted(old.items()):
+        if o.opaque:
+            continue  # a name we only know from a string constant: not evidence of a real old API
         n = new.get(name)
         if n is None:
             changes.append(Change(name, "removed", "symbol no longer exists"))
             continue
+        if n.opaque:
+            continue  # lazily exposed: it still exists, but a static scan cannot compare its signature
         old_by = {p.name: p for p in o.params}
         new_by = {p.name: p for p in n.params}
         new_has_varkw = any(p.kind == "varkw" for p in n.params)

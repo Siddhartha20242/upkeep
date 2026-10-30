@@ -11,18 +11,17 @@ evidence. **The code decides the verdict, not the model.** If it cannot show a f
 
 ## The short, honest version
 
-- **What works:** a static radar that finds what an upgrade breaks (argument-aware, with local instance-method
-  tracking), an agent that edits only those lines, a no-network Docker sandbox for tests, a behavior check that uses
-  the **old library as an oracle**, and a proof file that says what was and was not verified.
-- **The core finding:** a naive fix can pass every visible test and still change behavior. On the real Werkzeug
-  upgrade, **every model I tried fell into that trap: 18 of 18 runs without the behavior check were green and wrong**,
-  across Muse Spark Open and Muse Spark 1.1, 1.2 and 1.3. A better model is not the fix; independent verification is.
-- **What the evidence shows about the agent:** on small benchmarks I wrote, it is near-perfect (a sign those are easy).
-  On **real library releases** (PyYAML, Jinja2, Werkzeug; apps and tests written by me) it is **mixed and noisy**.
-- **Real-world evidence for the radar:** on 60 real developer fix commits (read-only analysis) it flagged 66% of the
-  relevant changed lines in a held-out half; and about 28,000 public Python files still import APIs those upgrades removed.
-- **What is not shown:** real users. No outside person or project has used it yet. My attempt to mine real fix commits
-  and rebuild their environments produced **0 of 4 usable cases**.
+- **The finding:** a naive upgrade fix can pass every visible test and still change behavior. On the real Werkzeug
+  upgrade, **18 of 18 runs without the behavior check were green and wrong, across Muse Spark Open and Muse Spark 1.1,
+  1.2 and 1.3.** No model version was safe on its own, so Upkeep puts a deterministic verifier around the model: the old
+  library is the oracle, and the code (not the model) decides the verdict.
+- **What works:** a static radar (64% of the relevant changed lines on a held-out set of real developer fixes; `upkeep audit` checks every pinned dependency of a repo in one command), an agent
+  that edits only the affected lines, a no-network Docker sandbox, and a proof file that says what was not verified.
+- **What does not:** the agent has never produced a *correct* Werkzeug fix with the check on (it declined 30 of 31 runs;
+  1 wrong fix got through before edge-case probes were added, 0 of 6 after). On real library releases it is mixed.
+- **Not shown:** real users. The agent's apps and tests were written by me; the radar has also been run on 35 public repos I did not write (result 12), where it flagged few and was wrong about half of its first flags.
+- **The Meta angle:** a cheap open model (Muse Spark Open) is usable *because* the verifier catches what it gets wrong;
+  see the [scorecard](#muse-spark-scorecard) comparing Open with 1.1, 1.2 and 1.3.
 
 ## How it works
 
@@ -57,11 +56,12 @@ live. `--open-pr` proposes a **draft** pull request and is a dry run unless you 
 ## Quick start
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -e ".[dev]" coverage mypy
-.venv/bin/python -m pytest -q                       # 170 tests; live OSV test: UPKEEP_LIVE=1
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev,sign]" coverage mypy
+.venv/bin/python -m pytest -q                       # 270 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
+upkeep audit     --repo .                                                            # no key; every pinned dependency vs its newest release
 upkeep check     --repo . --package PyYAML --from 5.4.1 --to 6.0.2 --module yaml      # no key; downloads the two releases
 upkeep radar     --repo R --old OLD_SRC --new NEW_SRC --package lib
 upkeep fix       --repo R --old OLD_SRC --new NEW_SRC --package lib --test-backend docker --deps DEPS --behavior-check --old-deps OLD_DEPS
@@ -71,6 +71,29 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 `--test-backend local --unsandboxed` runs the repo's tests on your machine without isolation; use it only on code you trust.
 A rehearsed 3-minute walkthrough is in [`docs/DEMO.md`](docs/DEMO.md); an example CI workflow (not yet run on GitHub
 Actions) is in [`docs/ci/upkeep-check.yml`](docs/ci/upkeep-check.yml).
+
+## Muse Spark scorecard
+
+The same harness, benchmarks and verifier run on **Muse Spark Open** (Baseten) and **Muse Spark 1.1 / 1.2 / 1.3** (Meta API).
+Sources are the numbered results below; every cell comes from a file in `eval_results/`.
+
+| | Open | 1.1 | 1.2 | 1.3 |
+|---|---|---|---|---|
+| Tool calls exactly right (512 calls, result 11) | 84% | 97% | 99% | 100% |
+| Mean latency per call / tokens per call | 1.7 s / 1,059 | 2.3 s / 1,206 | 2.7 s / 1,200 | 3.3 s / 1,353 |
+| Authored cases solved (result 1; all saturate) | 38/38 (2 runs) | 19/19 | 19/19 | 19/19 |
+| Tokens / seconds per authored case | 13.4k / 11 | 13.8k / 13 | 15.4k / 20 | 11.2k / 10 |
+| Werkzeug, no behavior check: wrong but called verified (result 3) | 12 of 12 | 2 of 2 | 2 of 2 | 2 of 2 |
+| Own probes catch the subtle wrong fix / the naive one (result 10) | 3/6, 6/6 | 5/6, 5/6 | 4/6, 6/6 | 5/6, 5/6 |
+
+How to read it: newer versions call tools more reliably but are slower and use more tokens; Open is the cheapest and
+fastest per call but is the one that answers in text instead of calling `finish` (the agent's nudge exists for it);
+**every version fails the Werkzeug trap**, so none of them is a substitute for the verifier. *Caveats: small samples,
+Open and the Meta-API versions are served by different stacks, and the Werkzeug rows count only runs without the check.*
+
+**Why Muse Spark Open for the main loop:** it is open-weights, it had the lowest tokens and latency per call here, and an
+agent loop makes about 14 calls per fix. The measurement also showed what it needs: a nudge when it stops without
+`finish`, and the verifier above, because its subtle-fix probes were the weakest (3/6).
 
 ## Results (read the caveat under each)
 
@@ -126,12 +149,12 @@ the call fine, usually a refactor), or *unseen*. Commits were split by hash pari
 
 | | Commits | Lines flagged | Compliant | Unseen | Commits with a flagged line |
 |---|---|---|---|---|---|
-| **held-out half** | 37 | **48 (66%)** | 10 (14%) | 15 (21%) | **29 (78%)** |
-| dev half | 23 | 25 (48%) | 23 (44%) | 4 (8%) | 15 (65%) |
-| all 60 | 60 | 73 (58%) | 33 (26%) | 19 (15%) | 44 (73%) |
+| **held-out half** | 37 | **47 (64%)** | 11 (15%) | 15 (21%) | **28 (76%)** |
+| dev half | 23 | 24 (46%) | 24 (46%) | 4 (8%) | 14 (61%) |
+| all 60 | 60 | 71 (57%) | 35 (28%) | 19 (15%) | 42 (70%) |
 
-The 33 "compliant" lines are calls like `yaml.load(f, Loader=yaml.FullLoader)` that developers changed to `safe_load` for
-security, not because the upgrade broke them. **Without argument-awareness, 33 of the 106 lines the radar sees (31%)
+The 35 "compliant" lines are calls like `yaml.load(f, Loader=yaml.FullLoader)` that developers changed to `safe_load` for
+security, not because the upgrade broke them. **Without argument-awareness, 35 of the 106 lines the radar sees (33%)
 would have been false alarms.** The "unseen" lines I inspected (dev half) were `import yaml` and similar, not real
 breaks, so 15% overstates the true blind spot. *Caveats: 55 of the 60 commits are PyYAML (Jinja2 1, Werkzeug 1, Flask 3,
 because those "fixes" are mostly version pins); commits come from keyword searches, so the sample favors well-described
@@ -193,6 +216,39 @@ agent's nudge exists for. Newer versions were slower and used more tokens. *Cave
 most of the difference and its wording matters; Open and the others are served by different stacks (Baseten vs the Meta API).*
 See `eval_results/toolcall_bench.json`.
 
+**12. `upkeep audit` on public repos I did not write (read-only, no model).** I took repos that pin an *old* version of
+nine popular libraries (Flask, click, SQLAlchemy, requests, marshmallow, PyYAML, Jinja2, Werkzeug, pydantic), in the order
+GitHub code search returned them, and ran `audit` against the newest release (`scripts/outside_audit.py`; only counts and
+`file:line` are saved, never their code). **I labeled every flag by reading the line.**
+
+| | Repos | Library pins analysed | Pins with a flagged line | Flagged sites |
+|---|---|---|---|---|
+| Set A (used to find and fix false alarms) | 17 | 74 | 6 | 52 |
+| Set B (fresh: different pins, no code changed after I read it) | 18 | 62 | 3 | 11 |
+
+- **Most pinned-old repos are not hit.** Only 9 of 136 pins (7%) had any flagged line; the rest are green (or the break
+  is invisible to the radar, see below).
+- **Two kinds of flag with very different precision.** *Will fail* (removed names, removed or newly required
+  parameters): 41 of 42 flagged sites were real on set A (one I could not judge), for example Flask's `send_file(...,
+  cache_timeout=0)`, marshmallow 4 ignoring `ValidationError(field_names=...)`, and `from pydantic import BaseSettings`.
+  None appeared on set B. *Default changed* (a default value changed and the call relies on it): only 10 of 21 mattered,
+  because 11 were `marshmallow.fields.Nested(many=...)` going from `False` to `None`, which behaves the same. `audit` now
+  prints these separately as "will fail" and "default change to review".
+- **The first run was bad, and that was the useful part.** On set A it flagged 299 lines, most of them false. After the
+  first round of fixes it was 95 sites, which I labeled by hand at about **50% precision** (47 real). The remaining false
+  alarms had four causes the benchmark never exercised: a base class imported under an alias (Flask 3: `class
+  Blueprint(SansioBlueprint)`), names a library exposes lazily (pydantic 2), absolute and two-step re-exports
+  (marshmallow 4, SQLAlchemy 2), and calls that still work after a *parameter rename* (positional arguments, bare
+  decorators, subclass declarations, constructors inherited from private base classes). Each is fixed with a test; the
+  same set then gave 52 sites at 94% precision. That number is on the set I tuned on. The fair test is set B, and it is
+  small (11 sites: 2 real behavior changes, 0 will-fail).
+- **Misses are not measured here.** Reading code to find breaks the radar missed is slow, so I did not do it, except by
+  accident: in one earlier repo (`cristianzsh/freki`) a call passes `method="sha256"`, which Werkzeug 3 rejects, and the
+  radar cannot see a parameter that stops accepting a value. The radar-versus-real-fixes numbers in result 6 are the
+  recall evidence, and they were unchanged (64% held-out) after all of these fixes.
+- *Caveats: 35 repos, nine libraries, GitHub search order, a single labeler (me), and labels for `ValidationError` sites
+  came from the radar's argument evidence plus a 5-site spot check.* See `eval_results/outside_audit*.json`.
+
 ## Integrity of what it downloads and produces
 
 - **Downloads are verified.** Every PyPI release is checked against the SHA-256 PyPI publishes for it. A mismatch, or a
@@ -230,16 +286,27 @@ See `eval_results/toolcall_bench.json`.
 10. **"Verified" would have been wrong** on the Werkzeug fixes. This is why the proof lists which sites tests or probes
     actually execute.
 11. **Missing data silently looked like "nothing breaks".** The extracted library sources in my caches lost all their
-    `.py` files (I do not know what removed them), and the radar reported **no changes** instead of failing. I only
+    `.py` files (I did not know what removed them; the most likely cause, not proven, is macOS clearing old files from the temp folder where the cache lived and leaving empty directories, so the cache now lives in `~/.cache/upkeep`), and the radar reported **no changes** instead of failing. I only
     noticed because an experiment that depended on it returned zero probes. The radar now refuses to run on a library
     folder with no Python source (exit code 3), and a cache of empty folders is re-downloaded, not trusted.
 12. **A hypothesis that did not hold.** I expected a different Meta model as the prober to catch more than the model that
     wrote the fix. It did not; a second sample from the same model did just as well. I kept the finding, not the idea.
+13. **Running on real repos exposed false alarms my benchmarks never could.** The first `audit` over 17 repos flagged
+    299 lines, most of them wrong: `flask.Blueprint.route` "removed" 124 times because of an aliased base class,
+    every `class X(Schema)` flagged for constructor changes, and names pydantic exposes lazily reported as gone. Fixing
+    these (inheritance through import aliases, lazy names, re-export chains, renamed parameters, bare decorators)
+    took the same set from 299 lines to 95 sites at about 50% precision, then to 52 at 94%, and a fresh set of 18 repos is the check.
+    The earlier "66% on a held-out set" number moved to 64% for the same reason: I removed an import-line flag.
+
+14. **My own tests were too gentle.** A ground-truth test for the radar found 89% recall where I believed it was near
+    complete, and adversarial edits found 13 ways around the "no unsafe YAML loader" rule I advertised in the README.
+    Both are fixed and kept as tests; the second is why that rule now reads as a heuristic, not a guarantee.
 
 ## Known limitations and roadmap
 
 - Python only. The radar sees signature-level breaks and literal default changes; a change that keeps the same
   signature and defaults (return type, internal behavior) is invisible to it (one authored case documents this).
+- The radar cannot see a parameter that stops accepting a value it used to accept (Werkzeug 3 rejecting `method="sha256"`), and a flagged *default change* is often benign (11 of 21 on public repos).
 - Instance-method calls are resolved only in simple local patterns. Not resolved: inheritance of your own classes,
   reassigned variables, objects passed between files, `getattr`, factories and other dynamic calls.
 - The behavior check uses JSON-only probes of module-level functions, chosen by a model plus deterministic edge cases:
@@ -285,6 +352,31 @@ Needs Docker and your own keys (`BASETEN_API_KEY`; `META_API_KEY` only for the M
 .venv/bin/python scripts/blindspot_census.py                                                   # method vs function share
 bash scripts/real_validation.sh                                                                # mined repos (review the script first)
 ```
+
+## Testing
+
+- **270 tests, 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10 to 3.12; it has not
+  run on GitHub yet). No test needs the network, Docker or a model key: model replies are scripted, Docker is faked, and
+  the HTTP client is tested against a local server. The uncovered code is mostly the benchmark runners (`reallib.py`,
+  `evalharness.py`), which need Docker and a model.
+- **A ground-truth test for the radar** (`tests/radar_oracle_lib.py`, `scripts/radar_oracle.py`). It generates random
+  function signatures, applies the kinds of change libraries really make (remove, rename, reorder, add a required
+  parameter, make a parameter keyword-only, drop `**kwargs`, ...), draws call shapes that are valid for the old signature,
+  and asks Python's own `inspect.Signature.bind` whether the call still works. On 5,000 signature changes (18,892 calls,
+  5,893 of which stop working) the radar flagged every broken call and had no false hard flags, with 535 calls excluded as
+  uncertain (a value that moves into `*args`/`**kwargs`, which a library may forward) and 1,125 flagged only for a
+  changed default. **This is synthetic and was written alongside the fixes, so it checks the logic, not real-world
+  accuracy.** It earned its keep: the first run showed 89% recall (calls using a removed `**kwargs`, removals that shift
+  later arguments, and every reorder) and a rule I had added a day earlier was wrong for two of those cases. The test also
+  proves it can fail: replace the radar with one that ignores removed parameters and it reports recall below 90%.
+- **Adversarial tests for the content check** (44 edits a careless or hostile model might try, and 12 ordinary migration
+  edits that must still pass). They found 13 bypasses, now closed: `f = eval; f(...)`, `__builtins__["eval"]`,
+  `import yaml as y; y.Loader`, `from yaml import UnsafeLoader`, `yaml.unsafe_load`, `from yaml import *`, and
+  `operator.attrgetter` string tricks. It is still a denylist; the sandbox is the boundary.
+- **Boundary tests** for the Docker command line (no network, all capabilities dropped, read-only dependencies, never root,
+  no host environment), hostile archives (zip slip, tar path traversal, absolute paths, escaping symlinks, oversize), a
+  randomized scope-guard test (300 edits accepted exactly when they touch an affected line), and the failure paths of the
+  model client (key redaction in error bodies, connection refused, malformed replies).
 
 ## Development notes
 

@@ -1,0 +1,117 @@
+[
+  {
+    "lib": "PyYAML",
+    "from": "5.4.1",
+    "to": "6.0.2",
+    "repo": "leucos/ansible-tuto",
+    "py_files": 0,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "PyYAML",
+    "from": "5.4.1",
+    "to": "6.0.2",
+    "repo": "CodedotAl/gpt-code-clippy",
+    "py_files": 39,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "PyYAML",
+    "from": "5.4.1",
+    "to": "6.0.2",
+    "repo": "goruck/smart-zoneminder",
+    "py_files": 17,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "PyYAML",
+    "from": "5.4.1",
+    "to": "6.0.2",
+    "repo": "dflook/python-minifier",
+    "py_files": 122,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Jinja2",
+    "from": "3.0.3",
+    "to": "3.1.4",
+    "repo": "AI-Yash/st-chat",
+    "py_files": 4,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Jinja2",
+    "from": "3.0.3",
+    "to": "3.1.4",
+    "repo": "lona-web-org/lona",
+    "py_files": 225,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Jinja2",
+    "from": "3.0.3",
+    "to": "3.1.4",
+    "repo": "hortonworks/cloudbreak-images",
+    "py_files": 4,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Jinja2",
+    "from": "3.0.3",
+    "to": "3.1.4",
+    "repo": "google/grr-doc",
+    "py_files": 1,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Werkzeug",
+    "from": "2.3.8",
+    "to": "3.0.3",
+    "repo": "miguelgrinberg/Flask-SocketIO",
+    "py_files": 8,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Werkzeug",
+    "from": "2.3.8",
+    "to": "3.0.3",
+    "repo": "kevmo314/magic-copy",
+    "py_files": 1,
+    "risk": "green",
+    "flagged": []
+  },
+  {
+    "lib": "Werkzeug",
+    "from": "2.3.8",
+    "to": "3.0.3",
+    "repo": "cristianzsh/freki",
+    "py_files": 22,
+    "risk": "red",
+    "flagged": [
+      [
+        "freki/app/web/user.py",
+        27,
+        "werkzeug.security.generate_password_hash",
+        "default_changed"
+      ]
+    ]
+  },
+  {
+    "lib": "Werkzeug",
+    "from": "2.3.8",
+    "to": "3.0.3",
+    "repo": "malaohu/MobaXterm-GenKey",
+    "py_files": 1,
+    "risk": "green",
+    "flagged": []
+  }
+]

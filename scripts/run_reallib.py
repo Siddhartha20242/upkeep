@@ -12,7 +12,7 @@ from upkeep.llm import client_for, load_env
 from upkeep.reallib import CASES, prepare, run_agent_case, selfcheck
 
 load_env(Path(__file__).resolve().parent.parent / ".env")
-CACHE = Path(tempfile.gettempdir()) / "upkeep-reallib-cache"
+CACHE = Path.home() / ".cache" / "upkeep" / "reallib"  # not /tmp: macOS clears old files there
 
 
 def opt(name, default):

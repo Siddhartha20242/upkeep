@@ -17,6 +17,7 @@ import tempfile
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any
 
 from .agent import Agent, ChatClient
 from .charact import BehaviorChecker
@@ -24,7 +25,7 @@ from .evalcases import Case, _w, materialize
 from .radar import run_radar
 from .sandbox import run_python, run_tests
 
-CONFIGS = {
+CONFIGS: dict[str, dict[str, Any]] = {
     "full": dict(show_signatures=True, max_test_runs=3, use_changelog=True),
     "nosig": dict(show_signatures=False, max_test_runs=3, use_changelog=True),
     "oneshot": dict(show_signatures=True, max_test_runs=1, use_changelog=True),
@@ -71,7 +72,7 @@ def run_case(case: Case, client: ChatClient, config: str = "full") -> Outcome:
     try:
         old, new, repo = materialize(case, root)
         report = run_radar(repo, old, new, "lib")
-        base = dict(name=case.name, kind=case.kind, expect=case.expect, config=config, radar_risk=report.risk)
+        base: dict[str, Any] = dict(name=case.name, kind=case.kind, expect=case.expect, config=config, radar_risk=report.risk)
         if not report.affected:
             outcome = "undetected" if case.expect == "undetectable" else "missed"
             return Outcome(**base, outcome=outcome, status="not run", reason="static diff found nothing affecting the repo")

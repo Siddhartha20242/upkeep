@@ -21,6 +21,7 @@ import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from .agent import Agent
 from .charact import BehaviorChecker
@@ -229,7 +230,7 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
         repo = root / "repo"
         _w(repo, case.repo)
         report = run_radar(repo, prep.old_src, prep.new_src, case.module)
-        base = dict(name=case.name, kind=case.kind, expect="fix", config=("real-behavior" if behavior_check else "real-full") if use_changelog else "real-nochangelog",
+        base: dict[str, Any] = dict(name=case.name, kind=case.kind, expect="fix", config=("real-behavior" if behavior_check else "real-full") if use_changelog else "real-nochangelog",
                     radar_risk=report.risk)
         if not report.affected:
             return Outcome(**base, outcome="missed", status="not run", reason="radar found nothing")

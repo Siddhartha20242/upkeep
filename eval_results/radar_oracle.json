@@ -1,0 +1,67 @@
+{
+  "pairs": 5000,
+  "calls": 18892,
+  "calls_that_stop_working": 5893,
+  "caught": 5893,
+  "recall": 1.0,
+  "hard_flags": 5893,
+  "hard_flags_that_were_not_breaking": 0,
+  "precision": 1.0,
+  "calls_flagged_only_for_a_default_change": 1125,
+  "uncertain_not_counted": 535,
+  "seed": 2026,
+  "by_mutation": {
+    "rename": {
+      "calls": 1901,
+      "breaks": 925
+    },
+    "drop_default": {
+      "calls": 594,
+      "breaks": 176
+    },
+    "remove": {
+      "calls": 1809,
+      "breaks": 1304
+    },
+    "default_value": {
+      "calls": 2279
+    },
+    "kwonly_to_pos": {
+      "calls": 945
+    },
+    "remove_varargs": {
+      "calls": 510,
+      "breaks": 245
+    },
+    "add_varargs": {
+      "calls": 1662
+    },
+    "add_optional": {
+      "calls": 1981
+    },
+    "make_kwonly": {
+      "calls": 1490,
+      "breaks": 405
+    },
+    "reorder": {
+      "calls": 691,
+      "breaks": 327
+    },
+    "add_varkw": {
+      "calls": 1801
+    },
+    "add_required": {
+      "calls": 2302,
+      "breaks": 2247
+    },
+    "add_default": {
+      "calls": 414
+    },
+    "remove_varkw": {
+      "calls": 513,
+      "breaks": 264
+    }
+  },
+  "first_misses": [],
+  "first_false_alarms": []
+}

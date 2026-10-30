@@ -20,7 +20,7 @@ class CallSite:
     """A place in the repo that touches a library symbol.
 
     kind: "call" (invoked), "import" (``from pkg import name``: a removed name
-    fails here, at import time), or "reference" (decorator or base class).
+    fails here, at import time), "base" (a class listed as a base class), or "reference" (a bare decorator).
     """
 
     file: str
@@ -109,18 +109,18 @@ class _Visitor(ast.NodeVisitor):
                     )
         self.generic_visit(node)
 
-    def _reference(self, expr: ast.expr) -> None:
+    def _reference(self, expr: ast.expr, kind: str = "reference") -> None:
         if isinstance(expr, ast.Call):  # a decorator like @pkg.f(...) is already seen as a call
             return
         target = self._resolve(expr)
         if target in self.symbols:
             self.sites.append(
-                CallSite(self.file, expr.lineno, expr.end_lineno or expr.lineno, target, "reference")
+                CallSite(self.file, expr.lineno, expr.end_lineno or expr.lineno, target, kind)
             )
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         for base in node.bases:
-            self._reference(base)
+            self._reference(base, "base")
         for dec in node.decorator_list:
             self._reference(dec)
         attrs: dict[str, str | None] = {}

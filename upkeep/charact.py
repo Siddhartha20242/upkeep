@@ -207,10 +207,10 @@ def _mutate(rng: random.Random, value):
             out.append(_mutate(rng, out[0] if out else ""))
         return out
     if isinstance(value, dict):
-        out = {k: (_mutate(rng, v) if rng.random() < 0.4 else v) for k, v in value.items()}
-        if out and rng.random() < 0.3:
-            out.pop(rng.choice(list(out)))
-        return out
+        d_out = {k: (_mutate(rng, v) if rng.random() < 0.4 else v) for k, v in value.items()}
+        if d_out and rng.random() < 0.3:
+            d_out.pop(rng.choice(list(d_out)))
+        return d_out
     return value
 
 

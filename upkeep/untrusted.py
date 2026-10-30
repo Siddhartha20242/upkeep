@@ -87,7 +87,8 @@ def focus_changelog(text: str, symbols: list[str], max_chars: int = 1800, keep_i
         return text
     names = {s.split(".")[-1] for s in symbols if s}
     pattern = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(re.escape(n) for n in sorted(names)) + r")(?![A-Za-z0-9_])") if names else None
-    blocks, cur = [], []
+    blocks: list = []
+    cur: list = []
     for line in text.splitlines():
         starts_item = re.match(r"\s*([-*+]|\d+[.)])\s", line) is not None
         if (not line.strip() or starts_item) and cur:

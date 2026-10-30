@@ -1,0 +1,1625 @@
+[
+  {
+    "repo": "dragonchain/dragonchain",
+    "split": "heldout",
+    "dist": "flask",
+    "old": "1.1.2",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 85
+  },
+  {
+    "repo": "dragonchain/dragonchain",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.24.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "click",
+    "old": "7.1.2",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 236
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.0.0",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "scrapydweb/views/operations/schedule.py",
+        50,
+        "flask.send_file",
+        "param_removed"
+      ],
+      [
+        "scrapydweb/views/overview/tasks.py",
+        24,
+        "flask.send_file",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 83
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.0",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 9597
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.0",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 750
+  },
+  {
+    "repo": "goruck/smart-zoneminder",
+    "split": "heldout",
+    "dist": "click",
+    "old": "7.0",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 236
+  },
+  {
+    "repo": "goruck/smart-zoneminder",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.22.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "click",
+    "old": "7.0",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 236
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "flask",
+    "old": "1.0.4",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/frontpage/views.py",
+        96,
+        "flask.send_from_directory",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/rest/views.py",
+        64,
+        "flask.json.dumps",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 98
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "jinja2",
+    "old": "2.10.1",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 183
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "marshmallow",
+    "old": "2.20.5",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/github/schemas.py",
+        59,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/github/schemas.py",
+        59,
+        "marshmallow.validates_schema",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/github/schemas.py",
+        59,
+        "marshmallow.validates_schema",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/github/schemas.py",
+        64,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        112,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        122,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        158,
+        "marshmallow.post_dump",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        159,
+        "marshmallow.post_load",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        164,
+        "marshmallow.post_load",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        171,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        171,
+        "marshmallow.validates_schema",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        171,
+        "marshmallow.validates_schema",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        176,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        187,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        192,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        226,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        226,
+        "marshmallow.validates_schema",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        226,
+        "marshmallow.validates_schema",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        232,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        239,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        244,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        258,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        261,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        322,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        330,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        376,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        382,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        386,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        395,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        405,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        410,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        415,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        419,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        424,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        428,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        433,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        438,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        443,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        451,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        479,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        485,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        490,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        495,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        508,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        515,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        523,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        528,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        534,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/common.py",
+        742,
+        "marshmallow.post_load",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/datacite.py",
+        164,
+        "marshmallow.post_dump",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/datacite.py",
+        164,
+        "marshmallow.post_dump",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/json.py",
+        46,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/json.py",
+        72,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/json.py",
+        72,
+        "marshmallow.validates_schema",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/json.py",
+        72,
+        "marshmallow.validates_schema",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        208,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        226,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        235,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        345,
+        "marshmallow.validates",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        350,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        355,
+        "marshmallow.validates_schema",
+        "default_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        355,
+        "marshmallow.validates_schema",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        355,
+        "marshmallow.validates_schema",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        370,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/legacyjson.py",
+        376,
+        "marshmallow.ValidationError",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/marc21.py",
+        320,
+        "marshmallow.post_dump",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/schemas/schemaorg.py",
+        284,
+        "marshmallow.pre_dump",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 276
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.21.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/github/cli.py",
+        35,
+        "sqlalchemy.orm.exc.NoResultFound",
+        "removed"
+      ]
+    ],
+    "n_changes": 9597
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "werkzeug",
+    "old": "0.15.4",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/auditor/records.py",
+        46,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        46,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        56,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        56,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        62,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        62,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/github/api.py",
+        83,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/github/api.py",
+        83,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        42,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        42,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        41,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        41,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        52,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        52,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        61,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        61,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/ext.py",
+        54,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/ext.py",
+        54,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/dcat.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/serializers/dcat.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/stats/ext.py",
+        45,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/stats/ext.py",
+        45,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/support/ext.py",
+        39,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/support/ext.py",
+        39,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 1116
+  },
+  {
+    "repo": "PacktPublishing/Building-Data-Science-Applications-with-FastAPI",
+    "split": "heldout",
+    "dist": "pydantic",
+    "old": "1.8.2",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "chapter10/project/app/settings.py",
+        1,
+        "pydantic.BaseSettings",
+        "removed"
+      ],
+      [
+        "chapter10/project/app/settings.py",
+        4,
+        "pydantic.BaseSettings",
+        "removed"
+      ]
+    ],
+    "n_changes": 472
+  },
+  {
+    "repo": "PacktPublishing/Building-Data-Science-Applications-with-FastAPI",
+    "split": "heldout",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "chapter6/sqlalchemy/database.py",
+        7,
+        "sqlalchemy.create_engine",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/alembic/env.py",
+        3,
+        "sqlalchemy.engine_from_config",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/alembic/env.py",
+        61,
+        "sqlalchemy.engine_from_config",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/database.py",
+        7,
+        "sqlalchemy.create_engine",
+        "removed"
+      ],
+      [
+        "tests/test_chapter6_sqlalchemy.py",
+        19,
+        "sqlalchemy.create_engine",
+        "removed"
+      ],
+      [
+        "tests/test_chapter6_sqlalchemy_relationship.py",
+        25,
+        "sqlalchemy.create_engine",
+        "removed"
+      ]
+    ],
+    "n_changes": 9597
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "click",
+    "old": "8.0.1",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 213
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.25.1",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.0",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 750
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "click",
+    "old": "7.1.2",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 236
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "pydantic",
+    "old": "1.7.3",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 470
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "pyyaml",
+    "old": "5.3.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.25.1",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.2.5",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 67
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "3.21.1",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 326
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.31.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.4.25",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10163
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "click",
+    "old": "8.0.1",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 213
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.0.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 87
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.1",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "3.13.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 320
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.4.25",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10163
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.1",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 750
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "click",
+    "old": "8.0.1",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 213
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.0.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 87
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.1",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "3.13.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 320
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.4.23",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10097
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.1",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 750
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "click",
+    "old": "7.1.2",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 236
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "flask",
+    "old": "1.1.4",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 85
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "2.11.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 148
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "2.21.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 276
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 9597
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "1.0.1",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 757
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "flask",
+    "old": "2.0.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 87
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "marshmallow",
+    "old": "3.13.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "backend/entityservice/views/serialization.py",
+        9,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        42,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        55,
+        "marshmallow.fields.Nested",
+        "default_changed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        59,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        62,
+        "marshmallow.fields.Nested",
+        "default_changed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        66,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        67,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        72,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        76,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 320
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "sqlalchemy",
+    "old": "1.4.23",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10097
+  },
+  {
+    "repo": "leucos/ansible-tuto",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "2.11.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 148
+  },
+  {
+    "repo": "leucos/ansible-tuto",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "leucos/ansible-tuto",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.22.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "google/grr-doc",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "google/grr-doc",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "6.0",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "google/grr-doc",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "flask",
+    "old": "1.1.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 85
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.22.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.3",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 754
+  },
+  {
+    "repo": "bborn/howdoi.ai",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.2.2",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 67
+  },
+  {
+    "repo": "bborn/howdoi.ai",
+    "split": "dev",
+    "dist": "pydantic",
+    "old": "1.10.2",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 572
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "click",
+    "old": "8.1.3",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 199
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "jinja2",
+    "old": "3.1.2",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 3
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "pydantic",
+    "old": "1.10.2",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "backend/app/core/config.py",
+        4,
+        "pydantic.BaseSettings",
+        "removed"
+      ],
+      [
+        "backend/app/core/config.py",
+        10,
+        "pydantic.BaseSettings",
+        "removed"
+      ]
+    ],
+    "n_changes": 572
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.28.1",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  }
+]

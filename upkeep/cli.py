@@ -13,6 +13,7 @@ from .llm import client_for, load_env
 from .pr import PRError, open_draft_pr
 from .pypi import PyPIError, sources_for
 from .progress import paint, run_with_progress, use_color
+from .audit import audit, worst
 from .attest import AttestError, generate_key, sign_manifest, verify_manifest, verify_signature, write_manifest
 from .proof import ProofBundle
 from .pypi import release_digest
@@ -85,6 +86,34 @@ def _check(args) -> int:
         for lim in report.limitations:
             print(f"  note: {lim}")
     return {"green": 0, "amber": 1, "red": 2}[report.risk]
+
+
+def _audit(args) -> int:
+    results = audit(args.repo, max_mb=args.max_mb, only={x.lower().replace("_", "-") for x in args.only} or None, limit=args.limit)
+    if not results:
+        print("no exact pins (name==version) found in requirements*.txt; nothing to audit", file=sys.stderr)
+        return 3
+    if args.json:
+        print(json.dumps([r.to_dict() for r in results], indent=2))
+    else:
+        shade = {"green": "green", "amber": "yellow", "red": "red"}
+        for r in results:
+            if r.status == "checked":
+                print(f"{r.dist} {r.old} -> {r.new}: " + paint(r.risk.upper(), shade[r.risk], use_color())
+                      + f"  ({r.n_changes} breaking change(s) in the library; here: {r.hard} will fail, {r.review} default change(s) to review)")
+                for f, ln, sym, kind in sorted(r.flagged, key=lambda x: x[3] == "default_changed")[:6]:
+                    print(f"    {f}:{ln}  {sym}  [{'review: default changed' if kind == 'default_changed' else kind}]")
+                if len(r.flagged) > 6:
+                    print(f"    ... and {len(r.flagged) - 6} more")
+            elif r.status == "up-to-date":
+                print(f"{r.dist} {r.old}: already the latest")
+            else:
+                print(f"{r.dist} {r.old}: SKIPPED ({r.reason})")
+        done = [r for r in results if r.status == "checked"]
+        print(f"\n{len(done)} of {len(results)} pinned dependencies analysed; "
+              f"{sum(1 for r in done if r.hard)} have lines that will fail, {sum(1 for r in done if r.review and not r.hard)} only default changes "
+              "to review. Skipped ones were NOT checked.")
+    return {"green": 0, "amber": 1, "red": 2}[worst(results)]
 
 
 def _vulns(args) -> int:
@@ -297,6 +326,14 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
     k.add_argument("--module", help="import name if it differs from the PyPI name (PyYAML -> yaml)")
     k.add_argument("--json", action="store_true")
     k.set_defaults(fn=_check)
+
+    au = sub.add_parser("audit", help="check every pinned dependency in a repo against its newest release (no model)")
+    au.add_argument("--repo", required=True, type=Path)
+    au.add_argument("--only", nargs="*", default=[], help="limit to these package names")
+    au.add_argument("--limit", type=int, help="analyse at most this many pins")
+    au.add_argument("--max-mb", type=int, default=15, help="skip libraries whose source archive is larger than this")
+    au.add_argument("--json", action="store_true")
+    au.set_defaults(fn=_audit)
 
     v = sub.add_parser("vulns", help="known vulnerabilities for a pinned version (OSV)")
     v.add_argument("--package", required=True)

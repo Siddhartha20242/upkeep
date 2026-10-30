@@ -156,7 +156,7 @@ def test_scan_finds_import_decorator_and_base_class_uses(tmp_path):
     assert ("lib.Markup", "import", 1) in got
     assert ("lib.escape", "import", 1) in got
     assert ("lib.contextfilter", "reference", 5) in got   # decorator
-    assert ("lib.JSONEncoder", "reference", 10) in got    # base class
+    assert ("lib.JSONEncoder", "base", 10) in got         # base class
     assert ("lib.escape", "call", 7) in got
     assert ("lib.Markup", "call", 14) in got
 
@@ -217,3 +217,99 @@ def test_inheritance_cycles_and_unknown_bases_do_not_crash(tmp_path):
     write(tmp_path, "lib/__init__.py", "class A(B):\n    def x(self):\n        pass\nclass B(A):\n    def y(self):\n        pass\nclass C(Unknown, object):\n    def z(self):\n        pass\n")
     api = extract_api(tmp_path, "lib", include_methods=True)
     assert "lib.A.x" in api and "lib.C.z" in api
+
+
+def test_inherited_methods_follow_an_aliased_import_of_a_same_named_base(tmp_path):
+    """Flask 3 style: `from .sansio.bp import Blueprint as SansioBlueprint; class Blueprint(SansioBlueprint)`."""
+    from upkeep.apidiff import extract_api
+    pkg = tmp_path / "lib"
+    (pkg / "sansio").mkdir(parents=True)
+    (pkg / "__init__.py").write_text("from .bp import Blueprint\n")
+    (pkg / "sansio" / "__init__.py").write_text("")
+    (pkg / "sansio" / "scaffold.py").write_text("class Scaffold:\n    def route(self, rule, **options):\n        pass\n")
+    (pkg / "sansio" / "bp.py").write_text("from .scaffold import Scaffold\n\n\nclass Blueprint(Scaffold):\n    def register(self, app):\n        pass\n")
+    (pkg / "bp.py").write_text("from .sansio.bp import Blueprint as SansioBlueprint\n\n\nclass Blueprint(SansioBlueprint):\n    def send(self):\n        pass\n")
+    api = extract_api(tmp_path, "lib", include_methods=True)
+    for m in ("route", "register", "send"):
+        assert f"lib.Blueprint.{m}" in api, m
+
+
+def test_lazily_exposed_names_are_not_reported_as_removed(tmp_path):
+    from upkeep.apidiff import diff_api, extract_api
+    old, new = tmp_path / "old", tmp_path / "new"
+    for d in (old, new):
+        (d / "lib").mkdir(parents=True)
+    (old / "lib" / "__init__.py").write_text("def root_validator(pre=False):\n    pass\n\n\nclass Extra:\n    pass\n\n\ndef gone():\n    pass\n")
+    (new / "lib" / "__init__.py").write_text(
+        "_dyn = {'root_validator': 'x', 'Extra': 'y'}\n\n\ndef __getattr__(name):\n    return _dyn[name]\n")
+    changes = {c.symbol: c.kind for c in diff_api(extract_api(old, "lib"), extract_api(new, "lib"))}
+    assert changes == {"lib.gone": "removed"}  # root_validator and Extra still exist; only the real removal is reported
+
+
+def test_absolute_reexports_inside_the_package_are_followed(tmp_path):
+    from upkeep.apidiff import diff_api, extract_api
+    old, new = tmp_path / "old", tmp_path / "new"
+    for d in (old, new):
+        (d / "lib").mkdir(parents=True)
+    (old / "lib" / "__init__.py").write_text("from .schema import Schema\n")
+    (new / "lib" / "__init__.py").write_text("from lib.schema import Schema\n")
+    for d in (old, new):
+        (d / "lib" / "schema.py").write_text("class Schema:\n    def __init__(self, strict=False):\n        pass\n")
+    assert diff_api(extract_api(old, "lib"), extract_api(new, "lib")) == []
+    assert "lib.Schema" in extract_api(new, "lib")
+
+
+def _two_versions(tmp_path, old_files, new_files):
+    out = []
+    for name, files in (("old", old_files), ("new", new_files)):
+        root = tmp_path / name
+        for rel, text in files.items():
+            f = root / "lib" / rel
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(text)
+        out.append(root)
+    return out
+
+
+def test_constructor_is_inherited_from_a_private_base_class(tmp_path):
+    from upkeep.apidiff import diff_api, extract_api
+    old, new = _two_versions(
+        tmp_path,
+        {"__init__.py": "from .f import DateTime\n", "f.py": "class DateTime:\n    def __init__(self, format=None, **kw):\n        pass\n"},
+        {"__init__.py": "from .f import DateTime\n",
+         "f.py": "class _Temporal:\n    def __init__(self, format=None, **kw):\n        pass\n\n\nclass DateTime(_Temporal):\n    pass\n"})
+    assert [p.name for p in extract_api(new, "lib")["lib.DateTime"].params] == ["format", "kw"]
+    assert diff_api(extract_api(old, "lib"), extract_api(new, "lib")) == []
+
+
+def test_reexport_chains_and_assignment_aliases_are_followed(tmp_path):
+    from upkeep.apidiff import diff_api, extract_api
+    old, new = _two_versions(
+        tmp_path,
+        {"__init__.py": "def create(url):\n    pass\n\n\nclass NoResult(Exception):\n    pass\n", "orm.py": ""},
+        {"__init__.py": "from .engine import create as create\nfrom .exc import NoResult as NoResult\n",
+         "engine/__init__.py": "from .make import create as create\n", "engine/make.py": "def create(url):\n    pass\n",
+         "exc.py": "class NoResult(Exception):\n    pass\n"})
+    assert diff_api(extract_api(old, "lib"), extract_api(new, "lib")) == []   # two-hop re-export
+    old2, new2 = _two_versions(
+        tmp_path / "b",
+        {"orm/__init__.py": "", "orm/exc.py": "class NoResultFound(Exception):\n    pass\n"},
+        {"orm/__init__.py": "", "orm/exc.py": "from .. import exc as sa_exc\n\nNoResultFound = sa_exc.NoResultFound\n",
+         "exc.py": "class NoResultFound(Exception):\n    pass\n", "__init__.py": ""})
+    assert diff_api(extract_api(old2, "lib"), extract_api(new2, "lib")) == []   # assignment alias
+
+
+def test_renamed_positional_parameter_and_bare_decorators_are_not_flagged():
+    from upkeep.apidiff import Change, Param, Signature
+    from upkeep.radar import site_affected
+    from upkeep.scan import CallSite
+    old = Signature("lib.validates", (Param("field_name", "pos", False),))
+    new = Signature("lib.validates", (Param("field_names", "vararg", False),))
+    ch = Change("lib.validates", "param_removed", "x", param="field_name")
+    assert not site_affected(ch, CallSite("a.py", 1, 1, "lib.validates", "call", 1, (), False), old, new)       # validates('x')
+    assert site_affected(ch, CallSite("a.py", 1, 1, "lib.validates", "call", 0, ("field_name",), False), old, new)  # keyword
+    old2 = Signature("lib.cp", (Param("func", "pos", False),))
+    new2 = Signature("lib.cp", (Param("fget", "pos", False),))
+    bare = CallSite("a.py", 2, 2, "lib.cp", "reference", 0, (), False)
+    assert not site_affected(Change("lib.cp", "param_removed", "x", param="func"), bare, old2, new2)
+    assert not site_affected(Change("lib.cp", "param_added_required", "x", param="fget"), bare, old2, new2)

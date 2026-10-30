@@ -23,7 +23,7 @@ CALLS = [
     ("lib.load(x, **opts)", True),
     ("lib.kw('u', 5)", True), ("lib.kw('u', timeout=5)", False),
     ("lib.rm(1, 2, ssl=True)", True), ("lib.rm(1, 2, True)", True), ("lib.rm(1, 2)", False),
-    ("lib.reorder(1, 2)", True), ("lib.reorder(h=1, w=2)", False), ("lib.reorder(1)", False),
+    ("lib.reorder(1, 2)", True), ("lib.reorder(h=1, w=2)", False), ("lib.reorder(1)", True),  # the one positional argument now lands on `h`, not `w`
     ("lib.dflt(1)", True), ("lib.dflt(1, retries=3)", False), ("lib.dflt(1, 3)", False),
     ("lib.newreq(1)", True), ("lib.newreq(1, region='x')", False),
     ("lib.pos(1, b=2)", True), ("lib.pos(1, 2)", False),
@@ -62,3 +62,22 @@ def test_non_literal_defaults_are_not_compared(tmp_path):
     (old / "lib" / "__init__.py").write_text("import os\n\ndef f(a, p=os.sep):\n    pass\n")
     (new / "lib" / "__init__.py").write_text("import os\n\ndef f(a, p=os.pathsep):\n    pass\n")
     assert diff_api(extract_api(old, "lib"), extract_api(new, "lib")) == []  # cannot know the values: stay quiet
+
+
+def test_importing_a_function_is_not_flagged_for_a_changed_default_but_is_for_a_removal():
+    from upkeep.apidiff import Change
+    from upkeep.radar import site_affected
+    from upkeep.scan import CallSite
+    imp = CallSite("a.py", 1, 1, "lib.f", "import", 0, (), False)
+    assert not site_affected(Change("lib.f", "default_changed", "x", param="m"), imp, None, None)
+    assert not site_affected(Change("lib.f", "param_removed", "x", param="m"), imp, None, None)
+    assert site_affected(Change("lib.f", "removed", "gone"), imp, None, None)  # a missing symbol breaks the import
+
+
+def test_declaring_a_subclass_is_not_flagged_for_a_constructor_parameter_change():
+    from upkeep.apidiff import Change
+    from upkeep.radar import site_affected
+    from upkeep.scan import CallSite
+    base = CallSite("a.py", 3, 3, "lib.Schema", "base", 0, (), False)
+    assert not site_affected(Change("lib.Schema", "param_removed", "x", param="context"), base, None, None)
+    assert site_affected(Change("lib.Schema", "removed", "gone"), base, None, None)

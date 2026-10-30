@@ -27,7 +27,12 @@ ALLOWED_DOTTED = {"urllib.parse"}
 DENY_CALLS = {"eval", "exec", "compile", "__import__", "open", "getattr", "setattr", "delattr",
               "globals", "locals", "vars", "dir", "input", "breakpoint"}
 # Unsafe deserializers: choosing one of these to silence an upgrade error is a security downgrade.
-UNSAFE_YAML = {"Loader", "UnsafeLoader", "CLoader", "CUnsafeLoader"}
+UNSAFE_YAML = {"Loader", "UnsafeLoader", "CLoader", "CUnsafeLoader", "unsafe_load", "unsafe_load_all"}
+# Referring to a dangerous builtin without calling it (`f = eval; f(...)`) is as bad as calling it. `dir` and `input`
+# are left out because they are common variable names; calling them is still denied.
+DENY_REFS = (DENY_CALLS - {"dir", "input"}) | {"__builtins__"}
+# String-driven attribute access that would bypass the dunder check.
+DENY_NAMES_ANYWHERE = {"attrgetter", "methodcaller"}
 DENY_ATTRS = {"__path__", "__code__", "__file__", "__dict__", "__globals__", "__builtins__",
               "__subclasses__", "__class__", "__bases__", "__mro__", "__closure__", "__module__"}
 
@@ -39,8 +44,18 @@ def _denied_module(name: str) -> str | None:
     return root if root in DENY_MODULES else None
 
 
+def _root(node: ast.expr) -> str | None:
+    while isinstance(node, ast.Attribute):
+        node = node.value
+    return node.id if isinstance(node, ast.Name) else None
+
+
 def _census(tree: ast.AST) -> Counter:
     c: Counter = Counter()
+    yaml_names = {"yaml"}  # `import yaml as y` makes `y` the same module
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            yaml_names |= {a.asname for a in node.names if a.name.split(".")[0] == "yaml" and a.asname}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
@@ -48,6 +63,16 @@ def _census(tree: ast.AST) -> Counter:
                 if d:
                     c[f"import {d}"] += 1
         elif isinstance(node, ast.ImportFrom):
+            if node.module and node.module.split(".")[0] == "yaml":
+                for a in node.names:
+                    if a.name == "*":
+                        c["star import of yaml (could pull in an unsafe loader)"] += 1
+                    elif a.name in UNSAFE_YAML:
+                        c[f"unsafe deserialization yaml.{a.name} (use yaml.SafeLoader, or decline)"] += 1
+            if node.module == "operator":
+                for a in node.names:
+                    if a.name in DENY_NAMES_ANYWHERE:
+                        c[f"operator.{a.name}"] += 1
             if node.module:
                 for a in node.names:  # check "module.name" so `from urllib import parse` is allowed, `request` is not
                     d = _denied_module(f"{node.module}.{a.name}")
@@ -61,8 +86,13 @@ def _census(tree: ast.AST) -> Counter:
         elif isinstance(node, ast.Attribute):
             if node.attr in DENY_ATTRS:
                 c[f"attribute {node.attr}"] += 1
-            if isinstance(node.value, ast.Name) and node.value.id == "yaml" and node.attr in UNSAFE_YAML:
+            if node.attr in UNSAFE_YAML and _root(node.value) in yaml_names:
                 c[f"unsafe deserialization yaml.{node.attr} (use yaml.SafeLoader, or decline)"] += 1
+            if node.attr in DENY_NAMES_ANYWHERE:
+                c[f"operator.{node.attr}"] += 1
+        elif isinstance(node, ast.Name):
+            if node.id in DENY_REFS and isinstance(node.ctx, ast.Load):
+                c[f"reference to {node.id}"] += 1
         elif isinstance(node, ast.Raise):
             c["raise statement"] += 1
     return c

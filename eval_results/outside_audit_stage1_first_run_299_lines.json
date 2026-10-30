@@ -1,0 +1,2695 @@
+[
+  {
+    "repo": "dragonchain/dragonchain",
+    "split": "heldout",
+    "dist": "flask",
+    "old": "1.1.2",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 139
+  },
+  {
+    "repo": "dragonchain/dragonchain",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.24.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "click",
+    "old": "7.1.2",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 241
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.0.0",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "scrapydweb/views/operations/schedule.py",
+        48,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "scrapydweb/views/operations/schedule.py",
+        50,
+        "flask.send_file",
+        "param_removed"
+      ],
+      [
+        "scrapydweb/views/overview/tasks.py",
+        22,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "scrapydweb/views/overview/tasks.py",
+        24,
+        "flask.send_file",
+        "param_removed"
+      ],
+      [
+        "scrapydweb/views/utilities/parse.py",
+        18,
+        "flask.Blueprint.route",
+        "removed"
+      ]
+    ],
+    "n_changes": 159
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.0",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 9571
+  },
+  {
+    "repo": "my8100/scrapydweb",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.0",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 620
+  },
+  {
+    "repo": "goruck/smart-zoneminder",
+    "split": "heldout",
+    "dist": "click",
+    "old": "7.0",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 241
+  },
+  {
+    "repo": "goruck/smart-zoneminder",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.22.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "click",
+    "old": "7.0",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 241
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "flask",
+    "old": "1.0.4",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/communities/views.py",
+        49,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        65,
+        "flask.Blueprint.errorhandler",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        141,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        160,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        193,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        214,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        288,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views.py",
+        333,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views_rest.py",
+        53,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views_rest.py",
+        206,
+        "flask.Blueprint.add_url_rule",
+        "removed"
+      ],
+      [
+        "zenodo/modules/deposit/views_rest.py",
+        211,
+        "flask.Blueprint.add_url_rule",
+        "removed"
+      ],
+      [
+        "zenodo/modules/frontpage/views.py",
+        66,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/frontpage/views.py",
+        93,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/frontpage/views.py",
+        96,
+        "flask.send_from_directory",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/frontpage/views.py",
+        102,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/metrics/views.py",
+        38,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/openaire/views.py",
+        39,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/openaire/views.py",
+        45,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        82,
+        "flask.Blueprint.app_template_test",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        88,
+        "flask.Blueprint.app_template_test",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        98,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        104,
+        "flask.Blueprint.app_template_test",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        109,
+        "flask.Blueprint.app_template_test",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        114,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        124,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        134,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        142,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        151,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        158,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        164,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        173,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        182,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        213,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        229,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        235,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        242,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        256,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        276,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        282,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        291,
+        "flask.Blueprint.app_template_test",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        298,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        305,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        318,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        334,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        351,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        357,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/records/views.py",
+        366,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/redirector/views.py",
+        51,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/redirector/views.py",
+        61,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/redirector/views.py",
+        71,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/redirector/views.py",
+        151,
+        "flask.Blueprint.add_url_rule",
+        "removed"
+      ],
+      [
+        "zenodo/modules/rest/views.py",
+        60,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/rest/views.py",
+        64,
+        "flask.json.dumps",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/search_ui/views.py",
+        39,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/sitemap/views.py",
+        47,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/sitemap/views.py",
+        53,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/spam/views.py",
+        78,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/spam/views.py",
+        221,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/spam/views.py",
+        309,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/spam/views.py",
+        333,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/spam/views.py",
+        360,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/support/views.py",
+        47,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "zenodo/modules/theme/views.py",
+        48,
+        "flask.Blueprint.app_template_filter",
+        "removed"
+      ],
+      [
+        "zenodo/modules/theme/views.py",
+        59,
+        "flask.Blueprint.app_template_global",
+        "removed"
+      ],
+      [
+        "zenodo/modules/theme/views.py",
+        65,
+        "flask.Blueprint.app_template_test",
+        "removed"
+      ]
+    ],
+    "n_changes": 152
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "jinja2",
+    "old": "2.10.1",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 173
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "marshmallow",
+    "old": "2.20.5",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/records/serializers/fields/doi.py",
+        113,
+        "marshmallow.fields.Field",
+        "param_kind_changed"
+      ],
+      [
+        "zenodo/modules/records/serializers/fields/doi.py",
+        113,
+        "marshmallow.fields.Field",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/fields/sanitizedurl.py",
+        34,
+        "marshmallow.fields.Url",
+        "param_kind_changed"
+      ]
+    ],
+    "n_changes": 261
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.21.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/github/cli.py",
+        35,
+        "sqlalchemy.orm.exc.NoResultFound",
+        "removed"
+      ]
+    ],
+    "n_changes": 9571
+  },
+  {
+    "repo": "zenodo/zenodo",
+    "split": "heldout",
+    "dist": "werkzeug",
+    "old": "0.15.4",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "zenodo/modules/auditor/records.py",
+        46,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        46,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        56,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        56,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        62,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/auditor/records.py",
+        62,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/github/api.py",
+        83,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/github/api.py",
+        83,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        42,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        42,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/openaire/ext.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        41,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        41,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        47,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        52,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        52,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        61,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/custom_metadata.py",
+        61,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/ext.py",
+        54,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/ext.py",
+        54,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/records/serializers/dcat.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/records/serializers/dcat.py",
+        51,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/stats/ext.py",
+        45,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/stats/ext.py",
+        45,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ],
+      [
+        "zenodo/modules/support/ext.py",
+        39,
+        "werkzeug.utils.cached_property",
+        "param_added_required"
+      ],
+      [
+        "zenodo/modules/support/ext.py",
+        39,
+        "werkzeug.utils.cached_property",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 1038
+  },
+  {
+    "repo": "PacktPublishing/Building-Data-Science-Applications-with-FastAPI",
+    "split": "heldout",
+    "dist": "pydantic",
+    "old": "1.8.2",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "chapter10/project/app/models.py",
+        4,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter10/project/app/models.py",
+        12,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter10/project/app/settings.py",
+        1,
+        "pydantic.BaseSettings",
+        "removed"
+      ],
+      [
+        "chapter10/project/app/settings.py",
+        4,
+        "pydantic.BaseSettings",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_01.py",
+        3,
+        "pydantic.ValidationError",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_01.py",
+        3,
+        "pydantic.validator",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_01.py",
+        11,
+        "pydantic.validator",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_02.py",
+        1,
+        "pydantic.ValidationError",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_02.py",
+        1,
+        "pydantic.root_validator",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_02.py",
+        9,
+        "pydantic.root_validator",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_03.py",
+        3,
+        "pydantic.validator",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_custom_validation_03.py",
+        9,
+        "pydantic.validator",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_01.py",
+        3,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_01.py",
+        3,
+        "pydantic.ValidationError",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_01.py",
+        7,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_01.py",
+        8,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_01.py",
+        9,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_02.py",
+        4,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_02.py",
+        12,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_02.py",
+        13,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_fields_validation_02.py",
+        14,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_pydantic_types_01.py",
+        1,
+        "pydantic.ValidationError",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_standard_field_types_02.py",
+        5,
+        "pydantic.ValidationError",
+        "removed"
+      ],
+      [
+        "chapter4/chapter4_standard_field_types_03.py",
+        5,
+        "pydantic.ValidationError",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb/models.py",
+        5,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb/models.py",
+        25,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb/models.py",
+        34,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb_relationship/models.py",
+        5,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb_relationship/models.py",
+        25,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb_relationship/models.py",
+        32,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb_relationship/models.py",
+        47,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/mongodb_relationship/models.py",
+        60,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy/models.py",
+        5,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy/models.py",
+        11,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/models.py",
+        5,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/models.py",
+        10,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/models.py",
+        25,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise/models.py",
+        4,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise/models.py",
+        12,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise_relationship/models.py",
+        4,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise_relationship/models.py",
+        4,
+        "pydantic.validator",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise_relationship/models.py",
+        11,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise_relationship/models.py",
+        29,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter6/tortoise_relationship/models.py",
+        51,
+        "pydantic.validator",
+        "removed"
+      ],
+      [
+        "chapter7/authentication/models.py",
+        4,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter7/authentication/models.py",
+        34,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter7/authentication/models.py",
+        35,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter7/csrf/models.py",
+        4,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter7/csrf/models.py",
+        38,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "chapter7/csrf/models.py",
+        39,
+        "pydantic.Field",
+        "removed"
+      ],
+      [
+        "tests/test_chapter4.py",
+        7,
+        "pydantic.ValidationError",
+        "removed"
+      ]
+    ],
+    "n_changes": 477
+  },
+  {
+    "repo": "PacktPublishing/Building-Data-Science-Applications-with-FastAPI",
+    "split": "heldout",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "chapter6/sqlalchemy/database.py",
+        7,
+        "sqlalchemy.create_engine",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/alembic/env.py",
+        3,
+        "sqlalchemy.engine_from_config",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/alembic/env.py",
+        61,
+        "sqlalchemy.engine_from_config",
+        "removed"
+      ],
+      [
+        "chapter6/sqlalchemy_relationship/database.py",
+        7,
+        "sqlalchemy.create_engine",
+        "removed"
+      ],
+      [
+        "tests/test_chapter6_sqlalchemy.py",
+        19,
+        "sqlalchemy.create_engine",
+        "removed"
+      ],
+      [
+        "tests/test_chapter6_sqlalchemy_relationship.py",
+        25,
+        "sqlalchemy.create_engine",
+        "removed"
+      ]
+    ],
+    "n_changes": 9571
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "click",
+    "old": "8.0.1",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 218
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.25.1",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "CodedotAl/gpt-code-clippy",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.0",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 620
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "click",
+    "old": "7.1.2",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 241
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "pydantic",
+    "old": "1.7.3",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 475
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "pyyaml",
+    "old": "5.3.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "simon-ging/coot-videotext",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.25.1",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.2.5",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "FineX/api/v1/__init__.py",
+        17,
+        "flask.Blueprint.errorhandler",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/__init__.py",
+        21,
+        "flask.Blueprint.errorhandler",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/transactions.py",
+        32,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/transactions.py",
+        47,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/transactions.py",
+        53,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/transactions.py",
+        59,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/transactions.py",
+        67,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/users.py",
+        36,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/users.py",
+        52,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/users.py",
+        62,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/users.py",
+        75,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "FineX/api/v1/users.py",
+        96,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        9,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        17,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        25,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        35,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        43,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        52,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        60,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        68,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/endpoints.py",
+        78,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/transaction.py",
+        11,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/transaction.py",
+        26,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/transaction.py",
+        34,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/transaction.py",
+        40,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/transaction.py",
+        55,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "api/transaction.py",
+        67,
+        "flask.Blueprint.errorhandler",
+        "removed"
+      ],
+      [
+        "app/models/currencies.py",
+        12,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/models/currencies.py",
+        24,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/models/currencies.py",
+        35,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/__init__.py",
+        7,
+        "flask.Blueprint.register_blueprint",
+        "removed"
+      ],
+      [
+        "app/views/__init__.py",
+        8,
+        "flask.Blueprint.register_blueprint",
+        "removed"
+      ],
+      [
+        "app/views/__init__.py",
+        9,
+        "flask.Blueprint.register_blueprint",
+        "removed"
+      ],
+      [
+        "app/views/accounts.py",
+        12,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/accounts.py",
+        31,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/accounts.py",
+        50,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/accounts.py",
+        60,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/accounts.py",
+        66,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/accounts.py",
+        86,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/currencies.py",
+        15,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/currencies.py",
+        32,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/currencies.py",
+        49,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/currencies.py",
+        60,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/transactions.py",
+        12,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/transactions.py",
+        43,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "app/views/transactions.py",
+        59,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api/new_endpoint.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api/routes/auth.py",
+        7,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api/routes/auth.py",
+        15,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api/routes/wallet.py",
+        7,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api/routes/wallet.py",
+        15,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api_gateway/api_routes.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api_gateway/api_routes.py",
+        10,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api_gateway/api_routes.py",
+        15,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api_gateway/api_routes.py",
+        20,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/api_gateway/api_routes.py",
+        25,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/blockchain.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/blockchain.py",
+        11,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/transaction.py",
+        8,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/transaction.py",
+        14,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/transaction.py",
+        25,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/transaction.py",
+        33,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/transaction.py",
+        49,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi-stablecoin/routes/transaction.py",
+        58,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/blockchain_integration/routes.py",
+        13,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/blockchain_integration/routes.py",
+        20,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/blockchain_integration/routes.py",
+        29,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/blockchain_integration/routes.py",
+        36,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/blockchain_integration/routes.py",
+        45,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/blockchain_integration/routes.py",
+        52,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        12,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        18,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        27,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        33,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        42,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        48,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/course_management/routes.py",
+        56,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/payment_gateway/routes.py",
+        13,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/payment_gateway/routes.py",
+        20,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/payment_gateway/routes.py",
+        29,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/payment_gateway/routes.py",
+        36,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/payment_gateway/routes.py",
+        45,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/payment_gateway/routes.py",
+        52,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/user_management/routes.py",
+        11,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/user_management/routes.py",
+        18,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/user_management/routes.py",
+        27,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "blockchain_integration/pi_network/pi_network_university/user_management/routes.py",
+        37,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        10,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        14,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        18,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        24,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        28,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        32,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/app/routes.py",
+        38,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/blueprints/coin_blueprint.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/blueprints/coin_blueprint.py",
+        12,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/views/coin_view.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/views/coin_view.py",
+        11,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/views/wallet_view.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "coin/views/wallet_view.py",
+        11,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "modules/authentication.py",
+        8,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "modules/authentication.py",
+        14,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "routes/account_routes.py",
+        7,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "routes/account_routes.py",
+        13,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "sidra_chain_integration/flask_app/routes/loan_processing.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/auth.py",
+        6,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/auth.py",
+        23,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/auth.py",
+        37,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/transactions.py",
+        9,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/transactions.py",
+        17,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/transactions.py",
+        25,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/transactions.py",
+        46,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/transactions.py",
+        71,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/users.py",
+        9,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/users.py",
+        17,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/users.py",
+        25,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/users.py",
+        41,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/blueprints/users.py",
+        60,
+        "flask.Blueprint.route",
+        "removed"
+      ],
+      [
+        "src/web/errors.py",
+        5,
+        "flask.Blueprint.app_errorhandler",
+        "removed"
+      ],
+      [
+        "src/web/errors.py",
+        10,
+        "flask.Blueprint.app_errorhandler",
+        "removed"
+      ],
+      [
+        "src/web/errors.py",
+        15,
+        "flask.Blueprint.app_errorhandler",
+        "removed"
+      ],
+      [
+        "src/web/errors.py",
+        20,
+        "flask.Blueprint.app_errorhandler",
+        "removed"
+      ],
+      [
+        "src/web/errors.py",
+        25,
+        "flask.Blueprint.app_errorhandler",
+        "removed"
+      ]
+    ],
+    "n_changes": 143
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "3.21.1",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 309
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.31.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "KOSASIH/pi-nexus-autonomous-banking-network",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.4.25",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10117
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "click",
+    "old": "8.0.1",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 218
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.0.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 163
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.1",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "3.13.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 301
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.4.25",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10117
+  },
+  {
+    "repo": "X1Zeth2X/flask-restx-boilerplate",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.1",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 620
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "click",
+    "old": "8.0.1",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 218
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.0.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 163
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.1",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "3.13.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 301
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.4.23",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10051
+  },
+  {
+    "repo": "python-microservices/microservices-scaffold",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.1",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 620
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "click",
+    "old": "7.1.2",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 241
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "flask",
+    "old": "1.1.4",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 139
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "2.11.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 148
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "marshmallow",
+    "old": "2.21.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 261
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "sqlalchemy",
+    "old": "1.3.24",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 9571
+  },
+  {
+    "repo": "dataength/automating-your-data-pipeline-with-apache-airflow",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "1.0.1",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 835
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "flask",
+    "old": "2.0.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 163
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "marshmallow",
+    "old": "3.13.0",
+    "new": "4.3.1",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "backend/entityservice/views/serialization.py",
+        9,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        42,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        55,
+        "marshmallow.fields.Nested",
+        "default_changed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        59,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        62,
+        "marshmallow.fields.Nested",
+        "default_changed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        66,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        67,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        72,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ],
+      [
+        "backend/entityservice/views/serialization.py",
+        76,
+        "marshmallow.fields.DateTime",
+        "param_removed"
+      ]
+    ],
+    "n_changes": 301
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "data61/anonlink-entity-service",
+    "split": "heldout",
+    "dist": "sqlalchemy",
+    "old": "1.4.23",
+    "new": "2.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 10051
+  },
+  {
+    "repo": "leucos/ansible-tuto",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "2.11.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 148
+  },
+  {
+    "repo": "leucos/ansible-tuto",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "5.4.1",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 4
+  },
+  {
+    "repo": "leucos/ansible-tuto",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.22.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "google/grr-doc",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "google/grr-doc",
+    "split": "dev",
+    "dist": "pyyaml",
+    "old": "6.0",
+    "new": "6.0.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "google/grr-doc",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.26.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "flask",
+    "old": "1.1.1",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 139
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "jinja2",
+    "old": "3.0.3",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 35
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "requests",
+    "old": "2.22.0",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 1
+  },
+  {
+    "repo": "pokealarm/pokealarm",
+    "split": "dev",
+    "dist": "werkzeug",
+    "old": "2.0.3",
+    "new": "3.1.9",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 624
+  },
+  {
+    "repo": "bborn/howdoi.ai",
+    "split": "dev",
+    "dist": "flask",
+    "old": "2.2.2",
+    "new": "3.1.3",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 143
+  },
+  {
+    "repo": "bborn/howdoi.ai",
+    "split": "dev",
+    "dist": "pydantic",
+    "old": "1.10.2",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "utils/giphy.py",
+        8,
+        "pydantic.Extra",
+        "removed"
+      ],
+      [
+        "utils/giphy.py",
+        8,
+        "pydantic.root_validator",
+        "removed"
+      ],
+      [
+        "utils/giphy.py",
+        49,
+        "pydantic.root_validator",
+        "removed"
+      ]
+    ],
+    "n_changes": 579
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "click",
+    "old": "8.1.3",
+    "new": "8.5.0",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 204
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "jinja2",
+    "old": "3.1.2",
+    "new": "3.1.6",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 3
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "pydantic",
+    "old": "1.10.2",
+    "new": "2.14.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "red",
+    "flagged": [
+      [
+        "backend/app/core/config.py",
+        4,
+        "pydantic.BaseSettings",
+        "removed"
+      ],
+      [
+        "backend/app/core/config.py",
+        10,
+        "pydantic.BaseSettings",
+        "removed"
+      ]
+    ],
+    "n_changes": 579
+  },
+  {
+    "repo": "bnkc/handlefinder",
+    "split": "heldout",
+    "dist": "requests",
+    "old": "2.28.1",
+    "new": "2.34.2",
+    "status": "checked",
+    "reason": "",
+    "risk": "green",
+    "flagged": [],
+    "n_changes": 0
+  }
+]

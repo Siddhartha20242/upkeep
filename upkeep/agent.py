@@ -18,7 +18,7 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Protocol
+from typing import Any, Callable, Protocol
 
 from .charact import where
 from .guard import allowed_ranges, check_diff
@@ -267,7 +267,7 @@ class Agent:
                 break
             calls += 1
             tokens += int((reply.usage or {}).get("total_tokens", 0))
-            msg = {"role": "assistant", "content": reply.text or None}
+            msg: dict = {"role": "assistant", "content": reply.text or None}
             if not reply.text and not reply.tool_calls:
                 msg["content"] = "(no output)"  # the API rejects an assistant message with neither content nor tool calls
             if reply.tool_calls:
@@ -351,7 +351,7 @@ class Agent:
 
     def _verdict(self, calls: int, tokens: int, declined: str | None) -> AgentResult:
         diff = self._final_diff()
-        common = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
+        common: dict[str, Any] = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
                       guard_rejections=self.rejections, injection_flags=self.flags)
         if declined is not None:
             return AgentResult("declined", f"model declined: {declined}", diff, **common)

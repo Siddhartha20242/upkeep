@@ -112,7 +112,8 @@ class Client:
             with urllib.request.urlopen(req, timeout=self.timeout) as r:  # noqa: S310 - fixed https URL
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
-            body = e.read().decode(errors="replace")[:500].replace(self._key, "***")
+            raw = e.read().decode(errors="replace")[:500]
+            body = raw.replace(self._key, "***") if self._key else raw
             raise LLMError(f"HTTP {e.code} from {path}: {body}") from None
         except urllib.error.URLError as e:
             raise LLMError(f"network error calling {path}: {e.reason}") from None

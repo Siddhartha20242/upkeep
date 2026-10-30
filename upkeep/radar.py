@@ -41,10 +41,45 @@ def _pos_index(sig: Signature | None, name: str) -> int | None:
     return names.index(name) if name in names else None
 
 
+def _pos_names(sig: Signature | None) -> list[str]:
+    return [p.name for p in sig.params if p.kind in ("posonly", "pos")] if sig else []
+
+
+def _fits_positionally(sig: Signature | None, n: int) -> bool:
+    """Can the new signature take ``n`` positional arguments? Unknown signature: no (stay conservative)."""
+    if sig is None:
+        return False
+    if any(p.kind == "vararg" for p in sig.params):
+        return True
+    return n <= len(_pos_names(sig))
+
+
+def _is_rename(old_sig: Signature | None, new_sig: Signature | None, idx: int, n: int) -> bool:
+    """A removed positional parameter that was only RENAMED: the same slot now holds a name that did not exist before
+    (and nothing shifted), so a positional argument still reaches the same place."""
+    if old_sig is None or new_sig is None:
+        return False
+    old_names, new_pos = {p.name for p in old_sig.params}, _pos_names(new_sig)
+    if idx < len(new_pos):
+        return new_pos[idx] not in old_names and _fits_positionally(new_sig, n)
+    # the removed parameter was the LAST positional one and `*args` now takes its place (a rename into a var-positional)
+    return idx == len(new_pos) and any(p.kind == "vararg" for p in new_sig.params)
+
+
+PARAM_LEVEL = {"params_reordered", "param_became_required", "param_added_required", "default_changed", "param_removed",
+               "param_kind_changed"}
+
+
 def site_affected(change: Change, site: CallSite, old_sig: Signature | None, new_sig: Signature | None) -> bool:
     """Does THIS call actually trip THIS change? Conservative: when unsure, say yes."""
+    if site.kind in ("import", "base") and change.kind in PARAM_LEVEL:
+        # importing a function or naming a base class cannot trip a changed parameter; the calls are what matter
+        # (found on real repos: every `class X(Schema)` line was flagged for each constructor change)
+        return False
+    if site.kind == "reference" and change.kind in PARAM_LEVEL:
+        site = CallSite(site.file, site.line, site.end_line, site.symbol, "call", 1, (), False)  # `@dec` calls dec(func)
     if site.kind != "call" or change.kind == "removed" or site.star:
-        return True  # imports/decorators/bases of a changed symbol, removed symbols, and calls that use *args/**kwargs
+        return True  # decorators/bases of a changed symbol, removed symbols, and calls that use *args/**kwargs
     p, n, kws = change.param, site.n_pos, set(site.kwargs)
 
     def provided(sig: Signature | None) -> bool:
@@ -52,15 +87,30 @@ def site_affected(change: Change, site: CallSite, old_sig: Signature | None, new
         return bool(p) and (p in kws or (idx is not None and n > idx))
 
     if change.kind == "params_reordered":
-        return n >= 2
+        po, pn = _pos_names(old_sig), _pos_names(new_sig)
+        if not po or not pn:
+            return n >= 2
+        return any(i < len(po) and i < len(pn) and po[i] != pn[i] for i in range(n))  # a positional argument lands elsewhere
     if p is None:
         return True
+    if change.kind == "param_removed" and old_sig is not None:
+        kind = next((x.kind for x in old_sig.params if x.name == p), None)
+        new_named = {x.name for x in (new_sig.params if new_sig else ()) if x.kind in ("posonly", "pos", "kwonly")}
+        if kind == "varkw":  # `**kwargs` is gone: any keyword the new signature does not name now fails
+            return any(k not in new_named for k in kws)
+        if kind == "vararg":  # `*args` is gone: extra positional arguments now fail
+            return n > len(_pos_names(new_sig))
     if change.kind in ("param_became_required",):
         return not provided(old_sig)
     if change.kind in ("param_added_required", "default_changed"):
         return not provided(new_sig)
     if change.kind == "param_removed":
-        return provided(old_sig)
+        if p in kws:
+            return True
+        idx = _pos_index(old_sig, p)
+        if idx is None or n <= idx:
+            return False
+        return not _is_rename(old_sig, new_sig, idx, n)  # a renamed parameter still takes the same positional argument
     if change.kind == "param_kind_changed":
         newp = next((x for x in (new_sig.params if new_sig else []) if x.name == p), None)
         if newp is not None and newp.kind == "posonly":

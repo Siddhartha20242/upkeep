@@ -10,15 +10,17 @@ import hashlib
 import hmac
 import io
 import json
+import os
 import shutil
 import tarfile
-import tempfile
 import time
 import urllib.request
 import zipfile
 from pathlib import Path
 
-DEFAULT_CACHE = Path(tempfile.gettempdir()) / "upkeep-pypi-cache"
+# Not the temp folder: macOS clears old files from temp folders and can leave empty directories behind, which is the most
+# likely cause of the "library sources lost their .py files" incident described in the README (not proven).
+DEFAULT_CACHE = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "upkeep" / "pypi"
 
 
 DIGEST_FILE = ".upkeep-sha256"
@@ -62,7 +64,7 @@ def _read(url: str, timeout: int = 45, tries: int = 4) -> bytes:
     raise PyPIError(f"download failed after {tries} tries: {url}: {last}")
 
 
-def fetch_sdist(dist: str, version: str, cache: Path = DEFAULT_CACHE) -> Path:
+def fetch_sdist(dist: str, version: str, cache: Path = DEFAULT_CACHE, max_bytes: int | None = None) -> Path:
     root = Path(cache) / f"{dist}-{version}"
     if root.exists() and any(root.rglob("*.py")):  # a cache of empty folders is NOT a cache (it has happened)
         return root
@@ -75,6 +77,8 @@ def fetch_sdist(dist: str, version: str, cache: Path = DEFAULT_CACHE) -> Path:
     if not files:
         raise PyPIError(f"{dist}=={version} has no source archive on PyPI")
     urls = [files[0]["url"]]
+    if max_bytes and int(files[0].get("size") or 0) > max_bytes:
+        raise PyPIError(f"{dist}=={version} source archive is {int(files[0]['size']) // 1_000_000} MB (limit {max_bytes // 1_000_000} MB)")
     blob = _read(urls[0])
     actual = check_sha256(blob, files[0], f"{dist}=={version}")
     tmp = Path(cache) / f".tmp-{dist}-{version}"
@@ -110,9 +114,18 @@ def guess_module(dist: str) -> str:
     return dist.lower().replace("-", "_")
 
 
-def sources_for(dist: str, old: str, new: str, module: str | None = None, cache: Path = DEFAULT_CACHE) -> tuple[Path, Path, str]:
+def latest_version(dist: str) -> str:
+    """The newest stable release PyPI lists (``info.version``)."""
+    try:
+        return str(json.loads(_read(f"https://pypi.org/pypi/{dist}/json"))["info"]["version"])
+    except (ValueError, KeyError, TypeError) as e:
+        raise PyPIError(f"could not read the latest version of {dist}") from e
+
+
+def sources_for(dist: str, old: str, new: str, module: str | None = None, cache: Path = DEFAULT_CACHE,
+                max_bytes: int | None = None) -> tuple[Path, Path, str]:
     mod = module or guess_module(dist)
-    o, n = fetch_sdist(dist, old, cache), fetch_sdist(dist, new, cache)
+    o, n = fetch_sdist(dist, old, cache, max_bytes), fetch_sdist(dist, new, cache, max_bytes)
     op, np_ = locate_package(o, mod), locate_package(n, mod)
     if not op or not np_:
         raise PyPIError(f"package folder {mod!r} not found in the {dist} archives; pass --module (for PyYAML it is 'yaml')")

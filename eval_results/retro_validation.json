@@ -2,10 +2,10 @@
   "summary": {
     "pyyaml": {
       "commits": 55,
-      "commits_with_a_flagged_line": 42,
+      "commits_with_a_flagged_line": 40,
       "lines": {
-        "flagged": 69,
-        "compliant": 33,
+        "flagged": 67,
+        "compliant": 35,
         "unseen": 15
       },
       "flagged_lines_the_developer_did_not_change": 2
@@ -187,7 +187,7 @@
       "repo": "mmcdermott/yaml_to_disk",
       "sha": "ceb67e79889a2a923ac48e7beea53537a20ee0a0",
       "split": "heldout",
-      "flagged": 1,
+      "compliant": 1,
       "unseen": 2
     },
     {
@@ -259,8 +259,7 @@
       "repo": "google/cyanobyte",
       "sha": "5a6e90440e386dd478084a6c0946fdb88eb8c5a8",
       "split": "dev",
-      "flagged": 1,
-      "compliant": 1,
+      "compliant": 2,
       "unseen": 1
     },
     {
