@@ -23,7 +23,7 @@ upkeep audit --repo .                                                       # ev
 upkeep check --repo . --package PyYAML --from 5.4.1 --to 6.0.2 --module yaml # one library, two versions you choose
 ```
 
-`audit` reads the exact pins (`name==version`) in your `requirements*.txt` and lists the lines of your code that each upgrade would break. It also lists the libraries it could not check, and why. It never counts those as safe.
+`audit` reads the exact pins (`name==version`) in your `requirements*.txt` and lists the lines of your code that each upgrade would break. It also lists the libraries it could not check, and why. It never counts those as safe. Add `--summary` to print a short block of counts and library names (no code, no paths) that you can send to someone.
 
 The agent needs Docker and a key (`cp .env.example .env`, then add `BASETEN_API_KEY`). One command does the rest:
 
@@ -49,8 +49,9 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 
 ## What I found
 
-- Werkzeug is still unsolved. With the behavior check on, 52 of 53 runs ended in a decline. One wrong fix got through before I added edge-case probes, and none of the 28 runs since. The agent has never produced a correct Werkzeug fix.
-- PyYAML and Jinja2 work. In the latest runs the agent fixed each of them correctly 2 times out of 2. Earlier Jinja2 runs varied a lot, from 0 of 3 to 3 of 3 with the same settings, so I would not read much into small differences.
+- Werkzeug is the hard case, and it splits the models. Muse Spark Open has never produced a correct fix (0 of 47 runs, even with library source, a compare tool and 40 turns). Muse Spark 1.3 with the compare tool fixed it 2 of 2 (hidden tests pass), at 338k to 574k tokens a run. Over all 64 runs with the behavior check on, 59 ended in a decline, 4 were verified and correct, and 1 was verified and wrong. That wrong one came from Muse Spark 1.1 before I added edge-case probes.
+- `upkeep fix --escalate meta:muse-spark-1.3` uses that split. Open goes first because it is cheap and open-weight. If the verifier declines, a stronger Muse Spark model takes over, and the same verifier judges its patch. End to end on Werkzeug this verified a correct fix in 2 of 3 runs, and in the third the verifier declined the stronger model's patch (`docs/EVIDENCE.md`, result 16). The hard case is therefore solved by a model that is not open-weight.
+- PyYAML and Jinja2 work. In the latest runs the agent fixed each of them correctly 5 times out of 5 (the hidden tests pass). Earlier Jinja2 runs varied a lot, from 0 of 3 to 3 of 3 with the same settings, so those older numbers are noisier than they look.
 - The radar catches about two thirds of the lines that real developers had to change. I took 60 real commits that fixed an upgrade break, ran the radar on the code from before each fix, and set aside half of them as a held-out set. On that half it flagged 47 of 73 relevant lines (64%).
 - I also ran it on 35 public repos I did not write. The first run flagged 299 lines and most were wrong. I fixed the causes one by one. On the repos I tuned on, 41 of 42 "will fail" flags were real. On a second set I never tuned on, it flagged 12 lines, and 2 of them mattered.
 - The four Muse Spark versions call tools reliably. Over 128 tool calls each, they got everything exactly right 84% of the time (Open), 97% (1.1), 99% (1.2) and 100% (1.3). Muse Spark Open sometimes ends a turn right after reasoning without making the tool call, so the agent now asks again when a reply comes back empty.
@@ -59,10 +60,10 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 
 ## What does not work
 
-- It has not been used by anyone but me. The apps and tests in my benchmarks are ones I wrote.
+- It has not been used by anyone but me. The apps and tests in my benchmarks are ones I wrote. I also tried to find real projects where an upgrade breaks their own tests: of 70 public repos (two search strategies), none passed every stage, so I have no downstream validation to show (`docs/EVIDENCE.md`, result 17).
 - It only handles Python, and mostly sees changes to function signatures. It cannot see a function that keeps its signature and behaves differently. It also cannot see a parameter that stops accepting a value it used to accept (Werkzeug 3 rejects `method="sha256"`).
-- A clean behavior check is evidence and falls short of proof. The inputs are chosen by a model plus my edge cases, they are limited to JSON values, and only module-level functions are probed.
-- The content check is a list of things to deny, and I found 13 ways around it while testing. Docker with no network is the real boundary.
+- A clean behavior check is evidence and falls short of proof. A model chooses the inputs, I add edge cases, and a second round targets lines the first inputs never reached. Inputs are JSON (plus tagged tuples, sets and bytes) and only module-level functions are probed. `PROOF.md` says how many lines of each function the probes executed, so you can see how thin the evidence is.
+- Redaction knows the shape of common tokens, the exact values of your own environment secrets and `.env` files, and what random keys look like. It will still miss a secret of an unknown shape that is not in your environment. The content check now denies new imports and builtins by default, but attribute tricks are still a deny list, and I found 13 ways around an earlier version. Docker with no network is the real boundary.
 - The samples are small, and some results moved a lot between runs.
 
 ## Security
@@ -73,11 +74,11 @@ Your code goes to a model provider when you run `fix`, so secret-like strings ar
 
 Every PyPI release is checked against the SHA-256 that PyPI publishes for it. A mismatch, or a release with no published hash, is refused before anything is unpacked.
 
-`upkeep fix` also writes a `MANIFEST.json` with the SHA-256 of `fix.patch`, `PROOF.md` and `result.json`, and `upkeep verify --run upkeep-out` fails if any of them was edited afterwards. You can sign the manifest with an Ed25519 key (`upkeep keygen --key my.pem`, then `upkeep fix ... --sign-key my.pem`). `upkeep verify --run upkeep-out --pubkey my.pem.pub` checks that signature against the key you trust. None of this shows that a fix is correct. `PROOF.md` says what is and is not proven.
+`upkeep fix` also saves everything it sent to the model (`model_transcript.json`, after secret redaction) and writes a `MANIFEST.json` with the SHA-256 of that file, `fix.patch`, `PROOF.md` and `result.json`, and `upkeep verify --run upkeep-out` fails if any of them was edited afterwards. You can sign the manifest with an Ed25519 key (`upkeep keygen --key my.pem`, then `upkeep fix ... --sign-key my.pem`). `upkeep verify --run upkeep-out --pubkey my.pem.pub` checks that signature against the key you trust. None of this shows that a fix is correct. `PROOF.md` says what is and is not proven.
 
 ## Tests
 
-There are 307 tests, with about 90% line coverage, and `mypy` reports no problems. GitHub Actions runs them on Python 3.10, 3.11 and 3.12. No test needs the network, Docker or a model key.
+There are 512 tests, with about 90% line coverage, and `mypy` reports no problems. GitHub Actions runs them on Python 3.10, 3.11 and 3.12. No test needs the network, Docker or a model key.
 
 Two kinds of test found real bugs. The first is a ground-truth test for the radar. It generates thousands of random function signatures and changes, then asks Python's own `inspect.Signature.bind` whether each call still works. On its first run the radar missed 11% of the calls that broke, and I fixed that. The second is a set of adversarial edits for the content check. Details are in [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 

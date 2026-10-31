@@ -42,12 +42,15 @@ def main() -> int:
     client = client_for(provider, model or None)
     pp = opt("--prober-provider", "")
     prober = client_for(pp, opt("--prober-model", "") or None) if pp else None
+    esc = opt("--escalate", "")
+    escalate = client_for(esc.partition(":")[0], esc.partition(":")[2] or None) if esc else None
     outs = []
     for i in range(repeat):
         for c in cases:
             o = run_agent_case(c, preps[c.name], client, use_changelog=not nochange, behavior_check=behavior,
                                focus_notes="--rawnotes" not in sys.argv,
-                               notes_mode=opt("--notes", "tool"), max_turns=int(opt("--max-turns", "14")), prober_client=prober, n_random=int(opt("--fuzz", "0")), library_source="--libsrc" in sys.argv)
+                               notes_mode=opt("--notes", "tool"), max_turns=int(opt("--max-turns", "14")), prober_client=prober, n_random=int(opt("--fuzz", "0")), library_source="--libsrc" in sys.argv, explore="--explore" in sys.argv,
+                               escalate_client=escalate, escalate_turns=int(opt("--escalate-turns", "40")))
             outs.append(o)
             print(f"[run {i + 1}] {o.name}: {o.outcome} ({o.model_calls} calls, {o.tokens} tokens, {o.seconds}s) {o.reason[:60]}", flush=True)
     Path(f"eval_results/reallib_{provider}{'_nochangelog' if nochange else ''}{'_' + model if model else ''}{'_behavior' if behavior else '_lint2'}{opt('--tag', '')}.json").write_text(

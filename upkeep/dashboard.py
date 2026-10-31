@@ -11,7 +11,7 @@ import json
 import re
 from pathlib import Path
 
-from .charact import where
+from .charact import format_call_args, where
 
 CSS = """
 :root{--bg:#fafafa;--fg:#1b1f23;--mut:#5d6773;--card:#fff;--line:#e3e7ec;--ok:#1a7f4b;--warn:#a15c00;--bad:#b42318;--add:#e6f6ec;--del:#fdecea;--acc:#2457d6}
@@ -127,7 +127,7 @@ def behavior_section(behavior: dict | None) -> str:
     if not mm:
         return head
     rows = "".join(
-        f"<tr><td><code>{e(m.get('function'))}({e(', '.join(json.dumps(a) for a in m.get('input', [])))})</code>"
+        f"<tr><td><code>{e(m.get('function'))}({e(format_call_args(m.get('input', [])))})</code>"
         f"{('<br><span class=mut>' + e(where(m).strip()) + '</span>') if where(m) else ''}</td>"
         f"<td class='ok'><code>{e(_pretty(m.get('old')))}</code></td><td class='bad'><code>{e(_pretty(m.get('new')))}</code></td></tr>"
         for m in mm[:8])

@@ -8,8 +8,11 @@ reduces the chance of a leak, it does not remove it. Do not run `fix` on code yo
 from __future__ import annotations
 
 import re
+import math
+import os
 from collections import Counter
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
+from typing import Iterable, Mapping
 
 _PLACEHOLDER = re.compile(r"(example|changeme|change-me|placeholder|your[_-]|xxxx|\*\*\*|dummy|sample|test|redacted)", re.I)
 
@@ -24,6 +27,13 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("openai-style-key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
     ("private-key-block", re.compile(r"-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z]+ )?PRIVATE KEY-----")),
     ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
+    ("pypi-token", re.compile(r"\bpypi-AgEI[A-Za-z0-9_-]{40,}\b")),
+    ("npm-token", re.compile(r"\bnpm_[A-Za-z0-9]{36}\b")),
+    ("sendgrid-key", re.compile(r"\bSG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}\b")),
+    ("twilio-key", re.compile(r"\bSK[0-9a-f]{32}\b")),
+    ("discord-token", re.compile(r"\b[MNO][A-Za-z0-9_-]{23,25}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,}\b")),
+    ("azure-storage-key", re.compile(r"(?i)\bAccountKey=[A-Za-z0-9+/=]{40,}")),
+    ("bearer-token", re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{24,}")),
     ("url-credentials", re.compile(r"(?<=://)[^\s/:@]+:[^\s/@]{3,}(?=@)")),
 ]
 ASSIGNED = re.compile(
@@ -47,9 +57,53 @@ def looks_sensitive(path: str) -> bool:
     return any(part.lower() in SENSITIVE_DIRS for part in p.parts)
 
 
-def redact(text: str) -> tuple[str, int]:
+SECRET_ENV_NAME = re.compile(r"(KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)", re.I)
+MIN_KNOWN_LENGTH = 8      # shorter values would redact ordinary words
+QUOTED = re.compile(r"""(["'])([A-Za-z0-9+/=_-]{32,})\1""")
+
+
+def known_secret_values(repo: Path | None = None, environ: Mapping[str, str] | None = None) -> set[str]:
+    """Exact values that ARE secrets here: environment variables named like secrets, and values in the repo's .env files.
+
+    Pattern matching cannot know the shape of a token it has never seen. These values are known, so they are redacted by
+    exact match wherever they appear, whatever their format.
+    """
+    values: set[str] = set()
+    for name, value in (os.environ if environ is None else environ).items():
+        if SECRET_ENV_NAME.search(name) and len(value) >= MIN_KNOWN_LENGTH:
+            values.add(value)
+    if repo is not None:
+        for f in Path(repo).glob(".env*"):
+            if f.is_file() and f.name.lower() not in SAFE_ENV_TEMPLATES:
+                try:
+                    lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+                except OSError:
+                    continue
+                for line in lines:
+                    key, sep, val = line.partition("=")
+                    val = val.strip().strip("\"'")
+                    if sep and not line.lstrip().startswith("#") and len(val) >= MIN_KNOWN_LENGTH:
+                        values.add(val)
+    return values
+
+
+def _entropy(s: str) -> float:
+    return -sum(n / len(s) * math.log2(n / len(s)) for n in Counter(s).values())
+
+
+def _looks_random(s: str) -> bool:
+    """A long mixed-case-and-digits string with high entropy: typical of an API key, unlike a hash, an identifier or prose."""
+    return (len(set(s)) >= 16 and any(c.islower() for c in s) and any(c.isupper() for c in s)
+            and any(c.isdigit() for c in s) and _entropy(s) >= 4.3)
+
+
+def redact(text: str, known: Iterable[str] = ()) -> tuple[str, int]:
     """(text with secret-like strings replaced by [REDACTED:kind], how many were replaced)."""
     count = 0
+    for value in sorted(set(known), key=len, reverse=True):
+        if value and value in text:
+            count += text.count(value)
+            text = text.replace(value, "[REDACTED:known-secret]")
 
     def sub_kind(kind: str):
         def f(m: re.Match[str]) -> str:
@@ -67,13 +121,25 @@ def redact(text: str) -> tuple[str, int]:
             return m.group(0)
         count += 1
         return f"{m.group(1)}{m.group(2)}[REDACTED:assigned-secret]{m.group(2)}"
-    return ASSIGNED.sub(assigned, text), count
+    text = ASSIGNED.sub(assigned, text)
+
+    def quoted(m: re.Match[str]) -> str:
+        nonlocal count
+        if _PLACEHOLDER.search(m.group(2)) or not _looks_random(m.group(2)):
+            return m.group(0)
+        count += 1
+        return f"{m.group(1)}[REDACTED:high-entropy-string]{m.group(1)}"
+    return QUOTED.sub(quoted, text), count
 
 
-def scan(text: str) -> Counter:
+def scan(text: str, known: Iterable[str] = ()) -> Counter:
     """Kinds of secret-like strings found in ``text`` (counts), without changing it."""
     found: Counter = Counter()
+    for value in set(known):
+        if value and value in text:
+            found["known-secret"] += text.count(value)
     for kind, pat in PATTERNS:
         found[kind] += len(pat.findall(text))
     found["assigned-secret"] += sum(1 for m in ASSIGNED.finditer(text) if not _PLACEHOLDER.search(m.group(3)))
+    found["high-entropy-string"] += sum(1 for m in QUOTED.finditer(text) if not _PLACEHOLDER.search(m.group(2)) and _looks_random(m.group(2)))
     return +found  # drop zero counts

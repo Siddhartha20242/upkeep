@@ -47,6 +47,8 @@ def format_step(step: dict, color: bool = False) -> str:
         return p("  notes     ", "dim") + f"asked the release notes about {args.get('query') or 'the affected symbols'!r}"
     if tool == "read_file":
         return p("  read      ", "dim") + where.strip()
+    if tool == "compare_old_new":
+        return p("  explore   ", "dim") + "ran a snippet on the old and the new library"
     if tool == "library_source":
         return p("  library   ", "dim") + f"read the {args.get('version', '?')} source of {args.get('path', '?')}:{args.get('start_line', '?')}-{args.get('end_line', '?')}"
     if tool == "library_search":

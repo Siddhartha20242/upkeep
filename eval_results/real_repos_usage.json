@@ -1,0 +1,214 @@
+{
+  "funnel": {
+    "candidates": 40,
+    "has tests": 13,
+    "deps": 10,
+    "radar hit": 4
+  },
+  "repos": [
+    {
+      "repo": "Pelagicore/qface",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "Takaaki-Saeki/ssl_speech_restoration",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "matael/bottle-blog-engine",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "ryuichiueda/opy",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "Takaaki-Saeki/ssl_speech_restoration_v2",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "snap-research/articulated-animation",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "Vu1nT0tal/yarb",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "PlayVoice/whisper-vits-svc",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "harlanhong/CVPR2022-DaGAN",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "qt/qtinterfaceframework-qface",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "j-petit/temporal_graph",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "avishayil/consoleme-ecs-service",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "boukeversteegh/ai-terminal-assistant",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "zhangbo2008/fastSpeeck2_chinese_train",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "Athanasius/ed-devtracker",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "sebranchett/ecs-jupyterhub-pluto-python",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "j-petit/leipzig_hids",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "modanesh/QWM",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "YYQHoro/BlogOnlineEditor",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "bisavelli/animated-winner",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "dipsylala/VulnerablePython",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "sweidemaier/Neat_SDF",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "datadriventests/ddt",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "qiantianwen/NuScenes-QA",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "deeplearningturkiye/kelime_kok_ayirici",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "jeya-maria-jose/UNeXt-pytorch",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "MILVLG/openvqa",
+      "lib": "PyYAML",
+      "stage": "skipped: tests do not pass on the OLD library in the sandbox",
+      "flagged_lines": 1
+    },
+    {
+      "repo": "arthur-bouton/MachineLearning",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "Kid-Liet/Reg-GAN",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "chongruo/pytorch-HED",
+      "lib": "PyYAML",
+      "stage": "skipped: tests do not pass on the OLD library in the sandbox",
+      "flagged_lines": 2
+    },
+    {
+      "repo": "HTTP-APIs/hydrus",
+      "lib": "PyYAML",
+      "stage": "skipped: tests do not pass on the OLD library in the sandbox",
+      "flagged_lines": 2
+    },
+    {
+      "repo": "X-PLUG/MM_StoryAgent",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "3xh4l3/devnet_marathon",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "MediaTek-NeuroPilot/mai22-real-time-video-sr",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "jbalogh/zurg",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "chainreactors/picker",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "Pinafore/qb",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "evermarkets/market-maker-bot",
+      "lib": "PyYAML",
+      "stage": "skipped: tests do not pass on the OLD library in the sandbox",
+      "flagged_lines": 1
+    },
+    {
+      "repo": "AngusDujw/Bottom-Up-Agent",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "open-falcon/cloud-mon",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    }
+  ]
+}

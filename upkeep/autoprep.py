@@ -11,6 +11,7 @@ The dependency step is the only one that runs with network access, so it is stri
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -60,8 +61,41 @@ def docker_ready() -> bool:
         return False
 
 
-def repo_requirements(repo: Path, dist: str) -> tuple[list[str], list[str]]:
-    """(requirements safe to install, notes about lines that were skipped). The upgraded library itself is excluded."""
+def imported_roots(repo: Path, limit: int = 3000) -> set[str]:
+    """Top-level module names imported anywhere in the repo's Python files (read with `ast`, nothing is run)."""
+    roots: set[str] = set()
+    for i, f in enumerate(sorted(Path(repo).rglob("*.py"))):
+        if i >= limit or f.stat().st_size > 400_000:
+            continue
+        try:
+            tree = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
+        except (SyntaxError, ValueError, OSError):
+            continue
+        for n in ast.walk(tree):
+            if isinstance(n, ast.Import):
+                roots |= {a.name.split(".")[0].lower() for a in n.names}
+            elif isinstance(n, ast.ImportFrom) and not n.level and n.module:
+                roots.add(n.module.split(".")[0].lower())
+    return roots
+
+
+def import_names(requirement_name: str) -> set[str]:
+    """Plausible import names for a PyPI name: the name itself, python-/-python variants, and the known odd ones."""
+    n = norm(requirement_name)
+    names = {n.replace("-", "_"), n.replace("-", "")}
+    for pre, suf in (("python-", ""), ("py-", ""), ("", "-python"), ("", "-py")):
+        if n.startswith(pre) and n.endswith(suf) and (pre or suf):
+            names.add(n[len(pre):len(n) - len(suf)].replace("-", "_"))
+    if n in MODULES:
+        names.add(MODULES[n].lower())
+    return names
+
+
+def repo_requirements(repo: Path, dist: str, only_imported: bool = False) -> tuple[list[str], list[str]]:
+    """(requirements safe to install, notes about lines that were skipped). The upgraded library itself is excluded.
+
+    ``only_imported`` keeps just the requirements whose import name appears in the repo's code: many projects list dozens of
+    heavy packages their tests never touch, and installing all of them from wheels is the usual reason setup fails."""
     ok: list[str] = []
     notes: list[str] = []
     seen: set[str] = set()
@@ -76,10 +110,22 @@ def repo_requirements(repo: Path, dist: str) -> tuple[list[str], list[str]]:
             continue
         seen.add(name)
         ok.append(text)
+    if only_imported:
+        used = imported_roots(repo)
+        keep = [r for r in ok if import_names(SAFE_REQUIREMENT.match(r).group(1)) & used]  # type: ignore[union-attr]
+        if len(keep) < len(ok):
+            notes.append(f"minimal dependencies: installing {len(keep)} of {len(ok)} requirements (the ones the code imports)")
+        ok = keep
     if len(ok) > MAX_REQUIREMENTS:
         notes.append(f"{len(ok) - MAX_REQUIREMENTS} requirement(s) beyond the first {MAX_REQUIREMENTS} were not installed")
         ok = ok[:MAX_REQUIREMENTS]
     return ok, notes
+
+
+def pip_errors(output: str) -> str:
+    """The lines of pip output that say what went wrong, without the version-skip chatter and the upgrade notice."""
+    lines = [ln.strip() for ln in output.splitlines() if "ERROR:" in ln and "Ignored the following" not in ln]
+    return "\n".join(lines[-3:]) if lines else output.strip()[-300:]
 
 
 def _deps_dir(cache: Path, image: str, packages: list[str]) -> Path:
@@ -103,7 +149,7 @@ def _install(deps: Path, packages: list[str], image: str, wheels_only: bool, ins
 
 def prepare_upgrade(
     repo: Path, dist: str, old: str, new: str, module: str | None = None, image: str | None = None,
-    cache: Path | None = None, allow_source_builds: bool = False, max_mb: int = 40,
+    cache: Path | None = None, allow_source_builds: bool = False, max_mb: int = 40, only_imported: bool = False,
     log: Callable[[str], None] = lambda s: print(s, flush=True),
     installer: Callable[..., TestResult] = prepare_deps,
 ) -> Prepared:
@@ -124,7 +170,7 @@ def prepare_upgrade(
     else:
         log("upkeep: no release notes found in the new archive; the agent will work without them")
 
-    others, notes = repo_requirements(repo, dist)
+    others, notes = repo_requirements(repo, dist, only_imported)
     for n in notes:
         log(f"upkeep: note: {n}")
     base = ["pytest", "coverage", *others]
@@ -139,7 +185,7 @@ def prepare_upgrade(
             r_new = _install(deps_new, [*base, f"{dist}=={new}"], img, not builds, installer) if r_old.ok else r_old
             if r_old.ok and r_new.ok:
                 return Prepared(old_src, new_src, mod, changelog, deps_old, deps_new, img, notes)
-            last = (r_new if r_old.ok else r_old).output[-300:]
+            last = pip_errors((r_new if r_old.ok else r_old).output)
     hint = ("" if allow_source_builds else
             " Re-run with --allow-source-builds to build from source inside the container (that runs the packages' build "
             "scripts, with network access), or pass --image for a Python version that has wheels.")

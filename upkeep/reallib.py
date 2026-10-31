@@ -28,6 +28,7 @@ from .charact import BehaviorChecker
 from .apidiff import diff_api, extract_api  # noqa: F401  (diff used by radar)
 from .evalcases import _w
 from .evalharness import Outcome
+from .patchlint import import_roots_from
 from .pypi import changelog_section, check_sha256
 from .radar import run_radar
 from .sandbox import prepare_deps, run_python, run_tests
@@ -212,7 +213,8 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
                    focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
-                   prober_client=None, n_random: int = 0, library_source: bool = False) -> Outcome:
+                   prober_client=None, n_random: int = 0, library_source: bool = False,
+                   explore: bool = False, escalate_client=None, escalate_turns: int = 40) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -231,12 +233,31 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
             world = lambda deps: (lambda d, script: run_python(d, script, backend="docker", image=IMAGE, deps_dir=deps))  # noqa: E731
             checker = BehaviorChecker(prober_client or client, repo, sites, world(prep.old_deps), world(prep.new_deps),
                                      n_random=n_random)
-        agent = Agent(client, repo, report, runner, changelog=prep.changelog if use_changelog else None,
-                      behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=max_turns,
-                      library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None)
+        def make_explorer():
+            scratch = Path(tempfile.mkdtemp(prefix="upkeep-explore-"))
+
+            def explorer(code: str) -> tuple[str, str]:
+                o = run_python(scratch, code, backend="docker", image=IMAGE, deps_dir=prep.old_deps, timeout=60)[1]
+                n = run_python(scratch, code, backend="docker", image=IMAGE, deps_dir=prep.new_deps, timeout=60)[1]
+                return o, n
+            return explorer
+
+        def build(cl, turns: int, with_explorer: bool):
+            return Agent(cl, repo, report, runner, changelog=prep.changelog if use_changelog else None,
+                         explorer=make_explorer() if with_explorer else None, import_roots=import_roots_from(prep.new_deps, prep.new_src),
+                         behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=turns,
+                         library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None)
+        agent = build(client, max_turns, explore)
         t0 = time.monotonic()
         try:
             res = agent.run()
+            if res.status != "verified" and escalate_client is not None:  # the verifier declined: the stronger model tries, same verifier
+                first_calls, first_tokens = res.model_calls, res.total_tokens
+                agent.cleanup()
+                agent = build(escalate_client, escalate_turns, True)
+                res = agent.run()
+                res.model_calls += first_calls
+                res.total_tokens += first_tokens
         except Exception as e:  # one broken case must not lose the whole benchmark run
             return Outcome(**base, outcome="error", status="error", reason=f"{type(e).__name__}: {str(e)[:150]}")
         dt = time.monotonic() - t0

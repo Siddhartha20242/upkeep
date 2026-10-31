@@ -90,7 +90,7 @@ def test_proof_contains_integrity_hashes_and_the_manifest_covers_it(tmp_path):
     proof = (out / "PROOF.md").read_text()
     assert "## Integrity" in proof and "fix.patch SHA-256" in proof
     manifest = json.loads((out / "MANIFEST.json").read_text())
-    assert set(manifest["files"]) == {"fix.patch", "PROOF.md", "result.json"} and manifest["status"] == "verified"
+    assert set(manifest["files"]) == {"fix.patch", "PROOF.md", "result.json", "model_transcript.json"} and manifest["status"] == "verified"
 
 
 def test_dashboard_command_writes_a_self_contained_escaped_page(tmp_path, capsys):

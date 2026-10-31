@@ -80,8 +80,76 @@ def _is_public(dotted: str) -> bool:
     return not any(part.startswith("_") or part in _NON_API_PARTS for part in parts)
 
 
-_GENERATED_DECORATORS = {"dataclass", "define", "frozen", "mutable", "attrs", "attributes", "s"}
-_GENERATED_BASES = {"BaseModel", "BaseSettings", "NamedTuple", "TypedDict", "Struct"}
+_GENERATED_DECORATORS = {"define", "frozen", "mutable", "attrs", "attributes", "s"}   # attrs: semantics differ, constructor unknown
+_GENERATED_BASES = {"BaseModel", "BaseSettings", "TypedDict", "Struct"}
+_HARMLESS_BASES = {"object", "Generic", "ABC", "Protocol"}
+
+
+@dataclass(frozen=True)
+class _Field:
+    name: str
+    has_default: bool
+    default: str | None
+    kw_only: bool
+
+
+def _deco_name(d: ast.expr) -> str | None:
+    d = d.func if isinstance(d, ast.Call) else d
+    return d.id if isinstance(d, ast.Name) else d.attr if isinstance(d, ast.Attribute) else None
+
+
+def _is_classvar(ann: ast.expr) -> bool:
+    a = ann.value if isinstance(ann, ast.Subscript) else ann
+    return (isinstance(a, ast.Name) and a.id == "ClassVar") or (isinstance(a, ast.Attribute) and a.attr == "ClassVar")
+
+
+def _kw(call: ast.Call, name: str) -> ast.expr | None:
+    return next((k.value for k in call.keywords if k.arg == name), None)
+
+
+def _const(node: ast.expr | None):
+    return node.value if isinstance(node, ast.Constant) else None
+
+
+def _dataclass_fields(cls: ast.ClassDef) -> tuple[list[_Field], bool] | None:
+    """(own fields in order, constructor generated?) for a stdlib @dataclass; None if the class is not one."""
+    deco = next((d for d in cls.decorator_list if _deco_name(d) == "dataclass"), None)
+    if deco is None:
+        return None
+    opts = deco if isinstance(deco, ast.Call) else None
+    if opts is not None and _const(_kw(opts, "init")) is False:
+        return [], False
+    kw_default = bool(opts is not None and _const(_kw(opts, "kw_only")) is True)
+    fields: list[_Field] = []
+    kw_from_here = kw_default
+    for st in cls.body:
+        if not (isinstance(st, ast.AnnAssign) and isinstance(st.target, ast.Name)):
+            continue
+        ann = st.annotation
+        if isinstance(ann, ast.Name) and ann.id == "KW_ONLY" or isinstance(ann, ast.Attribute) and ann.attr == "KW_ONLY":
+            kw_from_here = True                      # `_: KW_ONLY` makes every later field keyword-only
+            continue
+        if _is_classvar(ann):
+            continue
+        kw_only, has_default, default = kw_from_here, st.value is not None, _lit(st.value) if st.value is not None else None
+        if isinstance(st.value, ast.Call) and _deco_name(st.value.func) == "field" or (
+                isinstance(st.value, ast.Call) and isinstance(st.value.func, ast.Attribute) and st.value.func.attr == "field"):
+            call = st.value
+            if _const(_kw(call, "init")) is False:
+                continue
+            has_default = _kw(call, "default") is not None or _kw(call, "default_factory") is not None
+            default = _lit(_kw(call, "default")) if _kw(call, "default") is not None else None
+            if _kw(call, "kw_only") is not None:
+                kw_only = _const(_kw(call, "kw_only")) is True
+        fields.append(_Field(st.target.id, has_default, default, kw_only))
+    return fields, True
+
+
+def _namedtuple_fields(cls: ast.ClassDef) -> list[_Field] | None:
+    if not any(_base_name(b) == "NamedTuple" for b in cls.bases):
+        return None
+    return [_Field(st.target.id, st.value is not None, _lit(st.value) if st.value is not None else None, False)
+            for st in cls.body if isinstance(st, ast.AnnAssign) and isinstance(st.target, ast.Name)]
 
 
 def _generates_constructor(cls: ast.ClassDef) -> bool:
@@ -133,7 +201,8 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
     class_methods: dict[str, dict[str, Signature]] = {}  # class qualname -> its OWN public methods (by name)
     imported: dict[str, dict[str, str]] = {}          # module -> {local name: canonical dotted name} from `from x import y [as z]`
     own_init: dict[str, tuple[Param, ...]] = {}       # class qualname -> parameters of its OWN __init__
-    generated: set[str] = set()                       # classes whose constructor is generated from fields
+    generated: set[str] = set()                       # classes whose constructor is generated from fields we cannot read
+    dc_own: dict[str, list[_Field]] = {}              # @dataclass / NamedTuple classes: their OWN fields, in order
     init_trees: list[tuple[str, ast.Module]] = []     # parsed __init__.py files, reused by the lazy-name pass
 
     for file in sorted(pkg_dir.rglob("*.py")):
@@ -170,8 +239,15 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
                     if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                         params = _params_from_args(item.args, skip_first=True)
                         own_init[qual] = params
-                if qual not in own_init and _generates_constructor(node):
-                    generated.add(qual)
+                if qual not in own_init:
+                    dc = _dataclass_fields(node)
+                    nt = _namedtuple_fields(node)
+                    if dc is not None and dc[1]:
+                        dc_own[qual] = dc[0]
+                    elif nt is not None:
+                        dc_own[qual] = nt                      # a NamedTuple is positional, in field order
+                    elif dc is not None or _generates_constructor(node):
+                        generated.add(qual)
                 if _is_public(qual):
                     api[qual] = Signature(qual, params, is_class=True, ctor_unknown=qual in generated)
                 class_bases[qual] = [n for n in map(_base_name, node.bases) if n]
@@ -208,6 +284,42 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
             same = [c for c in cands if c.rsplit(".", 1)[0] == mod]  # prefer the same module, else the first match
             out += [c for c in (same or cands)[:1] if c != q]
         return out
+
+    def fields_of(q: str, seen: tuple[str, ...] = ()) -> list[_Field] | None:
+        """All constructor fields of a dataclass: inherited dataclass fields first, redefinitions keep their position."""
+        mod = q.rsplit(".", 1)[0]
+        merged: dict[str, _Field] = {}
+        for name in class_bases.get(q, []):
+            known = imported.get(mod, {}).get(name) in class_bases or name in by_simple
+            if not known and name not in _HARMLESS_BASES and name != "NamedTuple":
+                return None                                      # a base from outside the package: its fields are unknown
+        for b in reversed(base_quals(q)):
+            if b in seen:
+                continue
+            if b in generated:
+                return None
+            if b in dc_own:
+                sub_fields = fields_of(b, seen + (q,))
+                if sub_fields is None:
+                    return None
+                for f in sub_fields:
+                    merged[f.name] = f
+        for f in dc_own[q]:
+            merged[f.name] = f
+        return list(merged.values())
+
+    for q in list(dc_own):
+        fs = fields_of(q)
+        if fs is None:
+            generated.add(q)
+            if q in api:
+                api[q] = Signature(q, (), is_class=True, ctor_unknown=True)
+            continue
+        params = tuple([Param(f.name, "pos", f.has_default, f.default) for f in fs if not f.kw_only]
+                       + [Param(f.name, "kwonly", f.has_default, f.default) for f in fs if f.kw_only])
+        own_init[q] = params
+        if q in api:
+            api[q] = Signature(q, params, is_class=True)
 
     def inherited_init(q: str, seen: tuple[str, ...] = ()) -> tuple[tuple[Param, ...], str] | str | None:
         for b in base_quals(q):

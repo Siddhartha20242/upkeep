@@ -1,0 +1,28 @@
+name: audit-smoke
+
+# Runs the same command the docs show (`upkeep audit`) on a bundled example project, from a clean install, against live PyPI.
+# Kept separate from the unit-test workflow so a PyPI outage cannot turn the tests badge red.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install .
+      - name: upkeep audit on the example project (expects exit code 2 and the yaml.load line)
+        run: |
+          set +e
+          out=$(upkeep audit --repo examples/audit_demo --fail-on hard)
+          code=$?
+          echo "$out"
+          test "$code" -eq 2
+          echo "$out" | grep -q "app.py:6  yaml.load"
+          if echo "$out" | grep -q "app.py:10"; then echo "the already-safe call was flagged"; exit 1; fi

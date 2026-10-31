@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
-from .charact import where
+from .charact import format_call_args, where
 from .radar import RadarReport
 from .sandbox import TestResult
 from .vuln import Advisory
@@ -98,8 +98,12 @@ class ProofBundle:
             lines.append(f"- {b['inputs_checked']} probe inputs over {b['functions_checked']} function(s); "
                          f"{len(b['mismatches'])} mismatch(es)")
             for m in b["mismatches"][:5]:
-                lines.append(f"  - {where(m)}{m['function']}({', '.join(json.dumps(a) for a in m['input'])}): "
+                lines.append(f"  - {where(m)}{m['function']}({format_call_args(m['input'])}): "
                              f"old library {m['old']} vs patched code on new library {m['new']}")
+            for name, c in (b.get("coverage") or {}).items():
+                lines.append(f"- probes executed {c['executed']} of {c['total']} lines of `{name}()` in the patched code"
+                             + (f"; not executed: {c['file']} lines {', '.join(map(str, c['missed'][:8]))}" if c["missed"] else "")
+                             + (f"; a second round of {c['guided_inputs']} inputs aimed at the missed lines was added" if c.get("guided_inputs") else ""))
             lines += [f"  - skipped: {x}" for x in b["skipped"][:3]]
             lines.append("- probes are model-chosen: a clean result is evidence, not proof")
 

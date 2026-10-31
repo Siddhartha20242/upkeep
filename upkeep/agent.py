@@ -18,13 +18,13 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Iterable, Protocol
 
-from .charact import where
+from .charact import format_call_args, where
 from .guard import allowed_ranges, check_diff
 from .llm import LLMError, Reply
 from .patchlint import check_edit
-from .secrets import looks_sensitive, redact
+from .secrets import known_secret_values, looks_sensitive, redact
 from .radar import RadarReport
 from .sandbox import TestResult
 from .untrusted import focus_changelog, screen, wrap_untrusted
@@ -97,6 +97,12 @@ LIBRARY_TOOLS = [
             "version": {"type": "string", "enum": ["old", "new"]}, "text": {"type": "string"}},
             "required": ["version", "text"]}}},
 ]
+EXPLORE_TOOL = {"type": "function", "function": {
+    "name": "compare_old_new",
+    "description": ("Run a short Python snippet that PRINTS its result against the OLD library and against the NEW library, in the "
+                    "sandbox (no network), and get both outputs. Use it to see exactly how a function behaves in each version "
+                    "before you edit, for example: from werkzeug.urls import url_quote; print(repr(url_quote('a b/c:d')))."),
+    "parameters": {"type": "object", "properties": {"code": {"type": "string"}}, "required": ["code"]}}}
 MAX_LIB_FILE = 1_500_000
 
 
@@ -118,6 +124,7 @@ class AgentResult:
     behavior: dict | None = None
     empty_replies: int = 0  # dropped (empty) model replies that were asked again
     redactions: int = 0  # secret-like strings removed from text sent to the model
+    transcript: list[dict] = field(default_factory=list)  # every message exchanged with the model (already redacted)
 
 
 def _summary_line(output: str) -> str:
@@ -146,6 +153,9 @@ class Agent:
         library_roots: dict[str, Path] | None = None,  # {"old": root, "new": root}: where the library's source can be read
         max_empty_retries: int = 2,
         max_tokens: int = 12000,  # per reply. This model always reasons first; at 4096 long contexts ended in EMPTY replies
+        import_roots: Iterable[str] = (),  # modules an edit may newly import: what the project already depends on
+        explorer: Callable[[str], tuple[str, str]] | None = None,  # runs a snippet on (old library, new library) in the sandbox
+        max_explorations: int = 8,
         max_library_reads: int = 6,  # measured: without a budget the model read source until its turns ran out and never edited
     ):
         self.client, self.report, self.runner = client, report, test_runner
@@ -163,10 +173,14 @@ class Agent:
         self.lib_roots = {k: Path(v).resolve() for k, v in (library_roots or {}).items() if k in ("old", "new") and Path(v).is_dir()}
         self.max_tokens = max_tokens
         self.redactions = 0  # secret-like strings cut out of text before it was sent to the model
+        self.known_secrets = known_secret_values(repo)  # exact values (env vars, .env files) redacted wherever they appear
+        self.transcript: list[dict] = []
         self.max_empty_retries, self.empty_replies = max_empty_retries, 0
+        self.import_roots = set(import_roots) | {report.package.split(".")[0]}
+        self.explorer, self.max_explorations, self.explorations = explorer, max_explorations, 0
         self.max_library_reads, self.library_reads = max_library_reads, 0
         self.tools = (list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
-                      + (LIBRARY_TOOLS if self.lib_roots else []))
+                      + (LIBRARY_TOOLS if self.lib_roots else []) + ([EXPLORE_TOOL] if explorer else []))
         self.max_turns, self.max_edits, self.max_test_runs = max_turns, max_edits, max_test_runs
         self.work = Path(tempfile.mkdtemp(prefix="upkeep-agent-")) / "repo"
         shutil.copytree(repo, self.work, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"))
@@ -235,6 +249,21 @@ class Agent:
                         break
         return self._untrusted_library_text("\n".join(hits) or "no matches", f"library search ({version})")
 
+    def t_compare_old_new(self, code: str = "", **_) -> str:
+        if not self.explorer:
+            return "error: compare_old_new is not available in this session"
+        if not isinstance(code, str) or not code.strip():
+            return "error: give a short Python snippet that prints its result"
+        if len(code) > 2000:
+            return "error: snippet too long (max 2000 characters)"
+        self.explorations += 1
+        if self.explorations > self.max_explorations:
+            return (f"comparison budget used ({self.max_explorations}). Make the edit now with replace_lines (then run_tests and "
+                    "check_behavior), or call finish with status 'decline'.")
+        old_out, new_out = self.explorer(code)
+        body = f"OLD library:\n{old_out.strip()[-1200:]}\n\nNEW library:\n{new_out.strip()[-1200:]}"
+        return self._untrusted_library_text(self._redacted(body), "library behavior")
+
     def t_list_affected(self, **_) -> str:
         rows = []
         for change, sites in self.report.affected:
@@ -246,7 +275,7 @@ class Agent:
         return json.dumps(rows)
 
     def _redacted(self, text: str) -> str:
-        out, n = redact(text)
+        out, n = redact(text, self.known_secrets)
         self.redactions += n
         return out
 
@@ -284,7 +313,7 @@ class Agent:
         if not verdict.ok:
             self.rejections += 1
             return f"rejected by scope guard: {verdict.reason}"
-        ok, why = check_edit(old_text, "".join(new))
+        ok, why = check_edit(old_text, "".join(new), self.import_roots)
         if not ok:
             self.rejections += 1
             return f"rejected by content check: {why}"
@@ -329,6 +358,10 @@ class Agent:
         parts = [f"Package '{self.report.package}' was upgraded. Breaking changes that touch this repo:"]
         for change, sites in self.report.affected:
             parts.append(f"- {change.symbol}: {change.kind} ({change.detail}) at {len(sites)} site(s)")
+        if self.explorer:
+            parts.append("compare_old_new runs a snippet that prints on BOTH library versions and shows both outputs. Before you edit, "
+                         "use it on the exact calls your code makes (spaces, None values, lists, special characters) to see what "
+                         f"changed. You have {self.max_explorations} uses.")
         if self.lib_roots:
             parts.append("The library's own source is readable with library_source / library_search (version 'old' = the code was written "
                          "for it, 'new' = what it must run on). When unsure how to keep the old behavior, read how the OLD version did it. "
@@ -358,6 +391,7 @@ class Agent:
 
     def run(self) -> AgentResult:
         messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": self._first_message()}]
+        self.transcript = messages
         calls = tokens = nudges = 0
         declined: str | None = None
         model_error: str | None = None
@@ -423,7 +457,7 @@ class Agent:
         if model_error:
             return AgentResult("declined", f"model call failed: {model_error}", self._final_diff(), steps=self.steps,
                                model_calls=calls, total_tokens=tokens, guard_rejections=self.rejections,
-                               injection_flags=self.flags)
+                               injection_flags=self.flags, transcript=self.transcript)
         return self._verdict(calls, tokens, declined)
 
     def _chat(self, messages: list[dict], temperature: float | None = None) -> Reply:
@@ -457,7 +491,7 @@ class Agent:
         if rep is not None and not rep.ok:
             m = rep.mismatches[0]
             return ("You stopped, but check_behavior reported that your edit changes behavior "
-                    f"(for example {where(m)}{m['function']} with input {m['input']}: old library gave {m['old']}, new code gave {m['new']}). "
+                    f"(for example {where(m)}{m['function']}({format_call_args(m['input'])}): old library gave {m['old']}, new code gave {m['new']}). "
                     "Fix the edit so it matches the old behavior, run check_behavior again, or call finish with status 'decline' and explain.")
         if self.edits == 0:
             return ("You have not made any edit. Make the smallest edit at the affected lines, or call finish with status "
@@ -467,7 +501,8 @@ class Agent:
     def _verdict(self, calls: int, tokens: int, declined: str | None) -> AgentResult:
         diff = self._final_diff()
         common: dict[str, Any] = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
-                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies, redactions=self.redactions)
+                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies, redactions=self.redactions,
+                      transcript=self.transcript)
         if declined is not None:
             return AgentResult("declined", f"model declined: {declined}", diff, **common)
         if self.edits == 0:
@@ -481,7 +516,7 @@ class Agent:
             if not rep.ok:
                 m = rep.mismatches[0]
                 return AgentResult("declined", f"behavior differs from the old version: {where(m)}{m['function']}"
-                                   f"({', '.join(json.dumps(a) for a in m['input'])}) old={m['old']} new={m['new']}",
+                                   f"({format_call_args(m['input'])}) old={m['old']} new={m['new']}",
                                    diff, final_tests=final, **common)
         if final.ok:
             return AgentResult("verified", "tests pass after the edits", diff, final_tests=final, **common)

@@ -315,18 +315,23 @@ def test_renamed_positional_parameter_and_bare_decorators_are_not_flagged():
     assert not site_affected(Change("lib.cp", "param_added_required", "x", param="fget"), bare, old2, new2)
 
 
-def test_generated_constructors_are_unknown_not_inherited_from_a_base(tmp_path):
+def test_constructors_generated_from_fields_we_cannot_read_are_unknown_not_inherited(tmp_path):
     from upkeep.apidiff import diff_api, extract_api
-    old, new = _two_versions(
-        tmp_path,
-        {"__init__.py": "from dataclasses import dataclass\n\n\nclass Base:\n    def __init__(self, x, y=1):\n        pass\n\n\n"
-                        "@dataclass\nclass Cfg(Base):\n    a: int = 0\n\n\nclass Child(Cfg):\n    pass\n\n\nclass Plain(Base):\n    pass\n"},
-        {"__init__.py": "from dataclasses import dataclass\n\n\nclass Base:\n    def __init__(self, x, y=1):\n        pass\n\n\n"
-                        "@dataclass\nclass Cfg(Base):\n    a: int = 0\n    b: str = ''\n\n\nclass Child(Cfg):\n    pass\n\n\nclass Plain(Base):\n    pass\n"})
+    pydantic_like = "class BaseModel:\n    pass\n\n\nclass Cfg(BaseModel):\n    a: int = 0\n\n\nclass Child(Cfg):\n    pass\n"
+    old, new = _two_versions(tmp_path, {"__init__.py": pydantic_like}, {"__init__.py": pydantic_like.replace("a: int = 0", "a: int = 0\n    b: str = ''")})
     api = extract_api(new, "lib")
     assert api["lib.Cfg"].ctor_unknown and api["lib.Child"].ctor_unknown          # no wrong signature is invented
-    assert not api["lib.Plain"].ctor_unknown and [p.name for p in api["lib.Plain"].params] == ["x", "y"]
     assert diff_api(extract_api(old, "lib"), api) == []                           # the field change is unknown, so nothing false is reported
+
+
+def test_a_dataclass_takes_its_own_fields_not_the_constructor_of_a_plain_base(tmp_path):
+    from upkeep.apidiff import extract_api
+    old, _ = _two_versions(
+        tmp_path, {"__init__.py": "from dataclasses import dataclass\n\n\nclass Base:\n    def __init__(self, x, y=1):\n        pass\n\n\n"
+                                  "@dataclass\nclass Cfg(Base):\n    a: int = 0\n\n\nclass Child(Cfg):\n    pass\n"}, {"__init__.py": ""})
+    api = extract_api(old, "lib")
+    assert [p.name for p in api["lib.Cfg"].params] == ["a"] and not api["lib.Cfg"].ctor_unknown
+    assert [p.name for p in api["lib.Child"].params] == ["a"] and api["lib.Child"].ctor_from == "lib.Cfg"
 
 
 def test_a_generated_constructor_class_that_disappears_is_still_reported_removed(tmp_path):

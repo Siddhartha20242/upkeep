@@ -1,0 +1,159 @@
+{
+  "funnel": {
+    "candidates": 30,
+    "has tests": 12,
+    "deps": 5
+  },
+  "repos": [
+    {
+      "repo": "leucos/ansible-tuto",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "CodedotAl/gpt-code-clippy",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "goruck/smart-zoneminder",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "Arthur151/ROMP",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "OHDSI/Criteria2Query",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "dflook/python-minifier",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "tern-tools/tern",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "mindspore-ai/models",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "ToyotaResearchInstitute/simnet",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "gabegrand/lilo",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "nkandpa2/music_enhancement",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "dod-advana/gamechanger-ml",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "veupnea/CCP",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "shahcompbio/single_cell_pipeline",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "fredzannarbor/pagekicker-community",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "bdtinc/maskcam",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "py-mine/PyMine-Server",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "StanfordVL/perls2",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "ENCODE-DCC/encoded",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "VIDA-NYU/alphad3m",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    },
+    {
+      "repo": "irec-org/irec",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "heblade/pythontraining",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "bigcommerce/bigcommerce-api-python",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "vapor-ware/kubetest",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "raspstephan/nwp-downscale",
+      "lib": "PyYAML",
+      "stage": "skipped: too big or unreadable"
+    },
+    {
+      "repo": "Wadaboa/titanet",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "jhotujec/crispy-forms-bulma",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "YijinHuang/pytorch-classification",
+      "lib": "PyYAML",
+      "stage": "skipped: no tests"
+    },
+    {
+      "repo": "nsidn98/NICE",
+      "lib": "PyYAML",
+      "stage": "skipped: radar found nothing that will fail"
+    },
+    {
+      "repo": "text-analytics-20/news-sentiment-development",
+      "lib": "PyYAML",
+      "stage": "skipped: dependencies did not install from wheels"
+    }
+  ]
+}

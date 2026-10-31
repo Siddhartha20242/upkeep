@@ -50,10 +50,21 @@ The first run takes a few minutes because it pulls images and installs packages;
 - It needs Docker running and the project to have a `requirements.txt` with the packages your tests use.
 - Dependencies are installed from wheels only. If that fails for an old pin, try `--image python:3.9-slim` (or another version),
   or `--allow-source-builds` (which runs the packages' build scripts inside the container, with network access).
+- If your `requirements.txt` lists many heavy packages your tests never import, add `--minimal-deps`: it installs only the packages the
+  code imports, which is lighter, faster and fails less often.
 - `--no-behavior-check` skips the old-versus-new comparison. Leave it on if you can: it is the point of the tool.
 - Check the result with `upkeep verify --run upkeep-out`. Read `PROOF.md` before you apply the patch.
-- For `yaml.load` the agent usually picks `yaml.FullLoader`, because that was PyYAML 5.4's default, so the behavior check passes. If
-  your YAML can come from untrusted sources, switch to `yaml.safe_load` yourself. Upkeep only rejects the clearly unsafe loaders.
+- For `yaml.load` the agent has to choose `yaml.SafeLoader`: Upkeep rejects `Loader`, `UnsafeLoader` and `FullLoader`. SafeLoader
+  refuses YAML that builds arbitrary Python objects. If your files rely on that, the behavior check may not notice (it only tries
+  plain data), so check it yourself.
+- Everything that was sent to the model is saved in `upkeep-out/model_transcript.json` (after secret redaction). Read it before you
+  share a run folder.
+- `--explore` lets the agent run short snippets on both library versions to see how they differ. It is off by default: on the
+  hardest case I tried it got closer but did not solve it, and it costs more tokens.
+
+Hard upgrades: add `--escalate meta:muse-spark-1.3` (needs `META_API_KEY`) to let a stronger model try after Muse Spark Open is declined, and
+`--max-turns 40` to give it room. It is slower and costs more tokens, and your code then goes to both providers. On `audit`,
+`--summary` prints counts only, which is the block to send back to me.
 
 ## What leaves your machine
 
@@ -81,4 +92,6 @@ The first run takes a few minutes because it pulls images and installs packages;
 4. Was anything confusing in the output or the steps?
 5. Would you run it before an upgrade? Why or why not?
 
-Send the answers (and which package and versions you tried) to the person who gave you this link.
+Send the answers to the person who gave you this link, together with the block printed by
+`upkeep audit --repo /path/to/your/project --summary`. That block holds counts and library names only: no code, no file names,
+no paths and no repo names.

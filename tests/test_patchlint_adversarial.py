@@ -7,8 +7,11 @@ from upkeep.patchlint import check_edit
 BASE = "def load(text):\n    return text\n"
 
 
+DEPENDENCIES = {"yaml", "markupsafe", "jinja2", "lib"}      # the upgraded library and what the project already depends on
+
+
 def edit(snippet: str) -> tuple[bool, str]:
-    return check_edit(BASE, BASE + snippet)
+    return check_edit(BASE, BASE + snippet, DEPENDENCIES)
 
 
 REJECT = {

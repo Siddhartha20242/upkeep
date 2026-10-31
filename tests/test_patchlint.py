@@ -15,7 +15,7 @@ BASE = "import lib\n\n\ndef tok(user):\n    return lib.legacy_token(user)\n"
     "import urllib.parse\n\n\ndef tok(user):\n    return urllib.parse.quote(user)\n",
 ])
 def test_legitimate_migration_edits_pass(new):
-    assert check_edit(BASE, new) == (True, "")
+    assert check_edit(BASE, new, {"lib", "markupsafe"}) == (True, "")
 
 
 @pytest.mark.parametrize("new,expect", [
@@ -47,10 +47,10 @@ def test_preexisting_constructs_are_not_penalised():
 @pytest.mark.parametrize("loader", ["yaml.Loader", "yaml.UnsafeLoader", "yaml.CLoader"])
 def test_unsafe_yaml_loaders_are_rejected_but_safe_ones_pass(loader):
     base = "import yaml\n\n\ndef f(t):\n    return yaml.load(t)\n"
-    ok, why = check_edit(base, f"import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader={loader})\n")
+    ok, why = check_edit(base, f"import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader={loader})\n", {"yaml"})
     assert not ok and "unsafe deserialization" in why and "SafeLoader" in why
-    for safe in ("yaml.SafeLoader", "yaml.CSafeLoader", "yaml.FullLoader"):
-        assert check_edit(base, f"import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader={safe})\n")[0], safe
+    for safe in ("yaml.SafeLoader", "yaml.CSafeLoader"):
+        assert check_edit(base, f"import yaml\n\n\ndef f(t):\n    return yaml.load(t, Loader={safe})\n", {"yaml"})[0], safe
 
 
 def test_preexisting_unsafe_loader_is_not_blamed_on_the_edit():

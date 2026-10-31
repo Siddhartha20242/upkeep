@@ -194,3 +194,61 @@ def test_no_behavior_check_flag_turns_it_off(tmp_path, monkeypatch):
     model = Scripted([[FIX], [tc("finish", {"status": "fixed", "summary": "x"})]])
     cli.main(fix_args(repo, out, "--from", "1.0", "--to", "2.0", "--no-behavior-check"), client=model)
     assert "not run (only the repo's own tests" in (out / "PROOF.md").read_text()
+
+
+def test_the_failure_message_shows_pips_error_lines_not_its_chatter():
+    out = ("ERROR: Ignored the following versions that require a different python version: 1.2.0 Requires-Python >=3.10\n"
+           "ERROR: Could not find a version that satisfies the requirement pycrypto==2.6.1 (from versions: none)\n"
+           "ERROR: No matching distribution found for pycrypto==2.6.1\n\n[notice] A new release of pip is available: 23.0.1 -> 26.0.1\n")
+    got = autoprep.pip_errors(out)
+    assert "pycrypto==2.6.1" in got and "notice" not in got and "Ignored" not in got and got.count("\n") == 1
+    assert autoprep.pip_errors("something odd happened") == "something odd happened"
+
+
+def test_a_pin_that_cannot_be_installed_ends_in_a_prepare_error_that_names_it(fake_world):
+    class Fails(Installer):
+        def __call__(self, repo, deps, packages, image="", wheels_only=False, **kw):
+            deps.mkdir(parents=True, exist_ok=True)
+            return TestResult(False, 1, "ERROR: Could not find a version that satisfies the requirement pycrypto==2.6.1\n[notice] pip", "docker")
+    with pytest.raises(PrepareError, match="pycrypto==2.6.1") as e:
+        run(fake_world, Fails())
+    assert "[notice]" not in str(e.value) and "--allow-source-builds" in str(e.value)
+
+
+def test_minimal_deps_keeps_only_the_requirements_the_code_imports(tmp_path):
+    r = repo_with(tmp_path, "requests==2.28.1\nnumpy==1.26.0\npython-dateutil==2.8.2\nPillow==10.0.0\nscikit-learn==1.3.0\nunused-thing==1.0\nPyYAML==5.4.1\n")
+    (r / "app.py").write_text("import requests\nfrom dateutil import parser\nimport PIL.Image\nimport yaml\n")
+    (r / "pkg").mkdir()
+    (r / "pkg" / "m.py").write_text("from sklearn.linear_model import Ridge\n")
+    full, _ = repo_requirements(r, "PyYAML")
+    mini, notes = repo_requirements(r, "PyYAML", only_imported=True)
+    assert len(full) == 6
+    assert mini == ["requests==2.28.1", "python-dateutil==2.8.2", "Pillow==10.0.0", "scikit-learn==1.3.0"]   # numpy and unused-thing dropped
+    assert any("minimal dependencies: installing 4 of 6" in n for n in notes)
+
+
+def test_imports_are_read_without_running_anything_and_odd_files_are_skipped(tmp_path):
+    (tmp_path / "ok.py").write_text("import os, json\nfrom flask import Flask\nfrom . import sibling\n")
+    (tmp_path / "bad.py").write_text("def broken(:\n")
+    (tmp_path / "sneaky.py").write_text("import evil_module\nopen('SHOULD_NOT_EXIST', 'w')\n")
+    assert autoprep.imported_roots(tmp_path) >= {"os", "json", "flask", "evil_module"}
+    assert not (tmp_path / "SHOULD_NOT_EXIST").exists()
+
+
+@pytest.mark.parametrize("req,imports", [("python-dateutil", "dateutil"), ("PyYAML", "yaml"), ("beautifulsoup4", "bs4"), ("Pillow", "pil"),
+                                         ("msgpack-python", "msgpack"), ("typing_extensions", "typing_extensions"), ("some-pkg", "some_pkg")])
+def test_import_names_cover_the_common_oddities(req, imports):
+    assert imports in autoprep.import_names(req)
+
+
+def test_the_cli_flag_reaches_the_preparation(tmp_path, monkeypatch):
+    old, new, repo = build(tmp_path)
+    seen = {}
+
+    def fake(repo_, dist, a, b, module, image, **k):
+        seen.update(k)
+        return Prepared(old, new, "lib", None, old, new, "python:3.9-slim", [])
+    monkeypatch.setattr(cli, "prepare_upgrade", fake)
+    model = Scripted([[FIX], [tc("finish", {"status": "fixed", "summary": "x"})]])
+    cli.main(fix_args(repo, tmp_path / "o", "--from", "1.0", "--to", "2.0", "--minimal-deps"), client=model)
+    assert seen["only_imported"] is True

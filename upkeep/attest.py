@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .pypi import release_digest
 
-FILES = ("fix.patch", "PROOF.md", "result.json")
+FILES = ("fix.patch", "PROOF.md", "result.json", "model_transcript.json")
 MANIFEST, SIGNATURE = "MANIFEST.json", "MANIFEST.sig"
 
 
