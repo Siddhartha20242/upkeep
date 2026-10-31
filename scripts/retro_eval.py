@@ -9,7 +9,7 @@ that mentions the library:
   unseen     the radar saw nothing here: a blind spot (aliases, method calls, string-based use, ...)
 
 Only line numbers and categories are saved (never other people's code). Commits come from keyword searches, so the
-sample is biased toward well-described fixes; read the caveats in the README.
+sample is biased toward well-described fixes; read the caveats in docs/EVIDENCE.md.
 
 Run:  PYTHONPATH=. python scripts/retro_eval.py [--max-per-lib 60] [--libs pyyaml,jinja2,...]
 Needs: `gh` logged in (read-only API use), network for PyPI. No model is called.

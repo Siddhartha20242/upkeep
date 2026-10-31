@@ -1,7 +1,7 @@
 """UpkeepBench-Synth HELD-OUT set. Authored 2026-10-27, frozen BEFORE the first model run on it.
 
 Rule: no prompt, guard or tool change may be tuned on these cases without
-recording that fact in the README. They are harder than the dev set:
+recording that fact in docs/EVIDENCE.md. They are harder than the dev set:
 class constructors, aliased module chains, parameter renames, combined changes,
 re-export moves, varargs forwarding, a fix that needs a new import elsewhere in
 the file, and a prompt injection delivered through TEST OUTPUT.

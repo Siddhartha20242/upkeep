@@ -30,10 +30,10 @@ Werkzeug decline prints whichever difference the probes found first.
 
 ## What to point at for the judges
 - **Meta tooling:** the agent loop, release-note tool calls and probe-input proposals all run on
-  `meta-models/muse-spark-open-1026` (Baseten). Muse Spark 1.1, 1.2 and 1.3 on the Meta API are compared in the README's
-  scorecard (tool-call reliability over 512 calls, authored cases, the Werkzeug trap, probe quality).
+  `meta-models/muse-spark-open-1026` (Baseten). Muse Spark 1.1, 1.2 and 1.3 on the Meta API are compared in the scorecard in `docs/EVIDENCE.md`
+  (tool-call reliability over 512 calls, authored cases, the Werkzeug trap, probe quality).
 - **Technical depth:** static API diff, scope guard, content check, sandbox with no network, differential behavior check.
-- **Honesty:** the README lists fourteen things that went wrong and what caught each.
+- **Honesty:** docs/EVIDENCE.md lists fifteen things that went wrong and what caught each.
 
 ## If something goes wrong on camera
 - **Model slow or fails:** play the saved rehearsal transcript `docs/demo_rehearsal_output.txt` or open `demo/out/*/PROOF.md` and say on screen that it is from the rehearsal.

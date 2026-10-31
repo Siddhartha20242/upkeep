@@ -22,7 +22,7 @@ import zlib
 from pathlib import Path
 
 # Not the temp folder: macOS clears old files from temp folders and can leave empty directories behind, which is the most
-# likely cause of the "library sources lost their .py files" incident described in the README (not proven).
+# likely cause of the "library sources lost their .py files" incident described in docs/EVIDENCE.md (not proven).
 DEFAULT_CACHE = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "upkeep" / "pypi"
 
 

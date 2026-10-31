@@ -171,7 +171,7 @@ def render(result: dict | None, patch: str, proof_md: str, evals: dict[str, list
         parts.append(run_section(result, patch, proof_md))
     if evals:
         parts.append("<h2>Benchmarks</h2><p class='mut'>Authored cases and authored apps on real libraries, <b>not</b> a public benchmark. "
-                     "Read the README for what each one can and cannot show.</p>")
+                     "Read docs/EVIDENCE.md for what each one can and cannot show.</p>")
         parts += [bench_section(n, r) for n, r in evals.items()]
     return (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
             f"<title>Upkeep</title><style>{CSS}</style></head><body><main>{''.join(parts)}</main></body></html>")
