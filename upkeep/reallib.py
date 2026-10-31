@@ -214,7 +214,7 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
                    focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
                    prober_client=None, n_random: int = 0, library_source: bool = False,
-                   explore: bool = False, escalate_client=None, escalate_turns: int = 40, hint: bool = True) -> Outcome:
+                   explore: bool = False, escalate_client=None, escalate_turns: int = 40, hint: bool = True, repair_rounds: int = 0) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -251,14 +251,28 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
         t0 = time.monotonic()
         try:
             res = agent.run()
-            if res.status != "verified" and escalate_client is not None:  # the verifier declined: the stronger model tries, same verifier
-                first_calls, first_tokens = res.model_calls, res.total_tokens
-                earlier = {"model": getattr(client, "model", "the first model"), "reason": res.reason, "diff": res.diff} if hint else None
+            attempts_made, empties, reasoning = 1, res.empty_replies, res.reasoning_chars
+            spent_calls, spent_tokens = 0, 0
+            last_model = getattr(client, "model", "the first model")
+
+            def next_attempt(cl, turns, explore):
+                nonlocal agent, res, attempts_made, empties, reasoning, spent_calls, spent_tokens, last_model
+                spent_calls, spent_tokens = spent_calls + res.model_calls, spent_tokens + res.total_tokens
+                earlier = {"model": last_model, "reason": res.reason, "diff": res.diff} if hint else None
                 agent.cleanup()
-                agent = build(escalate_client, escalate_turns, True, earlier)
+                agent = build(cl, turns, explore, earlier)
                 res = agent.run()
-                res.model_calls += first_calls
-                res.total_tokens += first_tokens
+                attempts_made += 1
+                last_model = getattr(cl, "model", "the previous model")
+                empties, reasoning = empties + res.empty_replies, reasoning + res.reasoning_chars
+            for _ in range(repair_rounds):  # the same model again, shown the declined patch and the counterexample
+                if res.status == "verified":
+                    break
+                next_attempt(client, max_turns, explore)
+            if res.status != "verified" and escalate_client is not None:  # the verifier declined: the stronger model tries, same verifier
+                next_attempt(escalate_client, escalate_turns, True)
+            res.model_calls += spent_calls
+            res.total_tokens += spent_tokens
         except Exception as e:  # one broken case must not lose the whole benchmark run
             return Outcome(**base, outcome="error", status="error", reason=f"{type(e).__name__}: {str(e)[:150]}")
         dt = time.monotonic() - t0
@@ -272,7 +286,8 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
         out = Outcome(**base, outcome=outcome, status=res.status, reason=res.reason, model_calls=res.model_calls,
                       tokens=res.total_tokens, seconds=round(dt, 1), guard_rejections=res.guard_rejections,
                       injection_flags=res.injection_flags, hidden_ok=hidden_ok,
-                      tools=[s["tool"] for s in res.steps], diff=res.diff[:1500])
+                      tools=[s["tool"] for s in res.steps], diff=res.diff[:1500], attempts=attempts_made,
+                      empty_replies=empties, reasoning_chars=reasoning)
         agent.cleanup()
         return out
     finally:

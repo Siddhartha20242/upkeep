@@ -123,6 +123,7 @@ class AgentResult:
     injection_flags: list[str] = field(default_factory=list)
     behavior: dict | None = None
     empty_replies: int = 0  # dropped (empty) model replies that were asked again
+    reasoning_chars: int = 0  # characters of reasoning the model produced (Muse Spark Open always reasons first)
     redactions: int = 0  # secret-like strings removed from text sent to the model
     transcript: list[dict] = field(default_factory=list)  # every message exchanged with the model (already redacted)
 
@@ -177,6 +178,7 @@ class Agent:
         self.known_secrets = known_secret_values(repo)  # exact values (env vars, .env files) redacted wherever they appear
         self.transcript: list[dict] = []
         self.max_empty_retries, self.empty_replies = max_empty_retries, 0
+        self.reasoning_chars = 0
         self.import_roots = set(import_roots) | {report.package.split(".")[0]}
         self.explorer, self.max_explorations, self.explorations = explorer, max_explorations, 0
         self.max_library_reads, self.library_reads = max_library_reads, 0
@@ -415,12 +417,20 @@ class Agent:
                     self.empty_replies += 1
                     calls += 1
                     tokens += int((reply.usage or {}).get("total_tokens", 0))
+                    self.reasoning_chars += len(reply.reasoning)
+                    if tries == 1 and reply.reasoning:
+                        # The model said what it meant to do and stopped before doing it: show it the end of its own reasoning.
+                        tail = self._redacted(reply.reasoning[-300:])
+                        messages.append({"role": "assistant", "content": "(no output)"})
+                        messages.append({"role": "user", "content": "Your last reply ended after reasoning, with no tool call. The end of your "
+                                         f"reasoning was: \"...{tail}\". Make that tool call now, or call finish."})
                     reply = self._chat(messages, temperature=0.3 + 0.3 * tries)
             except LLMError as e:  # a failed model call must end in an honest decline, never a crash
                 model_error = str(e)[:200]
                 break
             calls += 1
             tokens += int((reply.usage or {}).get("total_tokens", 0))
+            self.reasoning_chars += len(reply.reasoning)
             msg: dict = {"role": "assistant", "content": reply.text or None}
             if not reply.text and not reply.tool_calls:
                 msg["content"] = "(no output)"  # the API rejects an assistant message with neither content nor tool calls
@@ -510,7 +520,7 @@ class Agent:
     def _verdict(self, calls: int, tokens: int, declined: str | None) -> AgentResult:
         diff = self._final_diff()
         common: dict[str, Any] = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
-                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies, redactions=self.redactions,
+                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies, reasoning_chars=self.reasoning_chars, redactions=self.redactions,
                       transcript=self.transcript)
         if declined is not None:
             return AgentResult("declined", f"model declined: {declined}", diff, **common)

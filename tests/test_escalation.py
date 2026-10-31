@@ -36,8 +36,8 @@ def test_a_declined_first_attempt_escalates_and_the_proof_records_both(tmp_path,
     assert result["model"] == "muse-spark-1.3" and result["provider"] == "meta"          # the headline model produced the final result
     assert result["tokens"] == sum(a["tokens"] for a in result["attempts"])
     proof = (out / "PROOF.md").read_text()
-    assert "escalated" in proof and "attempt 1: `meta-models/muse-spark-open-1026`" in proof and "attempt 2: `muse-spark-1.3`" in proof
-    assert "declined" in proof and "verified" in proof and "the verifier decided both times" in proof
+    assert "retried" in proof and "attempt 1: `meta-models/muse-spark-open-1026`" in proof and "attempt 2: `muse-spark-1.3`" in proof
+    assert "declined" in proof and "verified" in proof and "the verifier decided every time" in proof
 
 
 def test_the_earlier_attempts_conversation_is_kept_in_the_audit_log(tmp_path):
@@ -95,3 +95,27 @@ def test_the_escalated_model_is_shown_the_declined_attempt_as_untrusted_data(tmp
     assert "was DECLINED by the verifier" in first and "UNTRUSTED_CONTENT" in first and "earlier declined attempt" in first
     assert "was DECLINED" not in log["earlier_attempts"][0]["agent_messages"][1]["content"]   # the first attempt had no such hint
 
+
+
+def test_repair_rounds_retry_the_same_model_with_the_declined_attempt_shown(tmp_path):
+    old, new, repo = build(tmp_path)
+    out = tmp_path / "o"
+    class Twice:                       # the SAME client object serves both attempts; it fixes only once it is shown the declined attempt
+        model = "meta-models/muse-spark-open-1026"
+        first, second = decline(), fixer()
+
+        def chat(self, messages, **kw):
+            shown = "was DECLINED by the verifier" in messages[1]["content"]
+            return (self.second if shown else self.first).chat(messages, **kw)
+    cli.main(args(old, new, repo, out, "--repair-rounds", "1"), client=Twice())
+    result = json.loads((out / "result.json").read_text())
+    assert [a["status"] for a in result["attempts"]] == ["declined", "verified"] and result["status"] == "verified"
+    assert {a["model"] for a in result["attempts"]} == {"meta-models/muse-spark-open-1026"}
+    assert "reasoning_chars" in result
+
+
+def test_no_repair_rounds_by_default(tmp_path):
+    old, new, repo = build(tmp_path)
+    out = tmp_path / "o"
+    cli.main(args(old, new, repo, out), client=decline())
+    assert len(json.loads((out / "result.json").read_text())["attempts"]) == 1

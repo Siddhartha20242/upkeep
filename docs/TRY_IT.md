@@ -62,7 +62,7 @@ The first run takes a few minutes because it pulls images and installs packages;
 - `--explore` lets the agent run short snippets on both library versions to see how they differ. It is off by default: on the
   hardest case I tried it got closer but did not solve it, and it costs more tokens.
 
-Hard upgrades: add `--escalate meta:muse-spark-1.3` (needs `META_API_KEY`) to let a stronger model try after Muse Spark Open is declined, and
+Hard upgrades: add `--repair-rounds 2 --explore --max-turns 40` (the same model retries from the verifier's counterexample; same provider, many more tokens), or add `--escalate meta:muse-spark-1.3` (needs `META_API_KEY`) to let a stronger model try after Muse Spark Open is declined, and
 `--max-turns 40` to give it room. It is slower and costs more tokens, and your code then goes to both providers. On `audit`,
 `--summary` prints counts only, which is the block to send back to me.
 

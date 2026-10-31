@@ -55,6 +55,9 @@ class Outcome:
     tampered: bool = False
     tools: list[str] = field(default_factory=list)
     diff: str = ""
+    attempts: int = 1
+    empty_replies: int = 0
+    reasoning_chars: int = 0
 
     def to_dict(self) -> dict:
         return asdict(self)

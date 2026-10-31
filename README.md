@@ -35,6 +35,8 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 
 `fix` downloads both releases, installs your dependencies for each version inside Docker (the only step that uses the network, wheels only), runs the agent and writes the result to `upkeep-out/`. The first run takes a few minutes. If you already have the library source and dependency folders, `--old`, `--new`, `--deps` and `--old-deps` do the same job by hand (see `docs/DEMO.md`).
 
+For a hard upgrade, add `--repair-rounds 2 --explore --max-turns 40`: if the verifier declines, the same model tries again from the declined patch and the counterexample. It uses many more tokens and sends your code to the same provider each time.
+
 `upkeep fix` never changes your repo. It writes `fix.patch`, `PROOF.md` and `result.json`, and prints each agent step as it happens. `--open-pr` proposes a draft pull request, and only does a dry run unless you add `--confirm`. `--test-backend local --unsandboxed` runs your tests on your own machine with no isolation, so only use it on code you trust. `upkeep audit --fail-on hard` is the form to use in CI.
 
 [`docs/TRY_IT.md`](docs/TRY_IT.md) walks through trying it on your own project. [`docs/DEMO.md`](docs/DEMO.md) is the script for the 3-minute demo.
@@ -49,8 +51,8 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 
 ## What I found
 
-- Werkzeug is the hard case, and it splits the models. A single Muse Spark Open attempt has never produced a correct fix (0 of 47 runs, even with library source, a compare tool and 40 turns). Muse Spark 1.3 with the compare tool fixed it 2 of 2 (hidden tests pass), at 338k to 574k tokens a run. Over all 72 runs with the behavior check on, 62 ended in a decline, 9 were verified and correct, and 1 was verified and wrong. That wrong one came from Muse Spark 1.1 before I added edge-case probes.
-- `upkeep fix --escalate meta:muse-spark-1.3` uses that split. Open goes first because it is cheap and open-weight. If the verifier declines, a second attempt starts from the declined patch and the verifier's counterexample, and the same verifier judges it. Escalating to 1.3 verified a correct fix in 4 of 5 runs (2 of 3 before the second attempt was shown the failure), and Open on a second try got it once in 3. So the hard case is mostly solved by a model that is not open-weight. The sample is small. Details are in `docs/EVIDENCE.md`, result 16.
+- Werkzeug is the hard case. A single Muse Spark Open attempt never produced a correct fix (0 of 47 runs, even with library source, a compare tool and 40 turns). What changed that is a repair loop: when the verifier declines, the next attempt starts from the declined patch and the verifier's counterexample (the input, what the old library returned, what the patch returned). With up to three attempts, Open alone verified a correct fix in 6 of 8 runs (hidden tests pass), and the other 2 were declined. It is expensive, 221k to 1.9M tokens a run, and the sample is small. Muse Spark 1.3 can also fix it (2 of 2 alone, and `--escalate meta:muse-spark-1.3` verified 4 of 5 after Open failed).
+- Over all 80 runs on Werkzeug with the behavior check on, 64 ended in a decline, 15 were verified and correct, and 1 was verified and wrong. That wrong one came from Muse Spark 1.1 before I added edge-case probes. Without the check, the same agent called a wrong fix "verified" in 18 of 18 runs. Details are in `docs/EVIDENCE.md`, result 16.
 - PyYAML and Jinja2 work. The agent fixed each of them correctly 15 times out of 15 in the latest runs (the hidden tests pass). Earlier Jinja2 runs varied a lot, from 0 of 3 to 3 of 3 with the same settings, so those older numbers are noisier than they look.
 - The radar catches about two thirds of the lines that real developers had to change. I took 60 real commits that fixed an upgrade break, ran the radar on the code from before each fix, and set aside half of them as a held-out set. On that half it flagged 47 of 73 relevant lines (64%).
 - I also ran it on 35 public repos I did not write. The first run flagged 299 lines and most were wrong. I fixed the causes one by one. On the repos I tuned on, 41 of 42 "will fail" flags were real. On a second set I never tuned on, it flagged 12 lines, and 2 of them mattered.
@@ -64,6 +66,7 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 - It only handles Python, and mostly sees changes to function signatures. It cannot see a function that keeps its signature and behaves differently. It also cannot see a parameter that stops accepting a value it used to accept (Werkzeug 3 rejects `method="sha256"`).
 - A clean behavior check is evidence and falls short of proof. A model chooses the inputs, I add edge cases, and a second round targets lines the first inputs never reached. Inputs are JSON (plus tagged tuples, sets and bytes) and only module-level functions are probed. `PROOF.md` says how many lines of each function the probes executed, so you can see how thin the evidence is.
 - Redaction knows the shape of common tokens, the exact values of your own environment secrets and `.env` files, and what random keys look like. It will still miss a secret of an unknown shape that is not in your environment. The content check now denies new imports and builtins by default, but attribute tricks are still a deny list, and I found 13 ways around an earlier version. Docker with no network is the real boundary.
+- I used Muse Spark Open (through Baseten only) and the Muse Spark 1.1 to 1.3 models. I did not use Muse Code, Muse Glimmer, or other inference routes (Modal, Fireworks, my own hardware), so I have no comparison against them. I did not fine-tune anything. `scripts/export_verified_traces.py` turns verified runs into chat-format training examples, and that is as far as it goes.
 - The samples are small, and some results moved a lot between runs.
 
 ## Security
@@ -78,7 +81,7 @@ Every PyPI release is checked against the SHA-256 that PyPI publishes for it. A 
 
 ## Tests
 
-There are 551 tests, with about 90% line coverage, and `mypy` reports no problems. GitHub Actions runs them on Python 3.10, 3.11 and 3.12. No test needs the network, Docker or a model key.
+There are 558 tests, with about 90% line coverage, and `mypy` reports no problems. GitHub Actions runs them on Python 3.10, 3.11 and 3.12. No test needs the network, Docker or a model key.
 
 Two kinds of test found real bugs. The first is a ground-truth test for the radar. It generates thousands of random function signatures and changes, then asks Python's own `inspect.Signature.bind` whether each call still works. On its first run the radar missed 11% of the calls that broke, and I fixed that. The second is a set of adversarial edits for the content check. Details are in [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 

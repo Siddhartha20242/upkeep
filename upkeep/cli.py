@@ -269,14 +269,25 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
     agent, res = attempt(client, args.max_turns, args.explore)
     attempts = [_attempt_record(client, args.provider, args.max_turns, args.explore, res)]
     earlier: list[dict] = []
+    for rnd in range(args.repair_rounds):  # same model again, shown the declined patch and the verifier's counterexample
+        if res.status == "verified":
+            break
+        print(paint(f"\nupkeep: repair round {rnd + 1}: {attempts[-1]['model']} tries again from the declined patch ({res.reason[:90]}); "
+                    "the verifier still decides.", "yellow", use_color()), flush=True)
+        earlier.append({"model": attempts[-1]["model"], "agent_messages": res.transcript})
+        hint = {"model": attempts[-1]["model"], "reason": res.reason, "diff": res.diff}
+        agent.cleanup()
+        agent, res = attempt(client, args.max_turns, args.explore, hint)
+        attempts.append(_attempt_record(client, args.provider, args.max_turns, args.explore, res))
     if res.status != "verified" and args.escalate:
         prov, _, mod = args.escalate.partition(":")
         esc = escalator or client_for(prov, mod)
         print(paint(f"\nupkeep: {attempts[0]['model']} did not verify a fix ({res.reason[:90]}). Escalating to {mod} with the "
                     f"compare tool and {args.escalate_turns} turns; the verifier still decides.", "yellow", use_color()), flush=True)
-        earlier.append({"model": attempts[0]["model"], "agent_messages": res.transcript})
+        earlier.append({"model": attempts[-1]["model"], "agent_messages": res.transcript})
+        hint = {"model": attempts[-1]["model"], "reason": res.reason, "diff": res.diff}
         agent.cleanup()
-        agent, res = attempt(esc, args.escalate_turns, True, {"model": attempts[0]["model"], "reason": res.reason, "diff": res.diff})
+        agent, res = attempt(esc, args.escalate_turns, True, hint)
         attempts.append(_attempt_record(esc, prov, args.escalate_turns, True, res))
         client, args.provider = esc, prov  # the proof's headline model is the one that produced the final result
     print()
@@ -295,7 +306,7 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
     provider = args.provider if getattr(client, "model", None) else "n/a"
     probe_note = f"; probe inputs by `{getattr(prober, 'model', '?')}` via `{args.prober_provider}`" if prober is not None and args.prober_provider else ""
     if len(attempts) > 1:
-        md += "\n## Agent run\n- escalated: the first model did not verify a fix, so a second model tried again (the verifier decided both times)\n"
+        md += "\n## Agent run\n- retried: an attempt was declined, so the next attempt started from the declined patch and the counterexample (the verifier decided every time)\n"
         for i, a in enumerate(attempts, 1):
             md += (f"- attempt {i}: `{a['model']}` via `{a['provider']}`, {a['max_turns']} turns{', compare tool' if a['explore'] else ''}: "
                    f"{a['status']} ({a['model_calls']} calls, {a['tokens']} tokens)\n")
@@ -303,7 +314,7 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
     else:
         md += f"\n## Agent run\n- model: `{model_name}` via provider `{provider}`{probe_note}\n"
     md += (f"- model calls: {res.model_calls}, tokens: {res.total_tokens} (final attempt), guard rejections: {res.guard_rejections}, "
-           f"empty model replies re-asked: {res.empty_replies}\n"
+           f"empty model replies re-asked: {res.empty_replies}, reasoning: {res.reasoning_chars} characters\n"
            "- tool trace: " + " > ".join(s["tool"] for s in res.steps) + "\n")
     leaks = scan_secrets(res.diff, known_secret_values(args.repo))
     md += ("\n## Security\n"
@@ -317,7 +328,7 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
     (args.out / "result.json").write_text(json.dumps(
         {"status": res.status, "reason": res.reason, "model": model_name, "provider": provider, "model_calls": res.model_calls,
          "tokens": sum(a["tokens"] for a in attempts), "attempts": attempts,
-         "guard_rejections": res.guard_rejections, "empty_replies": res.empty_replies,
+         "guard_rejections": res.guard_rejections, "empty_replies": res.empty_replies, "reasoning_chars": res.reasoning_chars,
          "redactions": res.redactions, "secrets_in_patch": dict(leaks),
          "injection_flags": res.injection_flags, "steps": res.steps, "behavior": res.behavior}, indent=2))
     (args.out / "model_transcript.json").write_text(json.dumps(
@@ -439,6 +450,9 @@ def main(argv: list[str] | None = None, client=None, prober=None, escalator=None
     f.add_argument("--escalate", metavar="PROVIDER:MODEL",
                    help="if the first model does not verify a fix, try again with this one (for example meta:muse-spark-1.3) using the compare "
                         "tool and --escalate-turns. The verifier still decides; the proof records both attempts")
+    f.add_argument("--repair-rounds", type=int, default=0, metavar="N",
+                   help="if the verifier declines, let the SAME model try up to N more times, each shown the declined patch and the "
+                        "counterexample (default 0). Runs before --escalate.")
     f.add_argument("--escalate-turns", type=int, default=40, help="turns for the escalation attempt (default 40)")
     f.add_argument("--max-turns", type=int, default=14,
                    help="model turns the agent may use (default 14). Hard cases need more: Werkzeug was only ever fixed with 40")

@@ -17,7 +17,7 @@ Sources are the numbered results below; every cell comes from a file in `eval_re
 | Tokens / seconds per authored case | 13.4k / 11 | 13.8k / 13 | 15.4k / 20 | 11.2k / 10 |
 | Werkzeug, no behavior check: wrong but called verified (result 3) | 12 of 12 | 2 of 2 | 2 of 2 | 2 of 2 |
 | Own probes catch the subtle wrong fix / the naive one (result 10) | 3/6, 6/6 | 5/6, 5/6 | 4/6, 6/6 | 5/6, 5/6 |
-| Werkzeug fixed, hidden tests pass, check on, one attempt (result 16) | 0/47 | not run | not run | 2/2 |
+| Werkzeug fixed, hidden tests pass, check on (result 16) | 0/47 one attempt, 6/8 with repair rounds | not run | not run | 2/2 |
 
 How to read it: newer versions call tools more reliably but are slower and use more tokens; Open is the cheapest and
 fastest per call but is the one that answers in text instead of calling `finish` (the agent's nudge exists for it) and that
@@ -64,7 +64,7 @@ little. *Caveat: three libraries, apps written by me, small samples.*
 | check on, with edge-case expansion (Open x 3, `muse-spark-1.1` x 3) | 6 | 0 | 0 | 6 |
 
 The table covers the first 31 check-on runs. Later experiments (random inputs, library source, re-asking, Muse Spark 1.3, escalation;
-results 13 and 16) bring the total to 72 check-on runs: 62 declined, 9 verified with the hidden tests passing, and 1 wrong fix got
+results 13 and 16) bring the total to 80 check-on runs: 64 declined, 15 verified with the hidden tests passing, and 1 wrong fix got
 through. That one predates the edge-case expansion, and none of the runs after it was a wrong acceptance.
 
 The one wrong acceptance was `muse-spark-1.1` using `safe='/+'` where the old default was `safe='/:'`; neither the
@@ -268,7 +268,7 @@ mostly matters on larger functions.
 
 ### 16. The hard case and the tiered design: Muse Spark Open first, a stronger model only if the verifier declines
 
-Werkzeug 2.3.8 to 3.0.3 is the case no single Open attempt has solved. Every setup I tried, by model and harness (hidden tests decide "correct"):
+Werkzeug 2.3.8 to 3.0.3 is the case no single Open attempt solved in 47 runs. Every setup I tried, by model and harness (hidden tests decide "correct"):
 
 | Setup | Runs | Correct fix |
 |---|---|---|
@@ -278,6 +278,7 @@ Werkzeug 2.3.8 to 3.0.3 is the case no single Open attempt has solved. Every set
 | Open, then escalate to 1.3, second model starts fresh (first 3 escalation runs) | 3 | 2 |
 | Open, then Open again, second attempt is shown the declined patch and the counterexample | 3 | 1 |
 | Open, then escalate to 1.3, second model is shown the declined patch and the counterexample | 5 | 4 |
+| Open only, up to 3 attempts (`--repair-rounds 2`, compare tool, 40 turns), each retry shown the declined patch and the counterexample | 8 | 6 |
 
 `--escalate PROVIDER:MODEL` runs the cheap open-weight model first. Only if the deterministic verifier declines does a second model get
 the task. A correction: the first three escalation runs did NOT show the second model why the first attempt failed. I had written
@@ -291,12 +292,19 @@ second model's patch was declined (`app.py:9`, `werkzeug.urls.url_encode` differ
 Tokens per run were 257k to 880k (38 to 65 model calls, 6 to 24 minutes), summed over both attempts, in
 `eval_results/reallib_baseten_behavior_escalate.json`, `..._hint_open2open.json` and `..._hint_o2m13.json`.
 
-Across every check-on Werkzeug run on file (72): 62 declined, 9 verified with the hidden tests passing, 1 verified with them failing (Muse
-Spark 1.1, before the edge-case probes existed). Of the 9, none came from a single Open attempt; one came from Open on a second try with
-the counterexample (1 of 3), which is the first time an Open run has produced a correct Werkzeug fix.
+The Open-only rows are the answer to "does the hard case need a closed model": no. Open with up to three attempts, each shown what the
+verifier found wrong with the last one, produced a verified, correct fix in 6 of 8 runs (hidden tests pass). The other 2 ended in a
+decline. Of the 6, five needed a second or third attempt and one succeeded on its first. Cost is high: 221k to 1.9M tokens per run
+(25 to 129 model calls, 4 to 20 minutes), against 27k to 109k for the PyYAML and Jinja2 cases. In these 8 runs Open produced 0 to 9 empty
+replies and 0.2M to 1.5M characters of reasoning, recorded in the results file per run
+(`eval_results/reallib_baseten_behavior_repair2_a.json`, `..._b.json`). These runs also use the new behavior for an empty reply (the model is
+shown the end of its own reasoning, result 20), so I cannot say how much of the change is the retry loop and how much is that.
 
-Caveats: one case, small samples. Muse Spark 1.3 is served by Meta's API and is not open-weight, so most of the Werkzeug fixes come from a
-model outside the open-weight prize category. Cost: Open spends 27k to 40k tokens per verified PyYAML fix and 59k to 109k for Jinja2
+Across every check-on Werkzeug run on file (80): 64 declined, 15 verified with the hidden tests passing, 1 verified with them failing (Muse
+Spark 1.1, before the edge-case probes existed). No run since has been a wrong acceptance. The 15 correct ones: 6 Open alone with repair rounds, 2 Muse Spark 1.3 alone, 6 Open then Muse Spark 1.3, and 1 Open then Open.
+
+Caveats: one case, small samples (8 runs for the Open-only result), and the cost is large. Muse Spark 1.3 is served by Meta's API and is not
+open-weight, but it is no longer needed to solve the hard case. Cost: Open spends 27k to 40k tokens per verified PyYAML fix and 59k to 109k for Jinja2
 (result 14), and a hard escalation costs ten times that or more.
 
 ### 17. Mined real downstream repositories, second attempt: 0 of 70
@@ -353,6 +361,26 @@ what it is, and a plain lowercase word used as a password.
 Behavior changes under the same signature: `upkeep audit` now lists the release-note lines (for every release between your pin and the newest)
 that mention a name your code imports or calls, labelled as a text match that is not checked. On the PyYAML demo it finds the 6.0 line
 "always require `Loader` arg to `yaml.load()`". It never changes the risk or the exit code, and a change nobody wrote down stays invisible.
+
+### 20. What I did and did not do with Meta's tooling
+
+Used: Muse Spark Open (`meta-models/muse-spark-open-1026`) through Baseten as the main agent, with tool calling; Muse Spark 1.1, 1.2 and 1.3
+through the Meta Model API for the tool-calling benchmark (result 11), as a second prober (result 10) and as the escalation model (result 16).
+
+Reasoning output: Muse Spark Open always reasons before it answers, and the API returns that reasoning separately. Upkeep records how much
+it reasoned in `result.json` (`reasoning_chars`) and uses it in one place. When a reply comes back with no tool call, the usual cause is
+that the model said what it meant to do and stopped. The agent then shows the model the last 300 characters of its own reasoning (after
+secret redaction) and asks it to make that call, instead of only sampling again. I did not measure whether that is better than plain
+re-asking, so it is a design choice and not a result.
+
+Not used: Muse Code (Meta's coding agent; I did not have a way to run it on these cases, so I have no comparison), Muse Glimmer, Muse
+Wonder, Muse Image, Muse Voice and SAM (not relevant to a code tool), and any inference route other than Baseten for Open (Modal, Fireworks
+and self-hosting were not tried).
+
+Training: nothing was trained or fine-tuned. `upkeep/sft.py` and `scripts/export_verified_traces.py` select run folders that were verified,
+whose manifest still matches, and in which nothing was redacted, and write their conversations as chat-format JSONL, with declined
+attempts optionally as negatives. That is data preparation for fine-tuning an open-weight model on verifier-approved behavior, and I have not
+checked that it improves anything.
 
 ## Integrity of what it downloads and produces
 
