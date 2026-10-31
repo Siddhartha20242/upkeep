@@ -19,8 +19,8 @@ evidence. **The code decides the verdict, not the model.** If it cannot show a f
   library is the oracle, and the code (not the model) decides the verdict.
 - **What works:** a static radar (64% of the relevant changed lines on a held-out set of real developer fixes; `upkeep audit` checks every pinned dependency of a repo in one command), an agent
   that edits only the affected lines, a no-network Docker sandbox, and a proof file that says what was not verified.
-- **What does not:** the agent has never produced a *correct* Werkzeug fix with the check on (it declined 30 of 31 runs;
-  1 wrong fix got through before edge-case probes were added, 0 of 6 after). On real library releases it is mixed.
+- **What does not:** the agent has never produced a *correct* Werkzeug fix with the check on (it declined 33 of 34 runs;
+  1 wrong fix got through before edge-case probes were added, 0 of the 9 runs after). On real library releases it is mixed.
 - **Not shown:** real users. The agent's apps and tests were written by me; the radar has also been run on 35 public repos I did not write (result 12), where it flagged few and was wrong about half of its first flags.
 - **The Meta angle:** a cheap open model (Muse Spark Open) is usable *because* the verifier catches what it gets wrong;
   see the [scorecard](#muse-spark-scorecard) comparing Open with 1.1, 1.2 and 1.3.
@@ -59,7 +59,7 @@ live. `--open-pr` proposes a **draft** pull request and is a dry run unless you 
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev,sign]" coverage mypy
-.venv/bin/python -m pytest -q                       # 292 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
+.venv/bin/python -m pytest -q                       # 293 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
@@ -356,11 +356,14 @@ Needs Docker and your own keys (`BASETEN_API_KEY`; `META_API_KEY` only for the M
 .venv/bin/python scripts/retro_eval.py --reuse                                                 # real fix commits (read-only, needs gh)
 .venv/bin/python scripts/blindspot_census.py                                                   # method vs function share
 bash scripts/real_validation.sh                                                                # mined repos (review the script first)
+.venv/bin/python -I scripts/demo_replay.py                                                     # a recorded wrong Werkzeug fix vs the real libraries (no model)
+.venv/bin/python -I scripts/outside_audit.py --per-pin 5 --show                                # `audit` on public repos (read-only, needs gh)
+.venv/bin/python -I scripts/radar_oracle.py                                                    # radar vs Python's own call binding (synthetic)
 ```
 
 ## Testing
 
-- **292 tests, about 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10, 3.11 and 3.12;
+- **293 tests, about 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10, 3.11 and 3.12;
   the first run passed on GitHub with no Docker, network or keys). No test needs the network, Docker or a model key: model replies are scripted, Docker is faked, and
   the HTTP client is tested against a local server. The uncovered code is mostly the benchmark runners (`reallib.py`,
   `evalharness.py`), which need Docker and a model.

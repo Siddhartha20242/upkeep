@@ -134,6 +134,7 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
     imported: dict[str, dict[str, str]] = {}          # module -> {local name: canonical dotted name} from `from x import y [as z]`
     own_init: dict[str, tuple[Param, ...]] = {}       # class qualname -> parameters of its OWN __init__
     generated: set[str] = set()                       # classes whose constructor is generated from fields
+    init_trees: list[tuple[str, ast.Module]] = []     # parsed __init__.py files, reused by the lazy-name pass
 
     for file in sorted(pkg_dir.rglob("*.py")):
         try:
@@ -142,6 +143,8 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
             continue
         module = _module_name(root, file)
         is_init = file.name == "__init__.py"
+        if is_init:
+            init_trees.append((module, tree))
         here = module if is_init else module.rsplit(".", 1)[0] if "." in module else ""
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.names:
@@ -243,29 +246,43 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
             for name, sig in effective(q).items():
                 api[f"{q}.{name}"] = Signature(f"{q}.{name}", sig.params, False, True)
 
-    for file in sorted(pkg_dir.rglob("__init__.py")):
-        try:
-            tree = ast.parse(file.read_text(encoding="utf-8"))
-        except (SyntaxError, UnicodeDecodeError):
-            continue
+    for module, tree in init_trees:
         if any(isinstance(n, ast.FunctionDef) and n.name == "__getattr__" for n in tree.body):
-            module = _module_name(root, file)  # lazily exposed names (e.g. pydantic 2) appear only as string constants
+            # lazily exposed names (e.g. pydantic 2) appear only as string constants
             for c in ast.walk(tree):
                 if isinstance(c, ast.Constant) and isinstance(c.value, str) and c.value.isidentifier():
                     qual = f"{module}.{c.value}"
                     if qual not in api and _is_public(qual):
                         api[qual] = Signature(qual, (), opaque=True)
 
+    by_prefix: dict[str, list[str]] = {}  # every dotted prefix -> the api keys below it (so an alias copies a subtree fast)
+
+    def index(key: str) -> None:
+        parts = key.split(".")
+        for i in range(1, len(parts)):
+            by_prefix.setdefault(".".join(parts[:i]), []).append(key)
+
+    if include_methods:
+        for k in api:
+            index(k)
     for sweep in range(6):  # re-exports of re-exports (a -> b -> c): repeat until nothing new appears
         grew = False
         for public, canonical in reexports:
             if canonical in api and _is_public(public) and (sweep == 0 or public not in api):
                 sig = api[canonical]
+                fresh = public not in api
                 api[public] = Signature(sig.qualname, sig.params, sig.is_class, sig.is_method, sig.opaque, sig.ctor_unknown, sig.ctor_from)
                 grew = grew or sweep > 0
-                if include_methods and sig.is_class:
-                    for k, m in [(k, v) for k, v in api.items() if k.startswith(canonical + ".")]:
-                        api[public + k[len(canonical):]] = m
+                if include_methods:
+                    if fresh:
+                        index(public)
+                    if sig.is_class:  # `from . import array as arraylib` also makes every name under `array.` reachable as `arraylib.`
+                        for k, m in [(k, api[k]) for k in by_prefix.get(canonical, [])]:
+                            nk = public + k[len(canonical):]
+                            was_new = nk not in api
+                            api[nk] = m
+                            if was_new:
+                                index(nk)
         if not grew and sweep > 0:
             break
     return api

@@ -1,0 +1,76 @@
+$ upkeep radar (PyYAML 5.4.1 -> 6.0.2)
+yaml: RED  (coverage not measured)
+  yaml.load: param_became_required ('Loader' lost its default)
+    used at app.py:5 [NOT covered by tests]
+  yaml.load_all: param_became_required ('Loader' lost its default)
+    used at app.py:9 [NOT covered by tests]
+  2 breaking change(s) do not touch code in this repo
+
+$ upkeep fix --behavior-check (PyYAML)
+
+upkeep: agent working (the model proposes; code decides)
+  sites     listed the affected call sites
+  read      app.py:1-20
+  notes     asked the release notes about 'yaml.load Loader'
+  notes     asked the release notes about 'Loader'
+  REJECTED  rejected by content check: edit adds disallowed constructs: unsafe deserialization yaml.Loader (use yaml.SafeLoader, or decline)
+  edit      app.py:4-5
+  edit      app.py:8-9
+  tests     tests PASSED: 1 passed in 0.02s
+  behavior  NO DIFFERENCES FOUND
+  finish    fixed
+
+yaml: VERIFIED  (tests pass after the edits)
+wrote demo/out/pyyaml_load/fix.patch, PROOF.md, result.json, MANIFEST.json  (the repo itself was NOT modified)
+
+$ upkeep fix --behavior-check (Werkzeug 2.3.8 -> 3.0.3)
+
+upkeep: agent working (the model proposes; code decides)
+  sites     listed the affected call sites
+  read      app.py:1-30
+  notes     asked the release notes about 'url_encode'
+  notes     asked the release notes about 'url_quote'
+  notes     asked the release notes about 'urls'
+  notes     asked the release notes about 'the affected symbols'
+  read      /deps/werkzeug/urls.py:1-200
+  read      test_app.py:1-100
+  read      app.py:1-20
+  read      app.py:1-9
+
+werkzeug: DECLINED  (no edit was made)
+wrote demo/out/werkzeug_urls/fix.patch, PROOF.md, result.json, MANIFEST.json  (the repo itself was NOT modified)
+
+$ upkeep verify --run demo/out/werkzeug_urls
+OK   every file matches the SHA-256 manifest
+note: not signed, so this shows the files are unchanged, not who produced them
+
+$ python scripts/demo_replay.py   (recorded wrong fix, no model)
+Replaying a RECORDED wrong fix (a plausible edit a model produced) against the real Werkzeug 2.3.8 -> 3.0.3
+
+--- the edit ---
+from urllib.parse import urlencode, quote as _quote
+
+
+def quote(s):
+    return _quote(s, safe='/+')
+
+
+def encode(d):
+    return urlencode(d, doseq=True)
+
+radar: RED, 4 affected call site(s) in the ORIGINAL code
+
+1. the repo's own tests on the new Werkzeug:  PASSED
+2. happy-path probes against the old library:  no differences found  <- this is how the fix would slip through
+3. Upkeep's check (same probes, plus edge cases like ':' '+' and None values): 4 difference(s) in 18 probes
+   app.py:9 (werkzeug.urls.url_encode) encode({"q": "hello", "page": "2", "extra": null})
+     old library -> {"ok": "'q=hello&page=2'"}
+     patched code -> {"ok": "'q=hello&page=2&extra=None'"}
+   app.py:9 (werkzeug.urls.url_encode) encode({"q": null})
+     old library -> {"ok": "''"}
+     patched code -> {"ok": "'q=None'"}
+   app.py:5 (werkzeug.urls.url_quote) quote("a/b:c")
+     old library -> {"ok": "'a/b:c'"}
+     patched code -> {"ok": "'a/b%3Ac'"}
+
+werkzeug: DECLINED  (behavior differs from the old version)

@@ -19,6 +19,8 @@ U=.venv/bin/upkeep
   $U fix --repo demo/werkzeug_urls/repo --old demo/werkzeug_urls/old --new demo/werkzeug_urls/new --package werkzeug \
     --changelog demo/werkzeug_urls/CHANGELOG.txt --test-backend docker --image python:3.9-slim --deps demo/werkzeug_urls/deps_new \
     --behavior-check --old-deps demo/werkzeug_urls/deps_old --old-version 2.3.8 --new-version 3.0.3 --out demo/out/werkzeug_urls
+  echo; echo '$ python scripts/demo_replay.py   (recorded wrong fix, no model)'
+  .venv/bin/python -I scripts/demo_replay.py
   echo; echo '$ upkeep verify --run demo/out/werkzeug_urls'
   $U verify --run demo/out/werkzeug_urls
 } 2>&1 | tee docs/demo_rehearsal_output.txt

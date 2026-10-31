@@ -348,3 +348,16 @@ def test_an_inherited_constructor_records_where_it_came_from(tmp_path):
     old, _ = _two_versions(tmp_path, {"__init__.py": "class Base:\n    def __init__(self, x):\n        pass\n\n\nclass A(Base):\n    pass\n\n\nclass B(Base):\n    pass\n"}, {"__init__.py": ""})
     api = extract_api(old, "lib")
     assert api["lib.A"].ctor_from == api["lib.B"].ctor_from == "lib.Base" and api["lib.Base"].ctor_from == ""
+
+
+def test_module_alias_import_makes_every_name_below_it_reachable_under_the_alias(tmp_path):
+    """SQLAlchemy: `from .array import array as array` + `from . import array as arraylib` keeps `pg.arraylib.ARRAY` valid."""
+    from upkeep.apidiff import diff_api, extract_api
+    old, new = _two_versions(
+        tmp_path,
+        {"__init__.py": "", "pg/__init__.py": "", "pg/arraylib.py": "class ARRAY:\n    def bind(self, x):\n        pass\n"},
+        {"__init__.py": "", "pg/__init__.py": "from .array import array as array\nfrom . import array as arraylib\n",
+         "pg/array.py": "class array:\n    pass\n\n\nclass ARRAY:\n    def bind(self, x):\n        pass\n"})
+    api = extract_api(new, "lib", include_methods=True)
+    assert "lib.pg.arraylib.ARRAY" in api and "lib.pg.arraylib.ARRAY.bind" in api
+    assert not any(c.kind == "removed" for c in diff_api(extract_api(old, "lib", include_methods=True), api))
