@@ -215,6 +215,6 @@ def test_a_bad_request_is_not_retried(world):
 def test_an_empty_model_reply_is_never_sent_back_as_an_empty_assistant_message(world):
     repo, report, runner = world
     model = Flaky([[], [tc("finish", {"status": "decline", "summary": "x"})]], fail_on=())
-    Agent(model, repo, report, runner, max_nudges=1).run()
+    Agent(model, repo, report, runner, max_nudges=1, max_empty_retries=0).run()   # the nudge path (re-asking is off)
     assistant = [m for m in model.seen[-1] if m.get("role") == "assistant"]
     assert assistant and all(m.get("content") or m.get("tool_calls") for m in assistant)

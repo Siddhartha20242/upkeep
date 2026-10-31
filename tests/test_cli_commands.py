@@ -121,3 +121,21 @@ def test_audit_json_lists_skipped_and_checked_dependencies(tmp_path, capsys, mon
     rows = json.loads(cap.out)
     assert {r["dist"]: r["status"] for r in rows} == {"alpha": "skipped", "beta": "skipped"}
     assert all(r["reason"] for r in rows)
+
+
+def test_every_run_records_which_model_and_provider_produced_it(tmp_path):
+    old, new, repo = build(tmp_path)
+    out = tmp_path / "out"
+    model = Scripted([[FIX], [tc("finish", {"status": "fixed", "summary": "x"})]])
+    model.model = "meta-models/muse-spark-open-1026"
+    cli.main(args(old, new, repo, out, "--provider", "baseten"), client=model)
+    proof, result = (out / "PROOF.md").read_text(), json.loads((out / "result.json").read_text())
+    assert "model: `meta-models/muse-spark-open-1026` via provider `baseten`" in proof
+    assert result["model"] == "meta-models/muse-spark-open-1026" and result["provider"] == "baseten"
+
+
+def test_an_injected_test_client_is_labelled_as_such_not_as_a_meta_model(tmp_path):
+    old, new, repo = build(tmp_path)
+    out = tmp_path / "out"
+    cli.main(args(old, new, repo, out), client=Scripted([[FIX], [tc("finish", {"status": "fixed", "summary": "x"})]]))
+    assert json.loads((out / "result.json").read_text())["provider"] == "n/a"

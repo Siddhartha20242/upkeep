@@ -19,8 +19,8 @@ evidence. **The code decides the verdict, not the model.** If it cannot show a f
   library is the oracle, and the code (not the model) decides the verdict.
 - **What works:** a static radar (64% of the relevant changed lines on a held-out set of real developer fixes; `upkeep audit` checks every pinned dependency of a repo in one command), an agent
   that edits only the affected lines, a no-network Docker sandbox, and a proof file that says what was not verified.
-- **What does not:** the agent has never produced a *correct* Werkzeug fix with the check on (it declined 33 of 34 runs;
-  1 wrong fix got through before edge-case probes were added, 0 of the 9 runs after). On real library releases it is mixed.
+- **What does not:** the agent has never produced a *correct* Werkzeug fix with the check on (it declined 52 of 53 runs;
+  1 wrong fix got through before edge-case probes were added, 0 of the 28 runs after). On real library releases it is mixed.
 - **Not shown:** real users. The agent's apps and tests were written by me; the radar has also been run on 35 public repos I did not write (result 12), where it flagged few and was wrong about half of its first flags.
 - **The Meta angle:** a cheap open model (Muse Spark Open) is usable *because* the verifier catches what it gets wrong;
   see the [scorecard](#muse-spark-scorecard) comparing Open with 1.1, 1.2 and 1.3.
@@ -59,7 +59,7 @@ live. `--open-pr` proposes a **draft** pull request and is a dry run unless you 
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev,sign]" coverage mypy
-.venv/bin/python -m pytest -q                       # 293 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
+.venv/bin/python -m pytest -q                       # 307 tests (no network, Docker or keys needed); live OSV test: UPKEEP_LIVE=1
 cp .env.example .env                                # add keys; .env is git-ignored, never commit keys
 ```
 ```bash
@@ -89,7 +89,8 @@ Sources are the numbered results below; every cell comes from a file in `eval_re
 | Own probes catch the subtle wrong fix / the naive one (result 10) | 3/6, 6/6 | 5/6, 5/6 | 4/6, 6/6 | 5/6, 5/6 |
 
 How to read it: newer versions call tools more reliably but are slower and use more tokens; Open is the cheapest and
-fastest per call but is the one that answers in text instead of calling `finish` (the agent's nudge exists for it);
+fastest per call but is the one that answers in text instead of calling `finish` (the agent's nudge exists for it) and that
+sometimes ends a turn with no tool call at all after reasoning (the agent re-asks, result 13);
 **every version fails the Werkzeug trap**, so none of them is a substitute for the verifier. *Caveats: small samples,
 Open and the Meta-API versions are served by different stacks, and the Werkzeug rows count only runs without the check.*
 
@@ -254,6 +255,31 @@ GitHub code search returned them, and ran `audit` against the newest release (`s
 - *Caveats: 35 repos, nine libraries, GitHub search order, a single labeler (me), and labels for `ValidationError` sites
   came from the radar's argument evidence plus a 5-site spot check.* See `eval_results/outside_audit*.json`.
 
+**13. Can the agent read the library it is migrating from? Not usefully, so it is off by default.** A trace of a Werkzeug
+run showed the agent could not read any library source (`read_file` only sees the repo), so it worked from memory and the
+release notes. I added two read-only tools, `library_source` and `library_search`, for the old and new library (untrusted
+text, confined to the library folder, a budget of 6 reads, `--library-source`). Findings, in the order I hit them:
+(a) with no budget the agent read source until its turns ran out and **never edited** (3 of 3 runs); (b) with a budget
+it still did not edit, because **Muse Spark Open sometimes ends a turn right after reasoning, with no tool call** (3 of 11
+turns in a traced run; the reasoning even said "let's attempt library_source calls"), so the harness now **re-asks on an
+empty reply** instead of storing it and nudging, and asks for 12,000 output tokens instead of 4,096; (c) a 26-turn run
+died on a tool call whose argument was a number, so every tool call now survives wrong argument types. After all that,
+with 2 runs per case and 20 turns:
+
+| Real cases | Library tools off | Library tools on |
+|---|---|---|
+| PyYAML | 2/2 correct | 2/2 correct |
+| Jinja2 | 2/2 correct | 2/2 correct |
+| Werkzeug | 0/2 declined | 0/2 declined (one with no edit) |
+| Werkzeug tokens per run | 112k to 118k | 223k to 294k |
+
+No measurable gain and about twice the tokens, so the tools stay opt-in. The Werkzeug fix needs the exact `quote`/`urlencode`
+rules (for example `+` versus `%20`, `None` values, lists); in two of the late runs the agent got within one character
+class of the old behavior and the behavior check named the difference, but it ran out of turns or never edited. *Caveats:
+2 runs per cell, one model, and the PyYAML/Jinja2 improvement over the earlier 0/3 to 3/3 Jinja2 variance may be the
+re-ask and token changes or just noise.* Raw files: `eval_results/reallib_baseten_behavior_libsrc*.json`,
+`..._newharness_nolib.json`, `..._newharness_lib.json`.
+
 ## Integrity of what it downloads and produces
 
 - **Downloads are verified.** Every PyPI release is checked against the SHA-256 PyPI publishes for it. A mismatch, or a
@@ -307,6 +333,11 @@ GitHub code search returned them, and ran `audit` against the newest release (`s
     complete, and adversarial edits found 13 ways around the "no unsafe YAML loader" rule I advertised in the README.
     Both are fixed and kept as tests; the second is why that rule now reads as a heuristic, not a guarantee.
 
+15. **The agent could not read the library, and the model drops tool calls.** Giving it the library source (result 13)
+    exposed three harness bugs instead of a fix: a read loop with no budget, empty replies after reasoning that I had
+    been storing as answers, and a crash on a numeric tool argument that killed a whole benchmark run. All three are fixed
+    and tested; the Werkzeug fix is still out of reach for this model.
+
 ## Known limitations and roadmap
 
 - Python only. The radar sees signature-level breaks and literal default changes; a change that keeps the same
@@ -328,8 +359,8 @@ GitHub code search returned them, and ran `audit` against the newest release (`s
   the decline: it now names the file, line and library symbol, and the exact input where old and new differ (for
   example `url_encode` giving `+` for a space on the old library and `%20` on the new one).
 - **Roadmap (not built), in the order I would do it:**
-  1. Let the agent see the diverging input during editing (today only the first difference is fed back, and the model
-     still failed to use it on Werkzeug).
+  1. A model or prompt that can turn a named difference into the exact edit. Reading the library source did not do it (result 13);
+     the behavior check already names the differing input, and the model still does not close the gap on Werkzeug.
   2. Dynamic call tracing during a baseline test run, non-JSON probe inputs and stateful probing (WSGI-style contexts
      and other implicit state are invisible to the current check).
   3. Partial fixes (accept the verified functions, decline the rest), a real type checker for call resolution, a CI
@@ -363,7 +394,7 @@ bash scripts/real_validation.sh                                                 
 
 ## Testing
 
-- **293 tests, about 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10, 3.11 and 3.12;
+- **307 tests, about 90% line coverage, `mypy` clean** (`.github/workflows/tests.yml` runs both on Python 3.10, 3.11 and 3.12;
   the first run passed on GitHub with no Docker, network or keys). No test needs the network, Docker or a model key: model replies are scripted, Docker is faked, and
   the HTTP client is tested against a local server. The uncovered code is mostly the benchmark runners (`reallib.py`,
   `evalharness.py`), which need Docker and a model.

@@ -176,7 +176,8 @@ def _fix(args, client=None, prober=None) -> int:
         prober = prober or (client_for(args.prober_provider, args.prober_model) if args.prober_provider else None)
         checker = BehaviorChecker(prober or client, args.repo, sites, world(old_paths, args.old_deps), world(new_paths, args.deps),
                                   n_random=args.fuzz_inputs)
-    agent = Agent(client, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker)
+    agent = Agent(client, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker,
+                  library_roots={"old": args.old, "new": args.new} if args.library_source else None)
     print(paint("\nupkeep: agent working (the model proposes; code decides)", "bold", use_color()), flush=True)
     res = run_with_progress(agent)
     print()
@@ -191,14 +192,18 @@ def _fix(args, client=None, prober=None) -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "fix.patch").write_text(res.diff)
     md = bundle.to_markdown()
+    model_name = getattr(client, "model", None) or "unknown (injected client)"
+    provider = args.provider if getattr(client, "model", None) else "n/a"
     md += ("\n## Agent run\n"
-           f"- model calls: {res.model_calls}, tokens: {res.total_tokens}, guard rejections: {res.guard_rejections}\n"
+           f"- model: `{model_name}` via provider `{provider}`"
+           + (f"; probe inputs by `{getattr(prober, 'model', '?')}` via `{args.prober_provider}`" if prober is not None and args.prober_provider else "") + "\n"
+           f"- model calls: {res.model_calls}, tokens: {res.total_tokens}, guard rejections: {res.guard_rejections}, empty model replies re-asked: {res.empty_replies}\n"
            "- tool trace: " + " > ".join(s["tool"] for s in res.steps) + "\n")
     md += _integrity_section(res.diff, args.old, args.new)
     (args.out / "PROOF.md").write_text(md)
     (args.out / "result.json").write_text(json.dumps(
-        {"status": res.status, "reason": res.reason, "model_calls": res.model_calls,
-         "tokens": res.total_tokens, "guard_rejections": res.guard_rejections,
+        {"status": res.status, "reason": res.reason, "model": model_name, "provider": provider, "model_calls": res.model_calls,
+         "tokens": res.total_tokens, "guard_rejections": res.guard_rejections, "empty_replies": res.empty_replies,
          "injection_flags": res.injection_flags, "steps": res.steps, "behavior": res.behavior}, indent=2))
     write_manifest(args.out, args.package, args.old_version, args.new_version, bundle.status(), args.old, args.new)
     if args.sign_key:
@@ -302,6 +307,8 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
                    help="compare patched code on the new library with the original on the old one (needs probe inputs from the model)")
     f.add_argument("--fuzz-inputs", type=int, default=100,
                    help="with --behavior-check: extra seeded-random probe inputs per function (0 = only the model's and edge cases)")
+    f.add_argument("--library-source", action="store_true",
+                   help="let the agent read the library's old and new source (6 reads). Off by default: measured no gain and about twice the tokens")
     f.add_argument("--image", default="python:3.12-slim")
     f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
     f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")

@@ -7,3 +7,6 @@ __pycache__/
 coverage.json
 dashboard.html
 demo/
+
+# private notes
+*.local.md

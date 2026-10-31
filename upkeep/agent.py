@@ -79,6 +79,26 @@ NOTES_TOOL = {"type": "function", "function": {
     "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}}
 
 
+LIBRARY_TOOLS = [
+    {"type": "function", "function": {
+        "name": "library_source",
+        "description": ("Read lines of the LIBRARY's own source (max 200 lines, read-only). version 'old' is the version the code was "
+                        "written for (its behavior is what must be preserved); 'new' is the version it must work with. "
+                        "path is relative to the library root, e.g. 'werkzeug/urls.py'."),
+        "parameters": {"type": "object", "properties": {
+            "version": {"type": "string", "enum": ["old", "new"]}, "path": {"type": "string"},
+            "start_line": {"type": "integer"}, "end_line": {"type": "integer"}},
+            "required": ["version", "path", "start_line", "end_line"]}}},
+    {"type": "function", "function": {
+        "name": "library_search",
+        "description": "Find where a name or text appears in the library source ('old' or 'new'). Returns up to 15 'path:line: text' matches.",
+        "parameters": {"type": "object", "properties": {
+            "version": {"type": "string", "enum": ["old", "new"]}, "text": {"type": "string"}},
+            "required": ["version", "text"]}}},
+]
+MAX_LIB_FILE = 1_500_000
+
+
 class ChatClient(Protocol):
     def chat(self, messages: list[dict], tools: list[dict] | None = None, **kw) -> Reply: ...
 
@@ -95,6 +115,7 @@ class AgentResult:
     guard_rejections: int = 0
     injection_flags: list[str] = field(default_factory=list)
     behavior: dict | None = None
+    empty_replies: int = 0  # dropped (empty) model replies that were asked again
 
 
 def _summary_line(output: str) -> str:
@@ -120,6 +141,10 @@ class Agent:
         notes_mode: str = "tool",  # "tool": model pulls notes on demand; "push": pasted into the first message
         max_nudges: int = 2,
         max_finish_rejections: int = 2,
+        library_roots: dict[str, Path] | None = None,  # {"old": root, "new": root}: where the library's source can be read
+        max_empty_retries: int = 2,
+        max_tokens: int = 12000,  # per reply. This model always reasons first; at 4096 long contexts ended in EMPTY replies
+        max_library_reads: int = 6,  # measured: without a budget the model read source until its turns ran out and never edited
     ):
         self.client, self.report, self.runner = client, report, test_runner
         self.changelog = changelog
@@ -133,7 +158,12 @@ class Agent:
         self.finish_rejections = 0
         self.checker = behavior_checker
         self.behavior_report = None
-        self.tools = list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
+        self.lib_roots = {k: Path(v).resolve() for k, v in (library_roots or {}).items() if k in ("old", "new") and Path(v).is_dir()}
+        self.max_tokens = max_tokens
+        self.max_empty_retries, self.empty_replies = max_empty_retries, 0
+        self.max_library_reads, self.library_reads = max_library_reads, 0
+        self.tools = (list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
+                      + (LIBRARY_TOOLS if self.lib_roots else []))
         self.max_turns, self.max_edits, self.max_test_runs = max_turns, max_edits, max_test_runs
         self.work = Path(tempfile.mkdtemp(prefix="upkeep-agent-")) / "repo"
         shutil.copytree(repo, self.work, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"))
@@ -148,6 +178,59 @@ class Agent:
     def _resolve(self, rel: str) -> Path | None:
         p = (self.work / rel).resolve()
         return p if p.is_file() and self.work.resolve() in p.parents else None
+
+    def _lib_file(self, version: str, rel: str) -> Path | None:
+        root = self.lib_roots.get(version)
+        if root is None:
+            return None
+        p = (root / rel).resolve()
+        ok = p.is_file() and p.suffix == ".py" and root in p.parents and p.stat().st_size <= MAX_LIB_FILE
+        return p if ok else None
+
+    def _untrusted_library_text(self, text: str, label: str) -> str:
+        s = screen(text)  # library source and comments are third-party text: data, never instructions
+        self.flags += [f for f in s.flags if f not in self.flags]
+        return wrap_untrusted(s, label)
+
+    def _spend_library_read(self) -> str | None:
+        self.library_reads += 1
+        if self.library_reads >= self.max_library_reads:  # last allowed read: from the next turn the tools are simply gone
+            self.tools = [t for t in self.tools if t not in LIBRARY_TOOLS]
+        if self.library_reads > self.max_library_reads:
+            return (f"library read budget used ({self.max_library_reads}): you have seen enough source. Make the smallest edit now "
+                    "with replace_lines (then run_tests and check_behavior), or call finish with status 'decline'.")
+        return None
+
+    def t_library_source(self, version: str = "", path: str = "", start_line: int = 1, end_line: int = 200, **_) -> str:
+        over = self._spend_library_read()
+        if over:
+            return over
+        p = self._lib_file(version, path)
+        if p is None:
+            return "error: no such .py file in that library version (use library_search to find it; path is relative to the library root)"
+        lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        a, b = max(1, start_line), min(len(lines), end_line, start_line + 199)
+        return self._untrusted_library_text("\n".join(f"{i}: {lines[i - 1]}" for i in range(a, b + 1)), f"library source ({version}) {path}")
+
+    def t_library_search(self, version: str = "", text: str = "", **_) -> str:
+        over = self._spend_library_read()
+        if over:
+            return over
+        root = self.lib_roots.get(version)
+        if root is None or not text.strip():
+            return "error: give version 'old' or 'new' and a non-empty text"
+        hits: list[str] = []
+        for f in sorted(root.rglob("*.py")):
+            if len(hits) >= 15:
+                break
+            if "test" in f.parts[len(root.parts):-1] or f.stat().st_size > MAX_LIB_FILE:
+                continue
+            for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                if text in line:
+                    hits.append(f"{f.relative_to(root)}:{i}: {line.strip()[:120]}")
+                    if len(hits) >= 15:
+                        break
+        return self._untrusted_library_text("\n".join(hits) or "no matches", f"library search ({version})")
 
     def t_list_affected(self, **_) -> str:
         rows = []
@@ -232,6 +315,11 @@ class Agent:
         parts = [f"Package '{self.report.package}' was upgraded. Breaking changes that touch this repo:"]
         for change, sites in self.report.affected:
             parts.append(f"- {change.symbol}: {change.kind} ({change.detail}) at {len(sites)} site(s)")
+        if self.lib_roots:
+            parts.append("The library's own source is readable with library_source / library_search (version 'old' = the code was written "
+                         "for it, 'new' = what it must run on). When unsure how to keep the old behavior, read how the OLD version did it. "
+                         f"You have {self.max_library_reads} library reads in total: spend them on the OLD implementation of the changed "
+                         "functions, then edit.")
         if self.baseline_run:
             # Start like an engineer: look at the failing run first. Its output is untrusted data.
             res = self.runner(self.work)
@@ -262,6 +350,15 @@ class Agent:
         for _ in range(self.max_turns):
             try:
                 reply = self._chat(messages)
+                tries = 0
+                # An EMPTY reply (no text, no tool call) is a dropped response, not an answer: Muse Spark Open sometimes ends its turn
+                # right after reasoning ("let's call library_source") without emitting the call. Ask again, with a different sample.
+                while not reply.text and not reply.tool_calls and tries < self.max_empty_retries:
+                    tries += 1
+                    self.empty_replies += 1
+                    calls += 1
+                    tokens += int((reply.usage or {}).get("total_tokens", 0))
+                    reply = self._chat(messages, temperature=0.3 + 0.3 * tries)
             except LLMError as e:  # a failed model call must end in an honest decline, never a crash
                 model_error = str(e)[:200]
                 break
@@ -287,6 +384,8 @@ class Agent:
                     args = json.loads(tc["function"].get("arguments") or "{}")
                 except ValueError:
                     args = {}
+                if not isinstance(args, dict):  # valid JSON, but a list or a number
+                    args = {}
                 if name == "finish":
                     gate = self._finish_gate(args)
                     if gate:  # the system refuses to end the session while the old library disagrees
@@ -300,9 +399,10 @@ class Agent:
                     fn = getattr(self, f"t_{name}", None)
                     try:
                         out = fn(**args) if fn else f"error: unknown tool {name}"
-                    except TypeError as e:
-                        out = f"error: bad arguments ({e})"
-                self.steps.append({"tool": name, "args": {k: (v if k != "new_text" else v[:200]) for k, v in args.items()}, "result": out[:300]})
+                    except (TypeError, AttributeError, ValueError, KeyError, IndexError, OSError) as e:
+                        # model-supplied arguments of the wrong type must never crash the run: say so and let it try again
+                        out = f"error: bad arguments for {name} ({type(e).__name__}: {str(e)[:120]}); check the argument types"
+                self.steps.append({"tool": name, "args": {k: (v if k != "new_text" else str(v)[:200]) for k, v in args.items()}, "result": str(out)[:300]})
                 messages.append({"role": "tool", "tool_call_id": tc["id"], "content": out})
             if finished:
                 break
@@ -312,15 +412,16 @@ class Agent:
                                injection_flags=self.flags)
         return self._verdict(calls, tokens, declined)
 
-    def _chat(self, messages: list[dict]) -> Reply:
+    def _chat(self, messages: list[dict], temperature: float | None = None) -> Reply:
         """One retry for transient failures (network, 5xx, rate limit). A 4xx bad request is not retried."""
+        extra = {} if temperature is None else {"temperature": temperature}
         try:
-            return self.client.chat(messages, tools=self.tools)
+            return self.client.chat(messages, tools=self.tools, max_tokens=self.max_tokens, **extra)
         except LLMError as first:
             if "HTTP 4" in str(first) and "HTTP 429" not in str(first):
                 raise
             time.sleep(2)
-            return self.client.chat(messages, tools=self.tools)
+            return self.client.chat(messages, tools=self.tools, max_tokens=self.max_tokens, **extra)
 
     def _finish_gate(self, args: dict) -> str | None:
         """If the model claims it fixed things but the behavior check disagrees, reject the finish and say why."""
@@ -352,7 +453,7 @@ class Agent:
     def _verdict(self, calls: int, tokens: int, declined: str | None) -> AgentResult:
         diff = self._final_diff()
         common: dict[str, Any] = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
-                      guard_rejections=self.rejections, injection_flags=self.flags)
+                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies)
         if declined is not None:
             return AgentResult("declined", f"model declined: {declined}", diff, **common)
         if self.edits == 0:

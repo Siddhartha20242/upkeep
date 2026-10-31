@@ -224,7 +224,7 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
                    focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
-                   prober_client=None, n_random: int = 0) -> Outcome:
+                   prober_client=None, n_random: int = 0, library_source: bool = False) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -244,9 +244,13 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
             checker = BehaviorChecker(prober_client or client, repo, sites, world(prep.old_deps), world(prep.new_deps),
                                      n_random=n_random)
         agent = Agent(client, repo, report, runner, changelog=prep.changelog if use_changelog else None,
-                      behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=max_turns)
+                      behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=max_turns,
+                      library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None)
         t0 = time.monotonic()
-        res = agent.run()
+        try:
+            res = agent.run()
+        except Exception as e:  # one broken case must not lose the whole benchmark run
+            return Outcome(**base, outcome="error", status="error", reason=f"{type(e).__name__}: {str(e)[:150]}")
         dt = time.monotonic() - t0
         hidden_ok = None
         if res.status == "verified":
