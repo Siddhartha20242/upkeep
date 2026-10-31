@@ -14,11 +14,13 @@ from .pr import PRError, open_draft_pr
 from .pypi import PyPIError, sources_for
 from .progress import paint, run_with_progress, use_color
 from .audit import audit, count_unpinned, worst
+from .autoprep import PrepareError, docker_ready, prepare_upgrade
 from .attest import AttestError, generate_key, sign_manifest, verify_manifest, verify_signature, write_manifest
 from .proof import ProofBundle
 from .pypi import release_digest
 from .radar import RadarInputError, run_radar
 from .sandbox import SandboxRefused, run_python, run_tests
+from .secrets import scan as scan_secrets
 from .vuln import query_osv
 
 
@@ -119,6 +121,10 @@ def _audit(args) -> int:
     if not any(r.status == "checked" for r in results) and any(r.status == "skipped" for r in results):
         print("error: no dependency could be analysed (see the SKIPPED reasons above); this is not a clean result", file=sys.stderr)
         return 3
+    if args.fail_on == "never":
+        return 0
+    if args.fail_on == "hard":  # default changes are listed for review but do not fail the build
+        return 2 if any(r.hard for r in results if r.status == "checked") else 0
     return {"green": 0, "amber": 1, "red": 2}[worst(results)]
 
 
@@ -137,11 +143,47 @@ def _vulns(args) -> int:
     return 1
 
 
+def _auto_prepare(args) -> int | None:
+    """--from/--to: download the releases and build the dependency folders. Returns an exit code on failure, else None."""
+    if (args.old is not None or args.new is not None) and (args.from_version or args.to_version):
+        print("error: give either --old/--new (folders you prepared) or --from/--to (versions to download), not both", file=sys.stderr)
+        return 2
+    if (args.old is None) != (args.new is None):
+        print("error: --old and --new go together (or use --from and --to instead)", file=sys.stderr)
+        return 2
+    if not (args.from_version and args.to_version):
+        print("error: give --from and --to (for example --from 5.4.1 --to 6.0.2), or --old and --new source folders", file=sys.stderr)
+        return 2
+    if args.test_backend == "docker" and not docker_ready():
+        print("error: Docker is not running (needed for the isolated test runs). Start Docker Desktop and try again.", file=sys.stderr)
+        return 2
+    try:
+        prep = prepare_upgrade(args.repo, args.package, args.from_version, args.to_version, args.module, args.image,
+                               allow_source_builds=args.allow_source_builds)
+    except PrepareError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
+    args.dist, args.package = args.package, prep.module
+    args.old, args.new, args.deps, args.old_deps, args.image = prep.old_src, prep.new_src, prep.deps_new, prep.deps_old, prep.image
+    args.old_version, args.new_version = args.from_version, args.to_version
+    args.behavior_check = not args.no_behavior_check
+    if args.changelog is None:
+        args.changelog = prep.changelog
+    print(f"upkeep: ready ({prep.image}; behavior check {'on' if args.behavior_check else 'off'})\n", flush=True)
+    return None
+
+
 def _fix(args, client=None, prober=None) -> int:
     if args.test_backend == "local" and not args.unsandboxed:
         print("refused: --test-backend local runs this repo's tests on this machine, NOT isolated. "
               "Pass --unsandboxed to allow it, or use --test-backend docker.", file=sys.stderr)
         return 2
+    if args.from_version or args.to_version or args.old is None or args.new is None:
+        failed = _auto_prepare(args)
+        if failed is not None:
+            return failed
+    if args.image is None:
+        args.image = "python:3.12-slim"
     try:
         report = run_radar(args.repo, args.old, args.new, args.package)
     except RadarInputError as e:
@@ -199,11 +241,18 @@ def _fix(args, client=None, prober=None) -> int:
            + (f"; probe inputs by `{getattr(prober, 'model', '?')}` via `{args.prober_provider}`" if prober is not None and args.prober_provider else "") + "\n"
            f"- model calls: {res.model_calls}, tokens: {res.total_tokens}, guard rejections: {res.guard_rejections}, empty model replies re-asked: {res.empty_replies}\n"
            "- tool trace: " + " > ".join(s["tool"] for s in res.steps) + "\n")
+    leaks = scan_secrets(res.diff)
+    md += ("\n## Security\n"
+           f"- secret-like strings hidden from the model: {res.redactions}\n"
+           + ("- fix.patch contains secret-like strings (" + ", ".join(f"{k} x{n}" for k, n in leaks.items()) + "); no pull request will be opened\n"
+              if leaks else "- fix.patch: no secret-like strings found\n")
+           + "- the model sees snippets of your code and test output; do not run `fix` on code you are not allowed to share\n")
     md += _integrity_section(res.diff, args.old, args.new)
     (args.out / "PROOF.md").write_text(md)
     (args.out / "result.json").write_text(json.dumps(
         {"status": res.status, "reason": res.reason, "model": model_name, "provider": provider, "model_calls": res.model_calls,
          "tokens": res.total_tokens, "guard_rejections": res.guard_rejections, "empty_replies": res.empty_replies,
+         "redactions": res.redactions, "secrets_in_patch": dict(leaks),
          "injection_flags": res.injection_flags, "steps": res.steps, "behavior": res.behavior}, indent=2))
     write_manifest(args.out, args.package, args.old_version, args.new_version, bundle.status(), args.old, args.new)
     if args.sign_key:
@@ -213,7 +262,9 @@ def _fix(args, client=None, prober=None) -> int:
             print(f"not signed: {e}", file=sys.stderr)
     shade = {"verified": "green", "declined": "red"}.get(res.status, "yellow")
     print(f"{args.package}: " + paint(res.status.upper(), shade, use_color()) + f"  ({res.reason})")
-    if args.open_pr:
+    if args.open_pr and leaks:
+        print("PR not opened: fix.patch contains secret-like strings (see PROOF.md). Remove them and open the PR yourself.", file=sys.stderr)
+    elif args.open_pr:
         status = bundle.status()
         try:
             plan = open_draft_pr(args.repo, args.out / "fix.patch", args.out / "PROOF.md", args.package, args.new_version,
@@ -287,9 +338,16 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
 
     f = sub.add_parser("fix", help="let the agent propose a verified fix (the repo is never modified)")
     f.add_argument("--repo", required=True, type=Path)
-    f.add_argument("--old", required=True, type=Path, help="source root of the current version")
-    f.add_argument("--new", required=True, type=Path, help="source root of the new version (also put on the test path)")
-    f.add_argument("--package", required=True)
+    f.add_argument("--old", type=Path, help="source root of the current version (or use --from/--to and Upkeep downloads it)")
+    f.add_argument("--new", type=Path, help="source root of the new version (or use --from/--to)")
+    f.add_argument("--package", required=True,
+                   help="with --from/--to: the PyPI name (PyYAML). With --old/--new: the import name (yaml)")
+    f.add_argument("--from", dest="from_version", help="version you use now: Upkeep downloads both releases and prepares everything")
+    f.add_argument("--to", dest="to_version", help="version to upgrade to")
+    f.add_argument("--module", help="with --from/--to: import name if it differs from the PyPI name (PyYAML -> yaml)")
+    f.add_argument("--allow-source-builds", action="store_true",
+                   help="with --from/--to: if no wheels exist, build from source inside the container (runs build scripts, with network)")
+    f.add_argument("--no-behavior-check", action="store_true", help="with --from/--to the behavior check is on by default; skip it")
     f.add_argument("--changelog", type=Path, help="release notes file (treated as untrusted data)")
     f.add_argument("--out", type=Path, default=Path("upkeep-out"))
     f.add_argument("--old-version", default="old")
@@ -309,7 +367,8 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
                    help="with --behavior-check: extra seeded-random probe inputs per function (0 = only the model's and edge cases)")
     f.add_argument("--library-source", action="store_true",
                    help="let the agent read the library's old and new source (6 reads). Off by default: measured no gain and about twice the tokens")
-    f.add_argument("--image", default="python:3.12-slim")
+    f.add_argument("--image", help="Docker image for the test runs (default: python:3.12-slim; with --from/--to the newest "
+                                   "Python 3.9 to 3.12 image that has wheels for your dependencies)")
     f.add_argument("--open-pr", action="store_true", help="propose the fix as a DRAFT pull request (dry run unless --confirm)")
     f.add_argument("--confirm", action="store_true", help="with --open-pr: really push a branch and open the draft PR")
     f.add_argument("--base", default="main", help="base branch for --open-pr")
@@ -345,6 +404,9 @@ def main(argv: list[str] | None = None, client=None, prober=None) -> int:
     au.add_argument("--only", nargs="*", default=[], help="limit to these package names")
     au.add_argument("--limit", type=int, help="analyse at most this many pins")
     au.add_argument("--max-mb", type=int, default=15, help="skip libraries whose source archive is larger than this")
+    au.add_argument("--fail-on", choices=["any", "hard", "never"], default="any",
+                    help="exit code 2 when: any flagged line (default), only lines that will fail (hard), or never. "
+                         "Exit 3 (nothing could be analysed) is always reported")
     au.add_argument("--json", action="store_true")
     au.set_defaults(fn=_audit)
 

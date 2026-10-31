@@ -24,6 +24,7 @@ from .charact import where
 from .guard import allowed_ranges, check_diff
 from .llm import LLMError, Reply
 from .patchlint import check_edit
+from .secrets import looks_sensitive, redact
 from .radar import RadarReport
 from .sandbox import TestResult
 from .untrusted import focus_changelog, screen, wrap_untrusted
@@ -116,6 +117,7 @@ class AgentResult:
     injection_flags: list[str] = field(default_factory=list)
     behavior: dict | None = None
     empty_replies: int = 0  # dropped (empty) model replies that were asked again
+    redactions: int = 0  # secret-like strings removed from text sent to the model
 
 
 def _summary_line(output: str) -> str:
@@ -160,6 +162,7 @@ class Agent:
         self.behavior_report = None
         self.lib_roots = {k: Path(v).resolve() for k, v in (library_roots or {}).items() if k in ("old", "new") and Path(v).is_dir()}
         self.max_tokens = max_tokens
+        self.redactions = 0  # secret-like strings cut out of text before it was sent to the model
         self.max_empty_retries, self.empty_replies = max_empty_retries, 0
         self.max_library_reads, self.library_reads = max_library_reads, 0
         self.tools = (list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
@@ -242,13 +245,20 @@ class Agent:
                              **({"old_signature": old_sig, "new_signature": new_sig or "(removed)"} if self.show_signatures else {})})
         return json.dumps(rows)
 
+    def _redacted(self, text: str) -> str:
+        out, n = redact(text)
+        self.redactions += n
+        return out
+
     def t_read_file(self, path: str, start_line: int, end_line: int, **_) -> str:
+        if looks_sensitive(str(path)):
+            return "error: refusing to read a file that looks like it holds secrets (environment files, keys, credentials)"
         p = self._resolve(path)
         if p is None:
             return "error: no such file in the repo"
         lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
         a, b = max(1, start_line), min(len(lines), end_line, start_line + 199)
-        return "\n".join(f"{i}: {lines[i - 1]}" for i in range(a, b + 1))
+        return self._redacted("\n".join(f"{i}: {lines[i - 1]}" for i in range(a, b + 1)))
 
     def t_replace_lines(self, path: str, start_line: int, end_line: int, new_text: str, **_) -> str:
         if self.edits >= self.max_edits:
@@ -257,6 +267,10 @@ class Agent:
         if p is None:
             self.rejections += 1
             return "rejected: no such file in the repo"
+        if "[REDACTED:" in new_text:
+            self.rejections += 1
+            return ("rejected: new_text contains a [REDACTED:...] placeholder. Those mark secrets that were hidden from you; writing it "
+                    "back would overwrite the real value. Leave those lines out of your edit.")
         old_text = p.read_text(encoding="utf-8")
         old = old_text.splitlines(keepends=True)
         if not (1 <= start_line <= end_line <= len(old)):
@@ -284,7 +298,7 @@ class Agent:
             return "error: test-run budget exhausted"
         self.test_runs += 1
         res = self.runner(self.work)
-        s = screen(res.output[-3000:])
+        s = screen(self._redacted(res.output[-3000:]))
         self.flags += [f for f in s.flags if f not in self.flags]
         body = wrap_untrusted(s, "test output")
         return f"tests {'PASSED' if res.ok else 'FAILED'}: {_summary_line(res.output)}\n{body}"
@@ -294,7 +308,7 @@ class Agent:
             return "error: behavior check is not available in this session"
         rep = self.checker.check(self.work)
         self.behavior_report = rep
-        s = screen(rep.summary())
+        s = screen(self._redacted(rep.summary()))
         self.flags += [f for f in s.flags if f not in self.flags]
         verdict = "NO DIFFERENCES FOUND" if rep.ok else "DIFFERENCES FOUND: your edit changed behavior"
         return f"{verdict}\n" + wrap_untrusted(s, "behavior check")
@@ -324,7 +338,7 @@ class Agent:
             # Start like an engineer: look at the failing run first. Its output is untrusted data.
             res = self.runner(self.work)
             self.baseline_result = res
-            so = screen(res.output[-2000:])
+            so = screen(self._redacted(res.output[-2000:]))
             self.flags += [f for f in so.flags if f not in self.flags]
             parts.append(f"Current test run against the NEW library: {'PASSED' if res.ok else 'FAILED'} "
                          f"({_summary_line(res.output)})\n" + wrap_untrusted(so, "test output"))
@@ -433,7 +447,7 @@ class Agent:
         if rep.ok:
             return None
         self.finish_rejections += 1
-        s = screen(rep.summary())
+        s = screen(self._redacted(rep.summary()))
         self.flags += [f for f in s.flags if f not in self.flags]
         return ("finish REJECTED: the behavior check found differences from the old library, so the fix is not accepted yet. "
                 "Fix the edit (or call finish with status 'decline').\n" + wrap_untrusted(s, "behavior check"))
@@ -453,7 +467,7 @@ class Agent:
     def _verdict(self, calls: int, tokens: int, declined: str | None) -> AgentResult:
         diff = self._final_diff()
         common: dict[str, Any] = dict(steps=self.steps, model_calls=calls, total_tokens=tokens,
-                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies)
+                      guard_rejections=self.rejections, injection_flags=self.flags, empty_replies=self.empty_replies, redactions=self.redactions)
         if declined is not None:
             return AgentResult("declined", f"model declined: {declined}", diff, **common)
         if self.edits == 0:

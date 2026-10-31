@@ -1,26 +1,25 @@
-# Example GitHub Actions workflow: before merging a dependency bump, show which lines of YOUR code it would break.
-# Copy to .github/workflows/upkeep-check.yml and set PACKAGE / FROM / TO (or compute them from the PR diff).
-# The commands below are the same ones used locally; this workflow file itself has NOT been run on GitHub Actions.
-name: upkeep-check
+# Example GitHub Actions workflow: when a requirements file changes (and once a week), list the lines of YOUR code that a
+# dependency upgrade would break. Copy it to .github/workflows/upkeep-audit.yml.
+# It reads exact pins (name==version) from requirements*.txt, so it only needs the repo. No API key and no Docker.
+# This example file itself has not been run on GitHub Actions; the command it runs has (see tests and docs/EVIDENCE.md).
+name: upkeep-audit
 on:
   pull_request:
-    paths: ["requirements*.txt", "pyproject.toml"]
+    paths: ["requirements*.txt"]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
 jobs:
-  check:
+  audit:
     runs-on: ubuntu-latest
     permissions:
       contents: read          # read-only: it never pushes and never comments unless you add a step for that
-    env:
-      PACKAGE: PyYAML
-      FROM: "5.4.1"
-      TO: "6.0.2"
-      MODULE: yaml            # import name, only needed when it differs from the PyPI name
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install git+https://github.com/Siddhartha20242/upkeep.git
-      - name: What would this upgrade break?
-        run: |
-          # exit code: 0 = nothing affected, 2 = some call sites are affected, 3 = could not fetch the releases
-          upkeep check --repo . --package "$PACKAGE" --from "$FROM" --to "$TO" --module "$MODULE"
+      - name: Which pinned dependencies would break this code if upgraded?
+        # --fail-on hard: fail the build only for lines that will fail (removed names, removed or new required parameters).
+        # Changed defaults are listed for review. Exit code 3 (nothing could be analysed) always fails.
+        run: upkeep audit --repo . --fail-on hard

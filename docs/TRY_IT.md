@@ -36,12 +36,35 @@ How to read the output:
 `--module` is only needed when the import name differs from the PyPI name (PyYAML is imported as `yaml`).
 Examples that really broke code: `PyYAML 5.4.1 -> 6.0.2`, `Jinja2 3.0.3 -> 3.1.4`, `Werkzeug 2.3.8 -> 3.0.3`.
 
+## 4. Optional: let the agent propose a fix (needs Docker and a model key)
+
+```bash
+cp .env.example .env        # then add BASETEN_API_KEY=... (the file is git-ignored)
+upkeep fix --repo /path/to/your/project --package PyYAML --from 5.4.1 --to 6.0.2 --module yaml
+```
+
+One command. It downloads both releases (hash-checked), installs your dependencies for each version inside Docker, finds the
+release notes, runs the agent, and writes `fix.patch`, `PROOF.md` and `result.json` to `upkeep-out/`. Your repo is not changed.
+The first run takes a few minutes because it pulls images and installs packages; later runs reuse them.
+
+- It needs Docker running and the project to have a `requirements.txt` with the packages your tests use.
+- Dependencies are installed from wheels only. If that fails for an old pin, try `--image python:3.9-slim` (or another version),
+  or `--allow-source-builds` (which runs the packages' build scripts inside the container, with network access).
+- `--no-behavior-check` skips the old-versus-new comparison. Leave it on if you can: it is the point of the tool.
+- Check the result with `upkeep verify --run upkeep-out`. Read `PROOF.md` before you apply the patch.
+- For `yaml.load` the agent usually picks `yaml.FullLoader`, because that was PyYAML 5.4's default, so the behavior check passes. If
+  your YAML can come from untrusted sources, switch to `yaml.safe_load` yourself. Upkeep only rejects the clearly unsafe loaders.
+
 ## What leaves your machine
 
-- `upkeep audit` and `upkeep check` **only download** the two public releases from PyPI. It reads your repo **locally** and uploads nothing.
-- `upkeep fix` (needs your own model key) sends **code snippets around the affected lines** and test output to the model
-  provider. Do not use it on code you are not allowed to share.
-- It never modifies your repo. It never runs your code unless you pass `--test-backend local --unsandboxed`.
+- `upkeep audit` and `upkeep check` only download the public releases from PyPI. They read your repo locally, never run
+  your code or the library's code, and upload nothing.
+- `upkeep fix` sends snippets of your code and your test output to the model provider (Baseten by default). Secret-like strings
+  are replaced with `[REDACTED:...]` first, and the agent cannot read `.env`, key or credential files, but that is a list of
+  patterns and it will miss some. Do not use `fix` on code you are not allowed to share.
+- `upkeep fix` runs your tests inside Docker with no network. It never modifies your repo. It only runs your code on your own
+  machine, with no isolation, if you pass `--test-backend local --unsandboxed`.
+- More detail: [`SECURITY.md`](../SECURITY.md).
 
 ## Limits you should know
 

@@ -25,15 +25,17 @@ upkeep check --repo . --package PyYAML --from 5.4.1 --to 6.0.2 --module yaml # o
 
 `audit` reads the exact pins (`name==version`) in your `requirements*.txt` and lists the lines of your code that each upgrade would break. It also lists the libraries it could not check, and why. It never counts those as safe.
 
-The agent needs a key (`cp .env.example .env`, then add `BASETEN_API_KEY`) and Docker:
+The agent needs Docker and a key (`cp .env.example .env`, then add `BASETEN_API_KEY`). One command does the rest:
 
 ```bash
-upkeep fix --repo R --old OLD_SRC --new NEW_SRC --package lib --test-backend docker --deps DEPS --behavior-check --old-deps OLD_DEPS
+upkeep fix --repo . --package PyYAML --from 5.4.1 --to 6.0.2 --module yaml
 upkeep vulns --package requests --version 2.19.0
 upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 ```
 
-`upkeep fix` never changes your repo. It writes `fix.patch`, `PROOF.md` and `result.json` to a folder, and prints each agent step as it happens. `--open-pr` proposes a draft pull request, and only does a dry run unless you add `--confirm`. `--test-backend local --unsandboxed` runs your tests on your own machine with no isolation, so only use it on code you trust.
+`fix` downloads both releases, installs your dependencies for each version inside Docker (the only step that uses the network, wheels only), runs the agent and writes the result to `upkeep-out/`. The first run takes a few minutes. If you already have the library source and dependency folders, `--old`, `--new`, `--deps` and `--old-deps` do the same job by hand (see `docs/DEMO.md`).
+
+`upkeep fix` never changes your repo. It writes `fix.patch`, `PROOF.md` and `result.json`, and prints each agent step as it happens. `--open-pr` proposes a draft pull request, and only does a dry run unless you add `--confirm`. `--test-backend local --unsandboxed` runs your tests on your own machine with no isolation, so only use it on code you trust. `upkeep audit --fail-on hard` is the form to use in CI.
 
 [`docs/TRY_IT.md`](docs/TRY_IT.md) walks through trying it on your own project. [`docs/DEMO.md`](docs/DEMO.md) is the script for the 3-minute demo.
 
@@ -62,6 +64,10 @@ upkeep dashboard --run upkeep-out --evals eval_results --out dashboard.html
 - A clean behavior check is evidence and falls short of proof. The inputs are chosen by a model plus my edge cases, they are limited to JSON values, and only module-level functions are probed.
 - The content check is a list of things to deny, and I found 13 ways around it while testing. Docker with no network is the real boundary.
 - The samples are small, and some results moved a lot between runs.
+
+## Security
+
+Your code goes to a model provider when you run `fix`, so secret-like strings are redacted first, the agent cannot read `.env` or key files, and a patch containing a secret is never sent as a pull request. Tests run in Docker with no network. [`SECURITY.md`](SECURITY.md) lists what is protected and what is not.
 
 ## Checking a run
 

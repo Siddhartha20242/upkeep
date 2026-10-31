@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Callable, Protocol
 
 from .scan import CallSite
+from .secrets import redact
 
 RESULT_TAG = "@@UPKEEP_RESULT@@"
 Runner = Callable[[Path, str], tuple[bool, str]]
@@ -116,7 +117,7 @@ def _extract_json_list(text: str) -> list | None:
 
 def propose_inputs(client: _Chat, target: Target, n: int = 8, temperature: float = 0.0) -> tuple[list[list], int]:
     prompt = (
-        f"Here is a Python function from an application:\n\n{target.source}\n\n"
+        f"Here is a Python function from an application:\n\n{redact(target.source)[0]}\n\n"
         f"Propose up to {n} diverse argument lists to test it, as ONE JSON array of arrays, one inner array per call "
         f"(positional arguments: {target.params}). Use only JSON literals (strings, numbers, booleans, null, lists, "
         "objects). Include edge cases that matter for what it does: empty values, unicode, special characters, "

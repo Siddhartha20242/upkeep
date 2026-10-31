@@ -2,8 +2,23 @@
 name = "upkeep"
 version = "0.0.1"
 description = "Verified, security-aware dependency upgrade agent for Python projects"
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["dependencies", "upgrade", "static-analysis", "ai-agent", "security"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
 requires-python = ">=3.10"
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Siddhartha20242/upkeep"
+Issues = "https://github.com/Siddhartha20242/upkeep/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]

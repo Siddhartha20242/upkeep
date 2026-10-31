@@ -28,7 +28,7 @@ from .charact import BehaviorChecker
 from .apidiff import diff_api, extract_api  # noqa: F401  (diff used by radar)
 from .evalcases import _w
 from .evalharness import Outcome
-from .pypi import check_sha256
+from .pypi import changelog_section, check_sha256
 from .radar import run_radar
 from .sandbox import prepare_deps, run_python, run_tests
 
@@ -138,18 +138,6 @@ def _locate(root: Path, package: str) -> Path | None:
             if best is None or depth < best[0]:
                 best = (depth, init.parent.parent)
     return best[1] if best else None
-
-
-def changelog_section(root: Path, version: str, max_chars: int = 3500) -> str | None:
-    """Real release notes: the first section mentioning ``version`` in CHANGES/CHANGELOG/HISTORY."""
-    files = [p for p in root.rglob("*") if p.is_file() and len(p.relative_to(root).parts) <= 3
-             and re.match(r"(CHANGE|HISTORY|NEWS)", p.name, re.I)]
-    for f in sorted(files, key=lambda p: len(p.parts)):
-        lines = f.read_text(errors="replace").splitlines()
-        for i, line in enumerate(lines):
-            if re.search(rf"(?<![\d.]){re.escape(version)}(?![\d])", line) and len(line) < 80:
-                return "\n".join(lines[i:i + 70])[:max_chars]
-    return None
 
 
 @dataclass

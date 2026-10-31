@@ -17,6 +17,8 @@ from __future__ import annotations
 import ast
 from collections import Counter
 
+from .secrets import scan as scan_secrets
+
 DENY_MODULES = {
     "os", "sys", "subprocess", "pathlib", "inspect", "importlib", "socket", "urllib", "http",
     "ctypes", "shutil", "builtins", "pickle", "marshal", "glob", "tempfile", "gc", "types",
@@ -113,6 +115,8 @@ def check_edit(old_text: str, new_text: str) -> tuple[bool, str]:
     except SyntaxError:
         old = Counter()
     added = _census(new_tree) - old
+    for kind, n in (scan_secrets(new_text) - scan_secrets(old_text)).items():  # a hard-coded credential in a "fix"
+        added[f"secret-like string ({kind})"] += n
     if added:
         return False, "edit adds disallowed constructs: " + ", ".join(sorted(added))
     return True, ""

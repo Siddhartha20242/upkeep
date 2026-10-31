@@ -10,3 +10,6 @@ demo/
 
 # private notes
 *.local.md
+
+build/
+dist/

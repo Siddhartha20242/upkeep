@@ -120,3 +120,30 @@ def test_a_pinned_prerelease_is_audited_against_the_final_release(fake, monkeypa
     monkeypatch.setattr(au, "sources_for", no_sources)
     res = au.audit(r)[0]
     assert res.status == "skipped" and "did try" in res.reason   # i.e. it was NOT dismissed as already the latest
+
+
+def test_fail_on_controls_the_exit_code_but_never_hides_a_total_failure(fake, capsys, monkeypatch):
+    from tests.test_pypi_check import sdist_bytes as sb
+    import hashlib, json as j
+    arch = {"1.0": sb({"p-1.0/src/dlib/__init__.py": "def f(a, mode='x'):\n    pass\n"}),
+            "2.0": sb({"p-2.0/src/dlib/__init__.py": "def f(a, mode='y'):\n    pass\n"})}   # only a DEFAULT changes
+    real = pypi._read
+
+    def read(url, timeout=45, tries=4):
+        if "dlib" in url:
+            if url.endswith("/dlib/json"):
+                return j.dumps({"info": {"version": "2.0"}}).encode()
+            if url.endswith("/json"):
+                v = url.split("/")[-2]
+                return j.dumps({"urls": [{"packagetype": "sdist", "url": f"https://f/dlib-{v}.tar.gz", "size": 10,
+                                          "digests": {"sha256": hashlib.sha256(arch[v]).hexdigest()}}]}).encode()
+            return arch[url.split("dlib-")[1][:-7]]
+        return real(url, timeout, tries)
+    monkeypatch.setattr(pypi, "_read", read)
+    r = repo_with(fake, "dlib==1.0\n", "import dlib\n\n\ndef go():\n    return dlib.f(1)\n")
+    assert cli.main(["audit", "--repo", str(r)]) == 2                              # default: any flagged line fails
+    assert cli.main(["audit", "--repo", str(r), "--fail-on", "hard"]) == 0         # a changed default alone does not
+    assert cli.main(["audit", "--repo", str(r), "--fail-on", "never"]) == 0
+    capsys.readouterr()
+    monkeypatch.setattr(au, "sources_for", lambda *a, **k: (_ for _ in ()).throw(au.PyPIError("offline")))
+    assert cli.main(["audit", "--repo", str(r), "--fail-on", "never"]) == 3        # but "nothing was analysed" is always an error
