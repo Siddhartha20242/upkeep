@@ -205,3 +205,40 @@ def test_the_agent_redacts_known_values_from_files_and_test_output(tmp_path):
     runner = lambda w: TestResult(False, 1, f"FAILED test_x - assert '{ODD}' == 'y'\n1 failed", "local")  # noqa: E731
     res = Agent(model, repo, report, runner).run()
     assert ODD not in json.dumps(model.seen) and res.redactions >= 2
+
+
+import pytest as _pytest
+
+from upkeep.secrets import redact as _redact, scan as _scan
+
+
+@_pytest.mark.parametrize("text", [
+    'password = "correct horse battery"',
+    "{'passwd': 'S3cr3tValue!'}",
+    "api_token='abc123def456ghi789'",
+    'aws_secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYKEY0001"',
+    "DB_PASSWORD=prodpass123",
+    "export API_TOKEN=abc123def456",
+    "Authorization: Basic dXNlcjpwYXNzd29yZA==",
+    "hf_" + "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789",
+    "key-" + "0123456789abcdef0123456789abcdef",
+])
+def test_more_secret_shapes_are_redacted(text):
+    out, n = _redact(text)
+    assert n >= 1 and "[REDACTED" in out and _scan(text)
+
+
+@_pytest.mark.parametrize("text", [
+    'TOKEN_URL = "https://auth.example.com/oauth/token"',
+    'password_field = "password"',
+    'SECRET_KEY_NAME = "SECRET_KEY"',
+    "token = request.headers.get('x')",
+    "password = os.environ['DB_PASSWORD']",
+    "DB_PASSWORD = os.environ.get('DB_PASSWORD')",
+    "DB_PASSWORD=your-password-here",
+    'token = "abc"',
+    "x = {'name': 'tokenizer', 'kind': 'bpe'}",
+])
+def test_ordinary_code_is_left_alone(text):
+    out, n = _redact(text)
+    assert n == 0 and out == text and not _scan(text)

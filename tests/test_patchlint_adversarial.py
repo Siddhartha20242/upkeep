@@ -108,3 +108,37 @@ def test_more_bypasses_are_rejected(name):
 def test_repo_local_relative_imports_are_not_mistaken_for_the_stdlib(name):
     ok, why = edit(MORE_ACCEPT[name])
     assert ok, why
+
+
+BASE = "import yaml\n\ndef f(t):\n    return yaml.safe_load(t)\n"
+
+
+@pytest.mark.parametrize("body", [
+    "return '{0.__class__}'.format(t)",
+    "return '{0.__init__.__globals__}'.format(t)",
+    "return '{0[__class__]}'.format_map({'0': t})",
+    "return yaml.os.system('id')",
+    "return yaml.sys.modules",
+    "return yaml.subprocess.run(['id'])",
+    "return yaml.constructor.Constructor",
+])
+def test_reaching_dangerous_things_without_an_import_or_a_dunder_is_blocked(body):
+    ok, why = check_edit(BASE, f"import yaml\n\ndef f(t):\n    {body}\n")
+    assert not ok, why
+
+
+@pytest.mark.parametrize("body", [
+    "return '{0} and {name}'.format(t, name='x')",
+    "return '{0.real}'.format(t)",
+    "return t.types, t.signal, t.http",
+    "return yaml.safe_load(t) or {}",
+])
+def test_ordinary_formatting_and_attribute_names_are_still_allowed(body):
+    ok, why = check_edit(BASE, f"import yaml\n\ndef f(t):\n    {body}\n")
+    assert ok, why
+
+
+def test_an_existing_use_in_the_original_file_is_not_a_new_violation():
+    old = "import yaml\n\ndef f(t):\n    return '{0.__class__}'.format(t)\n"
+    ok, _ = check_edit(old, old.replace("f(t)", "f(t, extra=None)"))
+    assert ok

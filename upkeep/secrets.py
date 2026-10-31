@@ -34,10 +34,29 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("discord-token", re.compile(r"\b[MNO][A-Za-z0-9_-]{23,25}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,}\b")),
     ("azure-storage-key", re.compile(r"(?i)\bAccountKey=[A-Za-z0-9+/=]{40,}")),
     ("bearer-token", re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{24,}")),
+    ("basic-auth", re.compile(r"(?i)\bBasic\s+[A-Za-z0-9+/]{12,}={0,2}")),
+    ("huggingface-token", re.compile(r"\bhf_[A-Za-z0-9]{30,}\b")),
+    ("mailgun-key", re.compile(r"\bkey-[0-9a-f]{32}\b")),
     ("url-credentials", re.compile(r"(?<=://)[^\s/:@]+:[^\s/@]{3,}(?=@)")),
 ]
+_SECRET_WORD = r"(?:api[_-]?key|apikey|secret|token|passw(?:or)?d|pwd|credential|private[_-]?key|access[_-]?key)"
+# A quoted value assigned to a name that says it is a secret: `password = "..."`, `api_token='...'`, `{'passwd': '...'}`,
+# `aws_secret_access_key = "..."`. Spaces are allowed (passphrases); URLs, ALL_CAPS names and plain lowercase words are not secrets.
 ASSIGNED = re.compile(
-    r"""(?i)\b((?:api[_-]?key|secret(?:[_-]?key)?|access[_-]?token|auth[_-]?token|token|passw(?:or)?d|client[_-]?secret)\s*[:=]\s*)(["'])([^"'\s]{12,})\2""")
+    r"""(?i)([A-Za-z0-9_.-]*""" + _SECRET_WORD + r"""[A-Za-z0-9_.-]*["']?\s*[:=]\s*)(["'])([^"'\n]{6,}?)\2""")
+_NOT_A_SECRET = re.compile(r"^(?:https?://[^@\s]*|[A-Z][A-Z0-9_]*|[a-z_]+|[\w.]+\(\)?)$")
+# Unquoted environment-style lines: `DB_PASSWORD=prodpass123`, `export API_TOKEN=abc123...`.
+ENV_LINE = re.compile(r"(?m)^(\s*(?:export\s+)?[A-Z][A-Z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|CREDENTIALS?)"
+                      r"[A-Z0-9_]*\s*=\s*)([^\s\"'#()\[\]]{6,})[ \t]*$")
+
+
+def _assigned_is_secret(value: str) -> bool:
+    return not (_PLACEHOLDER.search(value) or _NOT_A_SECRET.match(value))
+
+
+def _env_is_secret(value: str) -> bool:
+    return not (_PLACEHOLDER.search(value) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+", value))
+
 
 SENSITIVE_NAMES = {".env", ".netrc", ".pypirc", "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "credentials", "credentials.json",
                    "secrets.json", "secrets.yml", "secrets.yaml", "service-account.json"}
@@ -117,11 +136,19 @@ def redact(text: str, known: Iterable[str] = ()) -> tuple[str, int]:
 
     def assigned(m: re.Match[str]) -> str:
         nonlocal count
-        if _PLACEHOLDER.search(m.group(3)):
+        if not _assigned_is_secret(m.group(3)):
             return m.group(0)
         count += 1
         return f"{m.group(1)}{m.group(2)}[REDACTED:assigned-secret]{m.group(2)}"
     text = ASSIGNED.sub(assigned, text)
+
+    def env_line(m: re.Match[str]) -> str:
+        nonlocal count
+        if not _env_is_secret(m.group(2)):
+            return m.group(0)
+        count += 1
+        return f"{m.group(1)}[REDACTED:assigned-secret]"
+    text = ENV_LINE.sub(env_line, text)
 
     def quoted(m: re.Match[str]) -> str:
         nonlocal count
@@ -140,6 +167,7 @@ def scan(text: str, known: Iterable[str] = ()) -> Counter:
             found["known-secret"] += text.count(value)
     for kind, pat in PATTERNS:
         found[kind] += len(pat.findall(text))
-    found["assigned-secret"] += sum(1 for m in ASSIGNED.finditer(text) if not _PLACEHOLDER.search(m.group(3)))
+    found["assigned-secret"] += (sum(1 for m in ASSIGNED.finditer(text) if _assigned_is_secret(m.group(3)))
+                                 + sum(1 for m in ENV_LINE.finditer(text) if _env_is_secret(m.group(2))))
     found["high-entropy-string"] += sum(1 for m in QUOTED.finditer(text) if not _PLACEHOLDER.search(m.group(2)) and _looks_random(m.group(2)))
     return +found  # drop zero counts

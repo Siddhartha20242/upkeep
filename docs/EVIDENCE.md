@@ -17,7 +17,7 @@ Sources are the numbered results below; every cell comes from a file in `eval_re
 | Tokens / seconds per authored case | 13.4k / 11 | 13.8k / 13 | 15.4k / 20 | 11.2k / 10 |
 | Werkzeug, no behavior check: wrong but called verified (result 3) | 12 of 12 | 2 of 2 | 2 of 2 | 2 of 2 |
 | Own probes catch the subtle wrong fix / the naive one (result 10) | 3/6, 6/6 | 5/6, 5/6 | 4/6, 6/6 | 5/6, 5/6 |
-| Werkzeug fixed, hidden tests pass, check on (result 16) | 0/47 | not run | not run | 2/2 |
+| Werkzeug fixed, hidden tests pass, check on, one attempt (result 16) | 0/47 | not run | not run | 2/2 |
 
 How to read it: newer versions call tools more reliably but are slower and use more tokens; Open is the cheapest and
 fastest per call but is the one that answers in text instead of calling `finish` (the agent's nudge exists for it) and that
@@ -64,7 +64,7 @@ little. *Caveat: three libraries, apps written by me, small samples.*
 | check on, with edge-case expansion (Open x 3, `muse-spark-1.1` x 3) | 6 | 0 | 0 | 6 |
 
 The table covers the first 31 check-on runs. Later experiments (random inputs, library source, re-asking, Muse Spark 1.3, escalation;
-results 13 and 16) bring the total to 64 check-on runs: 59 declined, 4 verified with the hidden tests passing, and 1 wrong fix got
+results 13 and 16) bring the total to 72 check-on runs: 62 declined, 9 verified with the hidden tests passing, and 1 wrong fix got
 through. That one predates the edge-case expansion, and none of the runs after it was a wrong acceptance.
 
 The one wrong acceptance was `muse-spark-1.1` using `safe='/+'` where the old default was `safe='/:'`; neither the
@@ -239,19 +239,20 @@ class of the old behavior and the behavior check named the difference, but it ra
 re-ask and token changes or just noise.* Raw files: `eval_results/reallib_baseten_behavior_libsrc*.json`,
 `..._newharness_nolib.json`, `..._newharness_lib.json`.
 
-### 14. More samples on the two cases that work: 5 of 5 each
+### 14. More samples on the two cases that work: 15 of 15 each
 
 With the current agent (re-asking on empty replies, 12,000 output tokens, deny-by-default content check), 5 runs per case on
 the real PyYAML and Jinja2 upgrades, 20 turns, library tools off:
 
 | Case | Correct (hidden tests pass) | Model calls | Tokens |
 |---|---|---|---|
-| PyYAML 5.4.1 to 6.0.2 | 5 of 5 | 9 to 11 | 27k to 40k |
-| Jinja2 3.0.3 to 3.1.4 | 5 of 5 | 14 to 20 | 64k to 109k |
+| PyYAML 5.4.1 to 6.0.2 | 5 of 5, then 10 of 10 | 9 to 11 | 27k to 40k |
+| Jinja2 3.0.3 to 3.1.4 | 5 of 5, then 10 of 10 | 14 to 20 | 59k to 109k |
 
 This is stronger than the earlier 2 runs per cell, and the earlier Jinja2 results (0 of 3 up to 3 of 3) look noisier next to it. These
 are still my own apps on three real libraries, so it says the agent is reliable on cases like these and nothing about breadth.
-Files: `eval_results/reallib_baseten_behavior_n5_pyyaml.json`, `..._n5_jinja2.json`.
+I then repeated both 10 more times (same settings, a later commit with the stricter content check and redaction): 10 of 10 each again, so 15 of 15
+on each case. Files: `eval_results/reallib_baseten_behavior_n5_*.json`, `..._n10_*.json`.
 
 ### 15. How strong is the behavior check's evidence? Now it says
 
@@ -267,29 +268,36 @@ mostly matters on larger functions.
 
 ### 16. The hard case and the tiered design: Muse Spark Open first, a stronger model only if the verifier declines
 
-Werkzeug 2.3.8 to 3.0.3 is the case no Open run has solved. Every setup I tried, by model and harness:
+Werkzeug 2.3.8 to 3.0.3 is the case no single Open attempt has solved. Every setup I tried, by model and harness (hidden tests decide "correct"):
 
-| Setup | Runs | Correct fix (hidden tests pass) |
+| Setup | Runs | Correct fix |
 |---|---|---|
-| Muse Spark Open, library source tools | 17 | 0 |
-| Muse Spark Open, all other check-on runs (earlier harnesses, nudges, fuzzing) | 24 | 0 |
-| Muse Spark Open, compare tool, 24 turns | 3 | 0 |
-| Muse Spark Open, compare tool, 40 turns | 3 | 0 |
+| Muse Spark Open, one attempt: library source tools | 17 | 0 |
+| Muse Spark Open, one attempt: all other check-on setups (earlier harnesses, nudges, fuzzing, compare tool at 24 and 40 turns) | 30 | 0 |
 | Muse Spark 1.3, compare tool, 40 turns | 2 | 2 |
-| Open first, then escalate to 1.3 (`--escalate meta:muse-spark-1.3`) | 3 | 2 (the third was declined by the verifier) |
+| Open, then escalate to 1.3, second model starts fresh (first 3 escalation runs) | 3 | 2 |
+| Open, then Open again, second attempt is shown the declined patch and the counterexample | 3 | 1 |
+| Open, then escalate to 1.3, second model is shown the declined patch and the counterexample | 5 | 4 |
 
-`--escalate PROVIDER:MODEL` runs the cheap open-weight model first. Only if the deterministic verifier declines does the stronger
-model get the task, with the earlier attempt's reason in its prompt. The same verifier then judges the second patch, so a stronger
-model cannot approve itself: in escalation run 3, Muse Spark 1.3 produced a patch that passed the visible tests, and the behavior
-check declined it (`app.py:9`, `werkzeug.urls.url_encode` differs from the old library). Tokens per run were 257k, 500k and 499k
-(about 40 to 54 model calls, 6 to 18 minutes), recorded in `eval_results/reallib_baseten_behavior_escalate.json`.
+`--escalate PROVIDER:MODEL` runs the cheap open-weight model first. Only if the deterministic verifier declines does a second model get
+the task. A correction: the first three escalation runs did NOT show the second model why the first attempt failed. I had written
+that they did, and it was not true; the code started the second attempt from scratch. The code now passes the declined patch and the
+verifier's concrete counterexample (input, old output, new output) to the second attempt as untrusted data, after secret redaction,
+and the last two rows are measured with it. The first escalation rows and the hinted rows differ by one change, but 2/3 against 4/5 is
+too few runs to say the hint helps.
 
-Across every check-on Werkzeug run on file (64): 59 declined, 4 verified with hidden tests passing (two Muse Spark 1.3 runs and two
-escalations), 1 verified with hidden tests failing (Muse Spark 1.1, before the edge-case probes existed).
+The same verifier judges every second patch, so a stronger model cannot approve itself: in the escalation runs that failed, the
+second model's patch was declined (`app.py:9`, `werkzeug.urls.url_encode` differs from the old library) or still failed the tests.
+Tokens per run were 257k to 880k (38 to 65 model calls, 6 to 24 minutes), summed over both attempts, in
+`eval_results/reallib_baseten_behavior_escalate.json`, `..._hint_open2open.json` and `..._hint_o2m13.json`.
 
-Caveats: three escalation runs, one case. Muse Spark 1.3 is served by Meta's API and is not open-weight, so the hard case is solved by a model
-outside the open-weight prize category. It costs 10 to 20 times what Open spends on PyYAML or Jinja2 (Open: 27k to 40k tokens per
-verified PyYAML fix, 64k to 109k for Jinja2; results 14 and the `n5_*` files).
+Across every check-on Werkzeug run on file (72): 62 declined, 9 verified with the hidden tests passing, 1 verified with them failing (Muse
+Spark 1.1, before the edge-case probes existed). Of the 9, none came from a single Open attempt; one came from Open on a second try with
+the counterexample (1 of 3), which is the first time an Open run has produced a correct Werkzeug fix.
+
+Caveats: one case, small samples. Muse Spark 1.3 is served by Meta's API and is not open-weight, so most of the Werkzeug fixes come from a
+model outside the open-weight prize category. Cost: Open spends 27k to 40k tokens per verified PyYAML fix and 59k to 109k for Jinja2
+(result 14), and a hard escalation costs ten times that or more.
 
 ### 17. Mined real downstream repositories, second attempt: 0 of 70
 
@@ -307,6 +315,44 @@ The four radar hits all dropped out because their tests do not pass on the old l
 upgrade. I read this as a finding about the method: very few public projects have a runnable test suite that also exercises the line
 the upgrade breaks. It is not a benchmark, and it means Upkeep has no validation on projects I did not write beyond results 6, 7 and 12.
 Raw output: `eval_results/real_repos.json`, `eval_results/real_repos_usage.json`.
+
+### 18. Against other tools: what I measured and what I did not
+
+I have not run Dependabot, Renovate or a general coding agent on these cases, so there is no head-to-head score. Two things are
+measured, and the rest is a description of what each kind of tool is for, not a benchmark.
+
+| Question | Measured |
+|---|---|
+| What would CI on a plain version-bump PR show for the three real upgrades (results 2 and 3)? | Red for all three. Each case was validated in Docker as "tests pass on the old version, fail on the new". A bump PR has no fix attached. |
+| The same model with no radar and no verifier, on Werkzeug | Called its fix "verified" in 18 of 18 runs, and none was correct (result 3). Visible tests pass, so a coding agent that stops when tests are green ships it. |
+
+| Kind of tool | What it does | What Upkeep adds on top |
+|---|---|---|
+| Version-bump bots (Dependabot, Renovate) | Open a PR that changes the version | Reads the two releases and lists the lines of your code that will break, before and without a model |
+| Codemods and rule-based migrators | Apply hand-written rewrite rules for a known migration | Works for a library nobody wrote rules for, but needs a model and is slower |
+| General coding agents | Edit code until the tests pass | Checks the edit against the old library's behavior, so green tests alone are not accepted |
+
+Caveat: the second and third tables describe categories from how these tools are generally used, and I did not verify them against a
+current version of each product. The claim I can stand behind is the narrow measured one: with the same model, adding the old-library check
+turned 18 of 18 wrong-but-green runs into declines.
+
+### 19. Closing gaps I found by attacking my own checks
+
+Content check: I wrote 36 new bypass attempts (format-string attribute reads, `yaml.os.system`, `yaml.constructor.Constructor`, frame and
+class walks, builtins through `vars`, and others). Four got through and are now blocked, with tests that also check ordinary code still
+passes: `'{0.__class__}'.format(x)`, reaching `os`/`sys`/`subprocess` through a library module, and the `Constructor` classes of PyYAML.
+The remaining allowed ones are harmless (`yaml.load` without a `Loader` just raises). It is still a deny list plus a deny-by-default
+import and builtin list, so new tricks will exist; Docker with no network remains the boundary.
+
+Redaction: I tried 24 secret shapes. Nine were not redacted: assignments such as `password = "..."` with spaces or a dict key,
+`api_token='...'`, `aws_secret_access_key = "..."`, `DB_PASSWORD=...` lines, Basic auth headers, Hugging Face tokens, Mailgun keys.
+All are now redacted, and nine kinds of ordinary code (URLs assigned to `TOKEN_URL`, `password = os.environ[...]`, placeholder values)
+are left alone. Still not caught: a secret of an unknown shape that is not in your environment and does not sit next to a name that says
+what it is, and a plain lowercase word used as a password.
+
+Behavior changes under the same signature: `upkeep audit` now lists the release-note lines (for every release between your pin and the newest)
+that mention a name your code imports or calls, labelled as a text match that is not checked. On the PyYAML demo it finds the 6.0 line
+"always require `Loader` arg to `yaml.load()`". It never changes the risk or the exit code, and a change nobody wrote down stays invisible.
 
 ## Integrity of what it downloads and produces
 

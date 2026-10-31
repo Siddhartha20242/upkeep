@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import ast
 import builtins
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Iterable
@@ -33,12 +34,18 @@ DENY_CALLS = {"eval", "exec", "compile", "__import__", "open", "getattr", "setat
               "globals", "locals", "vars", "dir", "input", "breakpoint"}
 # Unsafe deserializers: choosing one of these to silence an upgrade error is a security downgrade.
 UNSAFE_YAML = {"Loader", "UnsafeLoader", "CLoader", "CUnsafeLoader", "unsafe_load", "unsafe_load_all",
-               "FullLoader", "CFullLoader", "full_load", "full_load_all"}  # FullLoader was only made safe in 5.4 and can still build some Python objects
+               "FullLoader", "CFullLoader", "full_load", "full_load_all",
+               "Constructor", "FullConstructor", "UnsafeConstructor"}  # FullLoader was only made safe in 5.4 and can still build some Python objects
 # Referring to a dangerous builtin without calling it (`f = eval; f(...)`) is as bad as calling it. `dir` and `input`
 # are left out because they are common variable names; calling them is still denied.
 DENY_REFS = (DENY_CALLS - {"dir", "input"}) | {"__builtins__"}
 # String-driven attribute access that would bypass the dunder check.
 DENY_NAMES_ANYWHERE = {"attrgetter", "methodcaller"}
+# A library module exposes the modules it imported (`yaml.os.system(...)`, `lib.sys.modules`), which reaches them without an import
+# statement. Only the dangerous ones are listed: `.types` or `.signal` are ordinary attribute names.
+DENY_MODULE_ATTRS = {"os", "sys", "subprocess", "socket", "shutil", "ctypes", "importlib", "builtins", "pickle", "marshal", "pty",
+                     "multiprocessing"}
+_FORMAT_FIELD = re.compile(r"\{[^{}]*\}")
 DENY_ATTRS = {"__path__", "__code__", "__file__", "__dict__", "__globals__", "__builtins__",
               "__subclasses__", "__class__", "__bases__", "__mro__", "__closure__", "__module__",
               # frame and function internals: the usual ways to reach globals or builtins without a dunder
@@ -185,6 +192,14 @@ def _census(tree: ast.AST) -> Counter:
                 c[f"unsafe deserialization yaml.{node.attr} (use yaml.SafeLoader, or decline)"] += 1
             if node.attr in DENY_NAMES_ANYWHERE:
                 c[f"operator.{node.attr}"] += 1
+            if node.attr in DENY_MODULE_ATTRS:
+                c[f"attribute .{node.attr} (reaches a module the library imported)"] += 1
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and "{" in node.value:
+            # '{0.__class__}'.format(x) reads an attribute without writing it as one
+            for field in _FORMAT_FIELD.findall(node.value):
+                for attr in re.findall(r"[.\[](\w+)", field):
+                    if attr in DENY_ATTRS:
+                        c[f"format string reads attribute {attr}"] += 1
         elif isinstance(node, ast.Name):
             if node.id in DENY_REFS and isinstance(node.ctx, ast.Load):
                 c[f"reference to {node.id}"] += 1

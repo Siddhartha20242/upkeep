@@ -33,13 +33,13 @@ Test runs
 
 The model
 - It can only edit the lines the radar flagged. Code enforces this, not the prompt.
-- Edits are rejected if they add `eval`, `open`, network or OS imports, dunder tricks, a `raise`, an unsafe YAML loader
+- Edits are rejected if they add `eval`, `open`, network or OS imports, dunder tricks (including `'{0.__class__}'.format(x)` and reaching `os`/`sys` through a library, as in `yaml.os.system`), a `raise`, an unsafe YAML loader
   (`Loader`, `UnsafeLoader`, `FullLoader` and the matching `load` helpers, so the agent has to pick `SafeLoader` or decline), or a
   string that looks like a credential.
 - It cannot read environment files, keys or credentials (`.env`, `*.pem`, `id_rsa`, `.ssh/`, `.aws/`, `.git/` and similar).
 - Secret-like strings are replaced with `[REDACTED:...]` in everything sent to the model: file contents, test output, behavior
   results, the function source used to propose probe inputs, and the output of `--explore`. Three layers: patterns for common
-  token shapes (cloud keys, tokens, private key blocks, passwords assigned in code, credentials in URLs), the exact values of
+  token shapes (cloud keys, tokens, private key blocks, Basic auth headers, passwords and tokens assigned to a name that says so, including `DB_PASSWORD=...` lines, credentials in URLs), the exact values of
   secrets that are really there (environment variables named like KEY, TOKEN, SECRET or PASSWORD, and values in the repo's
   `.env` files), and an entropy rule for random-looking keys. A redacted placeholder cannot be written back over the real value.
 - Deny by default: a new import must be a listed standard-library module, the upgraded library, or something the project already

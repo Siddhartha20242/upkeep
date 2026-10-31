@@ -141,6 +141,28 @@ def changelog_section(root: Path, version: str, max_chars: int = 3500) -> str | 
     return None
 
 
+def changelog_between(root: Path, old: str, new: str, max_chars: int = 40000) -> str | None:
+    """Release notes for every release after ``old`` up to ``new``: from the heading that mentions ``new`` down to the heading that
+    mentions ``old`` (or at most ``max_chars``). Falls back to the newest section alone if ``old`` has no heading."""
+    files = [p for p in root.rglob("*") if p.is_file() and len(p.relative_to(root).parts) <= 3
+             and re.match(r"(CHANGE|HISTORY|NEWS)", p.name, re.I)]
+
+    def heading(lines: list[str], version: str, start: int = 0) -> int | None:
+        for i in range(start, len(lines)):
+            if len(lines[i]) < 80 and re.search(rf"(?<![\d.]){re.escape(version)}(?![\d])", lines[i]):
+                return i
+        return None
+    for f in sorted(files, key=lambda p: len(p.parts)):
+        lines = f.read_text(errors="replace").splitlines()
+        top = heading(lines, new)
+        if top is None:
+            continue
+        end = heading(lines, old, top + 1)
+        text = "\n".join(lines[top:end] if end is not None else lines[top:top + 70])
+        return text[:max_chars]
+    return None
+
+
 def guess_module(dist: str) -> str:
     return dist.lower().replace("-", "_")
 

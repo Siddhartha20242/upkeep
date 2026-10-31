@@ -157,6 +157,7 @@ class Agent:
         explorer: Callable[[str], tuple[str, str]] | None = None,  # runs a snippet on (old library, new library) in the sandbox
         max_explorations: int = 8,
         max_library_reads: int = 6,  # measured: without a budget the model read source until its turns ran out and never edited
+        earlier_attempt: dict | None = None,  # {"model", "reason", "diff"}: a declined attempt by another run, shown as data
     ):
         self.client, self.report, self.runner = client, report, test_runner
         self.changelog = changelog
@@ -179,6 +180,7 @@ class Agent:
         self.import_roots = set(import_roots) | {report.package.split(".")[0]}
         self.explorer, self.max_explorations, self.explorations = explorer, max_explorations, 0
         self.max_library_reads, self.library_reads = max_library_reads, 0
+        self.earlier_attempt = earlier_attempt
         self.tools = (list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
                       + (LIBRARY_TOOLS if self.lib_roots else []) + ([EXPLORE_TOOL] if explorer else []))
         self.max_turns, self.max_edits, self.max_test_runs = max_turns, max_edits, max_test_runs
@@ -375,6 +377,13 @@ class Agent:
             self.flags += [f for f in so.flags if f not in self.flags]
             parts.append(f"Current test run against the NEW library: {'PASSED' if res.ok else 'FAILED'} "
                          f"({_summary_line(res.output)})\n" + wrap_untrusted(so, "test output"))
+        if self.earlier_attempt:
+            e = self.earlier_attempt
+            sc = screen(self._redacted(f"patch:\n{str(e.get('diff', ''))[:1500]}\n\nwhy the verifier declined it: {str(e.get('reason', ''))[:600]}"))
+            self.flags += [f for f in sc.flags if f not in self.flags]
+            parts.append(f"An earlier attempt by {e.get('model', 'another model')} was DECLINED by the verifier. Its patch and the reason are "
+                         "below. Do not repeat that patch; the reason shows an input where it behaves differently from the old library.\n"
+                         + wrap_untrusted(sc, "earlier declined attempt"))
         if self.checker:
             parts.append("A check_behavior tool compares your patched code with the OLD library's behavior on probe inputs. "
                          "Call it after the tests pass; the final verdict also requires it to find no differences.")

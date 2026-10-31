@@ -12,7 +12,8 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .pypi import PyPIError, latest_version, sources_for
+from .notes import mentions, used_names
+from .pypi import PyPIError, changelog_between, fetch_sdist, latest_version, sources_for
 from .radar import RadarInputError, run_radar
 
 # import name differs from the PyPI name
@@ -38,6 +39,7 @@ class DepResult:
     hard: int = 0             # flagged lines that will fail or misbehave (removed names, removed/required/reordered parameters)
     review: int = 0           # flagged lines where only a default value changed: behavior MAY differ, often benign
     minor: int = 0            # of those, how many are a falsy default becoming None (usually equivalent)
+    notes: list[list[str]] = field(default_factory=list)  # [name, release-note line]: text matches, NOT part of the risk
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()
@@ -169,6 +171,11 @@ def audit(repo: Path, max_mb: int = 15, only: set[str] | None = None, limit: int
         # a site counts as "equivalent" only if EVERY default change at it is (one real change must never hide behind a harmless one)
         r.minor = sum(1 for x in r.flagged if x[3] == "default_changed" and all(by_site.get((x[0], x[1], x[2]), [False])))
         r.hard = len(r.flagged) - r.review
+        try:  # best effort: release-note lines that mention names this repo uses (never changes the risk)
+            text = changelog_between(fetch_sdist(dist, r.new, max_bytes=max_mb * 1_000_000), old, r.new)
+            r.notes = mentions(text, used_names(Path(repo), module)) if text else []
+        except Exception:  # noqa: BLE001 - notes are a bonus; a failure here must not lose the radar result
+            r.notes = []
     return out
 
 

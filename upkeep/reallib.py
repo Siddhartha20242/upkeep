@@ -214,7 +214,7 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
                    focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
                    prober_client=None, n_random: int = 0, library_source: bool = False,
-                   explore: bool = False, escalate_client=None, escalate_turns: int = 40) -> Outcome:
+                   explore: bool = False, escalate_client=None, escalate_turns: int = 40, hint: bool = True) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -242,19 +242,20 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
                 return o, n
             return explorer
 
-        def build(cl, turns: int, with_explorer: bool):
+        def build(cl, turns: int, with_explorer: bool, earlier: dict | None = None):
             return Agent(cl, repo, report, runner, changelog=prep.changelog if use_changelog else None,
                          explorer=make_explorer() if with_explorer else None, import_roots=import_roots_from(prep.new_deps, prep.new_src),
                          behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=turns,
-                         library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None)
+                         library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None, earlier_attempt=earlier)
         agent = build(client, max_turns, explore)
         t0 = time.monotonic()
         try:
             res = agent.run()
             if res.status != "verified" and escalate_client is not None:  # the verifier declined: the stronger model tries, same verifier
                 first_calls, first_tokens = res.model_calls, res.total_tokens
+                earlier = {"model": getattr(client, "model", "the first model"), "reason": res.reason, "diff": res.diff} if hint else None
                 agent.cleanup()
-                agent = build(escalate_client, escalate_turns, True)
+                agent = build(escalate_client, escalate_turns, True, earlier)
                 res = agent.run()
                 res.model_calls += first_calls
                 res.total_tokens += first_tokens

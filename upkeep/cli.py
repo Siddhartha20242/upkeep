@@ -110,6 +110,10 @@ def _audit(args) -> int:
                     print(f"    {f}:{ln}  {sym}  [{'review: default changed' if kind == 'default_changed' else kind}]")
                 if len(r.flagged) > 6:
                     print(f"    ... and {len(r.flagged) - 6} more")
+                if r.notes:
+                    print("    release notes mention names you use (text match, NOT checked by Upkeep; read them):")
+                    for name, line in r.notes[:4]:
+                        print(f"      {name}: {line}")
             elif r.status == "up-to-date":
                 print(f"{r.dist} {r.old}: already the latest")
             else:
@@ -254,10 +258,11 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
             return out_old, out_new
         return explorer
 
-    def attempt(cl, turns: int, explore: bool):
+    def attempt(cl, turns: int, explore: bool, earlier: dict | None = None):
         ag = Agent(cl, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker,
                    library_roots={"old": args.old, "new": args.new} if args.library_source else None,
-                   explorer=make_explorer() if explore else None, import_roots=import_roots_from(args.deps, args.new), max_turns=turns)
+                   explorer=make_explorer() if explore else None, import_roots=import_roots_from(args.deps, args.new), max_turns=turns,
+                   earlier_attempt=earlier)
         return ag, run_with_progress(ag)
 
     print(paint("\nupkeep: agent working (the model proposes; code decides)", "bold", use_color()), flush=True)
@@ -271,7 +276,7 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
                     f"compare tool and {args.escalate_turns} turns; the verifier still decides.", "yellow", use_color()), flush=True)
         earlier.append({"model": attempts[0]["model"], "agent_messages": res.transcript})
         agent.cleanup()
-        agent, res = attempt(esc, args.escalate_turns, True)
+        agent, res = attempt(esc, args.escalate_turns, True, {"model": attempts[0]["model"], "reason": res.reason, "diff": res.diff})
         attempts.append(_attempt_record(esc, prov, args.escalate_turns, True, res))
         client, args.provider = esc, prov  # the proof's headline model is the one that produced the final result
     print()

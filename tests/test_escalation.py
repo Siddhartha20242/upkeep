@@ -84,3 +84,14 @@ def test_without_the_flag_there_is_exactly_one_attempt(tmp_path):
     cli.main(args(old, new, repo, out), client=decline())
     result = json.loads((out / "result.json").read_text())
     assert len(result["attempts"]) == 1 and result["status"] == "declined"
+
+
+def test_the_escalated_model_is_shown_the_declined_attempt_as_untrusted_data(tmp_path):
+    old, new, repo = build(tmp_path)
+    out = tmp_path / "o"
+    cli.main(args(old, new, repo, out, "--escalate", "meta:muse-spark-1.3"), client=decline(), escalator=fixer())
+    log = json.loads((out / "model_transcript.json").read_text())
+    first = log["agent_messages"][1]["content"]            # the escalated model's opening message
+    assert "was DECLINED by the verifier" in first and "UNTRUSTED_CONTENT" in first and "earlier declined attempt" in first
+    assert "was DECLINED" not in log["earlier_attempts"][0]["agent_messages"][1]["content"]   # the first attempt had no such hint
+
