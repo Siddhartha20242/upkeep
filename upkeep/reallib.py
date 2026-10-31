@@ -83,6 +83,16 @@ CASES: list[RealCase] = [
         {"app.py": "from urllib.parse import quote, urlencode\n\n\ndef quote_(s):\n    return quote(s, safe='/:')\n\n\ndef encode(d):\n    return urlencode(d)\n"},
         "werkzeug's url_quote kept '/' and ':' unescaped by default; urllib.parse.quote escapes ':'. A naive swap is green on visible tests and wrong on the hidden one.",
     ),
+    RealCase(
+        "emoji_use_aliases", "emoji", "emoji", "1.7.0", "2.0.0", ["emoji==1.7.0"], ["emoji==2.0.0"],
+        "parameter removed; dropping it silently changes the output",
+        {"app.py": "import emoji\n\n\ndef render(text):\n    return emoji.emojize(text, use_aliases=True)\n",
+         "test_app.py": "import app\n\n\ndef test_render_cldr_name():\n    assert app.render('good :thumbs_up:') == 'good \\U0001F44D'\n"},
+        {"test_hidden.py": "import app\n\n\ndef test_render_legacy_alias():\n    assert app.render('ok :thumbsup:') == 'ok \\U0001F44D'\n"},
+        {"app.py": "import emoji\n\n\ndef render(text):\n    return emoji.emojize(text, language='alias')\n"},
+        "emojize(use_aliases=True) was removed in 2.0. Dropping the argument keeps ':thumbs_up:' working (the visible test) but stops converting "
+        "legacy aliases like ':thumbsup:' (the hidden test). The old behavior is language='alias'.",
+    ),
 ]
 BY_NAME = {c.name: c for c in CASES}
 # the third solution above must keep the app's public names; fix the helper name mismatch explicitly
@@ -214,7 +224,7 @@ def selfcheck(case: RealCase, prep: Prepared) -> dict:
 def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool = True, behavior_check: bool = False,
                    focus_notes: bool = True, notes_mode: str = "tool", max_turns: int = 14,
                    prober_client=None, n_random: int = 0, library_source: bool = False,
-                   explore: bool = False, escalate_client=None, escalate_turns: int = 40, hint: bool = True, repair_rounds: int = 0) -> Outcome:
+                   explore: bool = False, escalate_client=None, escalate_turns: int = 40, hint: bool = True, repair_rounds: int = 0, reasoning_hint: bool = True) -> Outcome:
     root = Path(tempfile.mkdtemp(prefix=f"real-{case.name}-"))
     try:
         repo = root / "repo"
@@ -246,7 +256,7 @@ def run_agent_case(case: RealCase, prep: Prepared, client, use_changelog: bool =
             return Agent(cl, repo, report, runner, changelog=prep.changelog if use_changelog else None,
                          explorer=make_explorer() if with_explorer else None, import_roots=import_roots_from(prep.new_deps, prep.new_src),
                          behavior_checker=checker, focus_notes=focus_notes, notes_mode=notes_mode, max_turns=turns,
-                         library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None, earlier_attempt=earlier)
+                         library_roots={"old": prep.old_src, "new": prep.new_src} if library_source else None, earlier_attempt=earlier, reasoning_hint=reasoning_hint)
         agent = build(client, max_turns, explore)
         t0 = time.monotonic()
         try:

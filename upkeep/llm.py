@@ -76,12 +76,15 @@ PROVIDERS = {
 }
 
 
-def client_for(provider: str, model: str | None = None) -> "Client":
+REASONING_EFFORTS = ("low", "medium", "high", "xhigh")  # Baseten's documented values; the service default is xhigh
+
+
+def client_for(provider: str, model: str | None = None, reasoning_effort: str | None = None) -> "Client":
     base, env, default_model = PROVIDERS[provider]
     key = os.environ.get(env)
     if not key:
         raise LLMError(f"{env} is not set (put it in .env or your environment)")
-    return Client(api_key=key, model=model or default_model, base_url=base)
+    return Client(api_key=key, model=model or default_model, base_url=base, reasoning_effort=reasoning_effort)
 
 
 class Client:
@@ -91,7 +94,11 @@ class Client:
         model: str = DEFAULT_MODEL,
         base_url: str = BASE_URL,
         timeout: int = 120,
+        reasoning_effort: str | None = None,  # sent as `reasoning_effort` when set; None leaves the provider's default
     ):
+        if reasoning_effort is not None and reasoning_effort not in REASONING_EFFORTS:
+            raise LLMError(f"reasoning_effort must be one of {', '.join(REASONING_EFFORTS)}")
+        self.reasoning_effort = reasoning_effort
         self._key = api_key or os.environ.get("BASETEN_API_KEY")
         if not self._key:
             raise LLMError("BASETEN_API_KEY is not set (put it in .env or your environment)")
@@ -136,6 +143,8 @@ class Client:
         }
         if tools:
             payload["tools"] = tools
+        if self.reasoning_effort:
+            payload["reasoning_effort"] = self.reasoning_effort
         t0 = time.monotonic()
         resp = self._request("POST", "/chat/completions", payload)
         dt = time.monotonic() - t0

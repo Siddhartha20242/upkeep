@@ -102,3 +102,20 @@ def test_client_for_each_provider_needs_its_own_key(monkeypatch, provider, env):
         client_for(provider)
     monkeypatch.setenv(env, "k")
     assert client_for(provider, "custom-model").model == "custom-model"
+
+
+def test_reasoning_effort_is_sent_only_when_set_and_rejects_unknown_values(monkeypatch):
+    import pytest
+    from upkeep.llm import Client, LLMError
+    sent = []
+    resp = {"choices": [{"message": {"role": "assistant", "content": "x"}, "finish_reason": "stop"}], "usage": {}}
+
+    def fake(self, method, path, payload=None):
+        sent.append(payload)
+        return resp
+    monkeypatch.setattr(Client, "_request", fake)
+    Client(api_key="k").chat([{"role": "user", "content": "hi"}])
+    Client(api_key="k", reasoning_effort="low").chat([{"role": "user", "content": "hi"}])
+    assert "reasoning_effort" not in sent[0] and sent[1]["reasoning_effort"] == "low"
+    with pytest.raises(LLMError):
+        Client(api_key="k", reasoning_effort="turbo")

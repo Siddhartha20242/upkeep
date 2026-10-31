@@ -204,6 +204,8 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
     generated: set[str] = set()                       # classes whose constructor is generated from fields we cannot read
     dc_own: dict[str, list[_Field]] = {}              # @dataclass / NamedTuple classes: their OWN fields, in order
     init_trees: list[tuple[str, ast.Module]] = []     # parsed __init__.py files, reused by the lazy-name pass
+    stars: list[tuple[str, str]] = []                 # (module, source module) for `from source import *`
+    all_names: dict[str, set[str]] = {}               # module -> names in its literal __all__
 
     for file in sorted(pkg_dir.rglob("*.py")):
         try:
@@ -263,12 +265,31 @@ def extract_api(root: Path, package: str, include_methods: bool = False) -> dict
                     v = v.value
                 if isinstance(v, ast.Name) and v.id in imported.get(module, {}):
                     reexports.append((f"{module}.{node.targets[0].id}", ".".join([imported[module][v.id], *reversed(chain)])))
+            elif isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "__all__" for t in node.targets) \
+                    and isinstance(node.value, (ast.List, ast.Tuple)):
+                all_names[module] = {e.value for e in node.value.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)}
             elif isinstance(node, ast.ImportFrom):
+                if any(a.name == "*" for a in node.names):  # `from .core import *`: every public name of that module is public here too
+                    if node.level:
+                        parts = here.split(".") if here else []
+                        up = parts[: len(parts) - (node.level - 1)] if node.level - 1 <= len(parts) else []
+                        star_src = ".".join([*up, *([node.module] if node.module else [])])
+                    else:
+                        star_src = node.module or ""
+                    if star_src.startswith(package + ".") or star_src == package:
+                        stars.append((module, star_src))
                 # `from .x import Y [as Z]` or `from pkg.x import Y` inside the package: Y is also public as this module's Z
                 for alias in node.names:
                     canonical = imported.get(module, {}).get(alias.asname or alias.name)
                     if alias.name != "*" and canonical and canonical.startswith(package + "."):
                         reexports.append((f"{module}.{alias.asname or alias.name}", canonical))
+
+    for module, src in stars:
+        wanted = all_names.get(src)
+        for key in list(api):
+            head, _, name = key.rpartition(".")
+            if head == src and not name.startswith("_") and (wanted is None or name in wanted):
+                reexports.append((f"{module}.{name}", key))
 
     by_simple: dict[str, list[str]] = {}
     for q in class_bases:

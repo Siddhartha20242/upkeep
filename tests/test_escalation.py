@@ -119,3 +119,14 @@ def test_no_repair_rounds_by_default(tmp_path):
     out = tmp_path / "o"
     cli.main(args(old, new, repo, out), client=decline())
     assert len(json.loads((out / "result.json").read_text())["attempts"]) == 1
+
+
+def test_a_spent_token_budget_stops_repair_rounds_and_escalation(tmp_path, capsys):
+    old, new, repo = build(tmp_path)
+    out = tmp_path / "o"
+    cli.main(args(old, new, repo, out, "--repair-rounds", "2", "--escalate", "meta:muse-spark-1.3", "--token-budget", "1"),
+             client=decline(), escalator=fixer())
+    text = capsys.readouterr().out
+    result = json.loads((out / "result.json").read_text())
+    assert len(result["attempts"]) == 1 and result["status"] == "declined"
+    assert "token budget (1) is spent" in text

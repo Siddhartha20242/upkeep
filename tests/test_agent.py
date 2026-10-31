@@ -218,3 +218,36 @@ def test_an_empty_model_reply_is_never_sent_back_as_an_empty_assistant_message(w
     Agent(model, repo, report, runner, max_nudges=1, max_empty_retries=0).run()   # the nudge path (re-asking is off)
     assistant = [m for m in model.seen[-1] if m.get("role") == "assistant"]
     assert assistant and all(m.get("content") or m.get("tool_calls") for m in assistant)
+
+
+def test_a_token_budget_stops_the_model_and_the_decline_says_so(world):
+    repo, report, runner = world
+    model = Scripted([[tc("list_affected", {})]] * 20)      # every reply costs 10 tokens and never finishes
+    res = Agent(model, repo, report, runner, token_budget=25, max_turns=14).run()
+    assert res.status == "declined" and res.reason.startswith("token budget reached (30 of 25)")
+    assert res.model_calls == 3                             # 10, 20, 30: the check runs before each call, so it stops after 3
+
+
+def test_the_budget_never_blocks_a_fix_the_verifier_accepts(world):
+    repo, report, runner = world
+    model = Scripted([[FIX], [tc("run_tests", {})]])         # the edit lands within budget, then the budget is spent
+    res = Agent(model, repo, report, runner, token_budget=15, max_turns=14).run()
+    assert res.status == "verified"                          # the tests pass on the edited code; code decides, not the budget
+
+
+def test_an_empty_reply_after_reasoning_shows_the_model_its_own_reasoning_unless_switched_off(world):
+    repo, report, runner = world
+
+    class Empties(Scripted):
+        def chat(self, messages, tools=None, **kw):
+            self.seen.append(json.loads(json.dumps(messages)))
+            if len(self.seen) == 1:
+                return Reply({"role": "assistant", "content": "", "reasoning_content": "so now I should list the affected sites"}, {"total_tokens": 10})
+            return Reply({"role": "assistant", "content": "", "tool_calls": [tc("finish", {"status": "decline", "summary": "x"})]}, {"total_tokens": 10})
+
+    on = Empties([])
+    Agent(on, repo, report, runner).run()
+    assert any("so now I should list the affected sites" in str(m.get("content")) for m in on.seen[1])
+    off = Empties([])
+    Agent(off, repo, report, runner, reasoning_hint=False).run()
+    assert not any("so now I should list" in str(m.get("content")) for m in off.seen[1])

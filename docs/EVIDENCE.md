@@ -382,6 +382,27 @@ whose manifest still matches, and in which nothing was redacted, and write their
 attempts optionally as negatives. That is data preparation for fine-tuning an open-weight model on verifier-approved behavior, and I have not
 checked that it improves anything.
 
+### 21. A fourth real upgrade, a radar gap it exposed, and a token budget
+
+Fourth real case: `emoji` 1.7.0 to 2.0.0. `emojize(text, use_aliases=True)` lost its `use_aliases` argument. Dropping the argument is the
+obvious fix, and it keeps the visible test green (`:thumbs_up:` converts either way) while `:thumbsup:` stops converting; the old behavior
+is `language="alias"`. Validated in Docker like the other three (tests pass on 1.7.0, fail on 2.0.0, the reference fix passes).
+Muse Spark Open fixed it in 15 of 15 runs (5 with the behavior check off, 10 with it on; 17k to 28k tokens), and never took the trap. So this
+adds a second real case with a hidden test where Open works, and does not add a second hard case.
+
+Building it exposed a radar gap. `emoji/__init__.py` exposes its API with `from emoji.core import *`, and the extractor did not follow star
+imports, so the radar said "nothing will fail" about a call that raises. It now follows `from x import *` inside the package, honoring a
+literal `__all__`. Effect on the public API the radar can see, over 93 cached release archives: PyYAML 123 to 348 names (its `__init__` does
+`from .loader import *`), Pydantic 591 to 733, Werkzeug 530 to 539. Breaking changes found: Pydantic 1.10.7 to 2.14.2 667 to 775, Werkzeug
+0.15.4 to 2.3.8 356 to 365, PyYAML 5.4.1 to 6.0.3 unchanged at 4 (and the demo output is identical). Caveat: the 64% recall in result 6 was
+measured before this fix on a set that is 55 of 60 PyYAML commits, so I do not know what it is now; I did not re-measure it.
+
+Cost: `upkeep fix --token-budget N` stops asking the model once N tokens are spent across all attempts (repair rounds and escalation
+included) and reports `token budget reached` in the decline reason. It never blocks a fix the verifier accepts: the budget limits spending,
+and the verdict is still made by code. For scale, tokens per verified fix on this repo's cases: 17k to 28k (emoji), 27k to 40k (PyYAML),
+59k to 109k (Jinja2), and 221k to 1.9M (Werkzeug with repair rounds). I have not converted these to money, because I do not know what the
+provider charges for them.
+
 ## Integrity of what it downloads and produces
 
 - Downloads are verified. Every PyPI release is checked against the SHA-256 PyPI publishes for it. A mismatch, or a

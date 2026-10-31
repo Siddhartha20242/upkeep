@@ -159,6 +159,8 @@ class Agent:
         max_explorations: int = 8,
         max_library_reads: int = 6,  # measured: without a budget the model read source until its turns ran out and never edited
         earlier_attempt: dict | None = None,  # {"model", "reason", "diff"}: a declined attempt by another run, shown as data
+        reasoning_hint: bool = True,  # on an empty reply, show the model the end of its own reasoning (off only for the ablation)
+        token_budget: int | None = None,  # stop asking the model once this many tokens are spent; the verdict is still made by code
     ):
         self.client, self.report, self.runner = client, report, test_runner
         self.changelog = changelog
@@ -183,6 +185,8 @@ class Agent:
         self.explorer, self.max_explorations, self.explorations = explorer, max_explorations, 0
         self.max_library_reads, self.library_reads = max_library_reads, 0
         self.earlier_attempt = earlier_attempt
+        self.token_budget = token_budget
+        self.reasoning_hint = reasoning_hint
         self.tools = (list(TOOLS) + ([CHECK_TOOL] if behavior_checker else []) + ([NOTES_TOOL] if changelog and notes_mode == "tool" else [])
                       + (LIBRARY_TOOLS if self.lib_roots else []) + ([EXPLORE_TOOL] if explorer else []))
         self.max_turns, self.max_edits, self.max_test_runs = max_turns, max_edits, max_test_runs
@@ -406,7 +410,11 @@ class Agent:
         calls = tokens = nudges = 0
         declined: str | None = None
         model_error: str | None = None
+        budget_hit = False
         for _ in range(self.max_turns):
+            if self.token_budget is not None and tokens >= self.token_budget:
+                budget_hit = True
+                break
             try:
                 reply = self._chat(messages)
                 tries = 0
@@ -418,7 +426,7 @@ class Agent:
                     calls += 1
                     tokens += int((reply.usage or {}).get("total_tokens", 0))
                     self.reasoning_chars += len(reply.reasoning)
-                    if tries == 1 and reply.reasoning:
+                    if tries == 1 and reply.reasoning and self.reasoning_hint:
                         # The model said what it meant to do and stopped before doing it: show it the end of its own reasoning.
                         tail = self._redacted(reply.reasoning[-300:])
                         messages.append({"role": "assistant", "content": "(no output)"})
@@ -477,7 +485,10 @@ class Agent:
             return AgentResult("declined", f"model call failed: {model_error}", self._final_diff(), steps=self.steps,
                                model_calls=calls, total_tokens=tokens, guard_rejections=self.rejections,
                                injection_flags=self.flags, transcript=self.transcript)
-        return self._verdict(calls, tokens, declined)
+        res = self._verdict(calls, tokens, declined)
+        if budget_hit and res.status == "declined":
+            res.reason = f"token budget reached ({tokens} of {self.token_budget}); {res.reason}"
+        return res
 
     def _chat(self, messages: list[dict], temperature: float | None = None) -> Reply:
         """One retry for transient failures (network, 5xx, rate limit). A 4xx bad request is not retried."""

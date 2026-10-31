@@ -235,7 +235,7 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
     report = run_radar(args.repo, args.old, args.new, args.package, executed_lines=base.executed_lines)
     runner_plain = lambda w: runner(w)  # noqa: E731
     changelog = args.changelog.read_text() if args.changelog else None
-    client = client or client_for(args.provider, args.model)
+    client = client or client_for(args.provider, args.model, args.reasoning_effort or None)
     checker = None
     if args.behavior_check:
         old_paths = None if (args.old_deps or args.deps) else [args.old]
@@ -258,12 +258,16 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
             return out_old, out_new
         return explorer
 
+    spent: list[int] = []   # tokens used by finished attempts
+
     def attempt(cl, turns: int, explore: bool, earlier: dict | None = None):
         ag = Agent(cl, args.repo, report, runner_plain, changelog=changelog, behavior_checker=checker,
                    library_roots={"old": args.old, "new": args.new} if args.library_source else None,
                    explorer=make_explorer() if explore else None, import_roots=import_roots_from(args.deps, args.new), max_turns=turns,
-                   earlier_attempt=earlier)
-        return ag, run_with_progress(ag)
+                   earlier_attempt=earlier, token_budget=(max(args.token_budget - sum(spent), 0) if args.token_budget else None))
+        out = run_with_progress(ag)
+        spent.append(out.total_tokens)
+        return ag, out
 
     print(paint("\nupkeep: agent working (the model proposes; code decides)", "bold", use_color()), flush=True)
     agent, res = attempt(client, args.max_turns, args.explore)
@@ -272,6 +276,9 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
     for rnd in range(args.repair_rounds):  # same model again, shown the declined patch and the verifier's counterexample
         if res.status == "verified":
             break
+        if args.token_budget and sum(spent) >= args.token_budget:
+            print(paint(f"\nupkeep: token budget ({args.token_budget}) is spent; no further attempts.", "yellow", use_color()), flush=True)
+            break
         print(paint(f"\nupkeep: repair round {rnd + 1}: {attempts[-1]['model']} tries again from the declined patch ({res.reason[:90]}); "
                     "the verifier still decides.", "yellow", use_color()), flush=True)
         earlier.append({"model": attempts[-1]["model"], "agent_messages": res.transcript})
@@ -279,7 +286,9 @@ def _fix(args, client=None, prober=None, escalator=None) -> int:
         agent.cleanup()
         agent, res = attempt(client, args.max_turns, args.explore, hint)
         attempts.append(_attempt_record(client, args.provider, args.max_turns, args.explore, res))
-    if res.status != "verified" and args.escalate:
+    if res.status != "verified" and args.escalate and args.token_budget and sum(spent) >= args.token_budget:
+        print(paint(f"\nupkeep: token budget ({args.token_budget}) is spent; not escalating.", "yellow", use_color()), flush=True)
+    elif res.status != "verified" and args.escalate:
         prov, _, mod = args.escalate.partition(":")
         esc = escalator or client_for(prov, mod)
         print(paint(f"\nupkeep: {attempts[0]['model']} did not verify a fix ({res.reason[:90]}). Escalating to {mod} with the "
@@ -450,9 +459,13 @@ def main(argv: list[str] | None = None, client=None, prober=None, escalator=None
     f.add_argument("--escalate", metavar="PROVIDER:MODEL",
                    help="if the first model does not verify a fix, try again with this one (for example meta:muse-spark-1.3) using the compare "
                         "tool and --escalate-turns. The verifier still decides; the proof records both attempts")
+    f.add_argument("--reasoning-effort", choices=["low", "medium", "high", "xhigh"], default=None,
+                   help="how much Muse Spark Open reasons per reply (Baseten's `reasoning_effort`; its default is xhigh). Lower is cheaper")
     f.add_argument("--repair-rounds", type=int, default=0, metavar="N",
                    help="if the verifier declines, let the SAME model try up to N more times, each shown the declined patch and the "
                         "counterexample (default 0). Runs before --escalate.")
+    f.add_argument("--token-budget", type=int, default=0, metavar="N",
+                   help="stop asking the model once N tokens are spent across all attempts (0 = no limit). The verdict is still made by code")
     f.add_argument("--escalate-turns", type=int, default=40, help="turns for the escalation attempt (default 40)")
     f.add_argument("--max-turns", type=int, default=14,
                    help="model turns the agent may use (default 14). Hard cases need more: Werkzeug was only ever fixed with 40")

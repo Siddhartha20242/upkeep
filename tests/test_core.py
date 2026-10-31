@@ -366,3 +366,15 @@ def test_module_alias_import_makes_every_name_below_it_reachable_under_the_alias
     api = extract_api(new, "lib", include_methods=True)
     assert "lib.pg.arraylib.ARRAY" in api and "lib.pg.arraylib.ARRAY.bind" in api
     assert not any(c.kind == "removed" for c in diff_api(extract_api(old, "lib", include_methods=True), api))
+
+
+def test_a_star_import_makes_the_source_modules_public_names_public_in_the_package(tmp_path):
+    from upkeep.apidiff import extract_api
+    pkg = tmp_path / "lib"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("from lib.core import *\nfrom .other import *\n")
+    (pkg / "core.py").write_text("def emojize(s, language='en'):\n    pass\n\ndef _hidden(s):\n    pass\n")
+    (pkg / "other.py").write_text("__all__ = ['kept']\n\ndef kept(x):\n    pass\n\ndef not_exported(x):\n    pass\n")
+    api = extract_api(tmp_path, "lib")
+    assert "lib.emojize" in api and [p.name for p in api["lib.emojize"].params] == ["s", "language"]
+    assert "lib.kept" in api and "lib.not_exported" not in api and "lib._hidden" not in api
