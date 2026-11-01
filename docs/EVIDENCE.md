@@ -64,7 +64,7 @@ little. *Caveat: three libraries, apps written by me, small samples.*
 | check on, with edge-case expansion (Open x 3, `muse-spark-1.1` x 3) | 6 | 0 | 0 | 6 |
 
 The table covers the first 31 check-on runs. Later experiments (random inputs, library source, re-asking, Muse Spark 1.3, escalation;
-results 13 and 16) bring the total to 80 check-on runs: 64 declined, 15 verified with the hidden tests passing, and 1 wrong fix got
+results 13 and 16) bring the total to 88 check-on runs: 71 declined, 16 verified with the hidden tests passing, and 1 wrong fix got
 through. That one predates the edge-case expansion, and none of the runs after it was a wrong acceptance.
 
 The one wrong acceptance was `muse-spark-1.1` using `safe='/+'` where the old default was `safe='/:'`; neither the
@@ -279,6 +279,7 @@ Werkzeug 2.3.8 to 3.0.3 is the case no single Open attempt solved in 47 runs. Ev
 | Open, then Open again, second attempt is shown the declined patch and the counterexample | 3 | 1 |
 | Open, then escalate to 1.3, second model is shown the declined patch and the counterexample | 5 | 4 |
 | Open only, up to 3 attempts (`--repair-rounds 2`, compare tool, 40 turns), each retry shown the declined patch and the counterexample | 8 | 6 |
+| The same, with the reasoning hint switched off (`--no-reasoning-hint`) | 8 | 1 |
 
 `--escalate PROVIDER:MODEL` runs the cheap open-weight model first. Only if the deterministic verifier declines does a second model get
 the task. A correction: the first three escalation runs did NOT show the second model why the first attempt failed. I had written
@@ -297,11 +298,15 @@ verifier found wrong with the last one, produced a verified, correct fix in 6 of
 decline. Of the 6, five needed a second or third attempt and one succeeded on its first. Cost is high: 221k to 1.9M tokens per run
 (25 to 129 model calls, 4 to 20 minutes), against 27k to 109k for the PyYAML and Jinja2 cases. In these 8 runs Open produced 0 to 9 empty
 replies and 0.2M to 1.5M characters of reasoning, recorded in the results file per run
-(`eval_results/reallib_baseten_behavior_repair2_a.json`, `..._b.json`). These runs also use the new behavior for an empty reply (the model is
-shown the end of its own reasoning, result 20), so I cannot say how much of the change is the retry loop and how much is that.
+(`eval_results/reallib_baseten_behavior_repair2_a.json`, `..._b.json`). These runs also use the reasoning hint (result 20): when a reply comes back with no tool call, the model is shown the end of its own reasoning.
+I then reran the identical setup with that hint switched off, 8 runs: 1 correct and 7 declined, and all 8 used all three attempts
+(`eval_results/reallib_baseten_behavior_repair2_nohint_a.json`, `..._b.json`). Six of eight against one of eight is a gap a Fisher exact test
+puts at p = 0.04, so the hint, and not the retry loop alone, accounts for most of the improvement. The two groups were run on the same
+day with the same code apart from the switch, but not interleaved, and 8 runs each is small. I do not know why showing the model its own
+reasoning helps; one guess is that it keeps the model from dropping a plan it had just made, which I have not tested.
 
-Across every check-on Werkzeug run on file (80): 64 declined, 15 verified with the hidden tests passing, 1 verified with them failing (Muse
-Spark 1.1, before the edge-case probes existed). No run since has been a wrong acceptance. The 15 correct ones: 6 Open alone with repair rounds, 2 Muse Spark 1.3 alone, 6 Open then Muse Spark 1.3, and 1 Open then Open.
+Across every check-on Werkzeug run on file (88): 71 declined, 16 verified with the hidden tests passing, 1 verified with them failing (Muse
+Spark 1.1, before the edge-case probes existed). No run since has been a wrong acceptance. The 16 correct ones: 6 Open alone with repair rounds and the reasoning hint, 1 Open alone with repair rounds and no hint, 2 Muse Spark 1.3 alone, 6 Open then Muse Spark 1.3, and 1 Open then Open.
 
 Caveats: one case, small samples (8 runs for the Open-only result), and the cost is large. Muse Spark 1.3 is served by Meta's API and is not
 open-weight, but it is no longer needed to solve the hard case. Cost: Open spends 27k to 40k tokens per verified PyYAML fix and 59k to 109k for Jinja2
@@ -370,8 +375,7 @@ through the Meta Model API for the tool-calling benchmark (result 11), as a seco
 Reasoning output: Muse Spark Open always reasons before it answers, and the API returns that reasoning separately. Upkeep records how much
 it reasoned in `result.json` (`reasoning_chars`) and uses it in one place. When a reply comes back with no tool call, the usual cause is
 that the model said what it meant to do and stopped. The agent then shows the model the last 300 characters of its own reasoning (after
-secret redaction) and asks it to make that call, instead of only sampling again. I did not measure whether that is better than plain
-re-asking, so it is a design choice and not a result.
+secret redaction) and asks it to make that call, instead of only sampling again. I measured it (result 16): with the retry loop on Werkzeug, 6 of 8 runs with the hint against 1 of 8 without.
 
 Not used: Muse Code (Meta's coding agent; I did not have a way to run it on these cases, so I have no comparison), Muse Glimmer, Muse
 Wonder, Muse Image, Muse Voice and SAM (not relevant to a code tool), and any inference route other than Baseten for Open (Modal, Fireworks
@@ -402,6 +406,27 @@ included) and reports `token budget reached` in the decline reason. It never blo
 and the verdict is still made by code. For scale, tokens per verified fix on this repo's cases: 17k to 28k (emoji), 27k to 40k (PyYAML),
 59k to 109k (Jinja2), and 221k to 1.9M (Werkzeug with repair rounds). I have not converted these to money, because I do not know what the
 provider charges for them.
+
+### 22. Does Baseten's `reasoning_effort` cut the cost? On the easy cases, somewhat
+
+Baseten documents a `reasoning_effort` setting for Muse Spark Open (`low`, `medium`, `high`, `xhigh`; the default is `xhigh`) and bills reasoning
+tokens as output. I had never set it, so every earlier run used the default. `--reasoning-effort` now sends it. Same cases, behavior check on:
+
+| Case | Setting | Correct | Median tokens | Median seconds |
+|---|---|---|---|---|
+| PyYAML | default, n=10 | 10/10 | 34.5k | 54 |
+| | medium, n=5 | 5/5 | 29.1k | 40 |
+| | low, n=5 | 5/5 | 20.6k | 27 |
+| Jinja2 | default, n=10 | 10/10 | 63.3k | 77 |
+| | medium, n=5 | 5/5 | 54.0k | 61 |
+| | low, n=5 | 4/5 | 49.0k | 40 |
+| emoji | default, n=10 | 10/10 | 24.8k | 28 |
+| | medium, n=5 | 5/5 | 20.6k | 21 |
+| | low, n=5 | 5/5 | 22.3k | 19 |
+
+`low` cut tokens by about 40% on PyYAML, 22% on Jinja2 and 10% on emoji, and roughly halved the time, but it had the only failure (Jinja2, 4 of 5).
+`medium` was correct every time and saved about 15%. The savings are modest because most tokens on these cases are the code and tool output
+sent each turn, not the reasoning. Five runs per cell cannot rule out a small accuracy drop at `low`. I did not test `high`.
 
 ## Integrity of what it downloads and produces
 
