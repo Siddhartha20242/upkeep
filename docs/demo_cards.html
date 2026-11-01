@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upkeep demo cards</title>
+<style>
+:root{--bg:#0b0d12;--fg:#e8ecf3;--dim:#8b93a3;--red:#ff5c5c;--green:#3ddc84;--amber:#ffb454;--card:#141821;--line:#262c3a}
+@media (prefers-color-scheme: light){:root{--bg:#f6f7fa;--fg:#12151c;--dim:#5d6676;--card:#fff;--line:#d9dde6}}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.slide{display:none;min-height:100vh;padding:5vh 6vw;flex-direction:column;justify-content:center;gap:3vh}.slide.on{display:flex}
+h1{font-size:clamp(34px,6vw,84px);line-height:1.05;margin:0;letter-spacing:-.02em}h2{font-size:clamp(22px,3vw,40px);margin:0;color:var(--dim);font-weight:500}
+.big{font-size:clamp(90px,24vw,300px);font-weight:800;line-height:.9;color:var(--red);letter-spacing:-.04em}
+.cap{font-size:clamp(20px,2.6vw,38px);color:var(--dim);max-width:30ch}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:3vw}@media(max-width:800px){.cols{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:3vh 2.4vw}
+.tag{font-size:clamp(14px,1.5vw,22px);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.bad .tag{color:var(--red)}.good .tag{color:var(--green)}
+pre{margin:1.5vh 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:clamp(15px,1.9vw,28px);line-height:1.5;white-space:pre-wrap}
+.hl{background:rgba(255,92,92,.25);color:var(--red);border-radius:6px;padding:0 .3em;font-weight:700}.ok{background:rgba(61,220,132,.2);color:var(--green);border-radius:6px;padding:0 .3em;font-weight:700}
+.row{display:grid;grid-template-columns:minmax(0,34ch) 1fr auto;gap:2vw;align-items:center;margin:1.4vh 0}@media(max-width:800px){.row{grid-template-columns:1fr}}
+.lab{font-size:clamp(16px,2vw,30px)}.track{height:clamp(26px,4vh,48px);background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.fill{height:100%;border-radius:9px}.val{font-size:clamp(22px,3vw,44px);font-weight:800;min-width:3ch;text-align:right}
+.hint{position:fixed;bottom:12px;right:16px;font-size:13px;color:var(--dim)}
+.pill{display:inline-block;padding:.35em .9em;border:1px solid var(--line);border-radius:999px;font-size:clamp(16px,2vw,28px);margin:.4em .4em 0 0;background:var(--card)}
+</style></head><body>
+
+<section class="slide on" id="s1">
+  <div class="big">18/18</div>
+  <div class="cap">times an AI agent called its own wrong fix "verified", while every test passed.</div>
+  <h2>Check switched off. Real Werkzeug 2.3.8 to 3.0.3 upgrade.</h2>
+</section>
+
+<section class="slide" id="s2">
+  <h1>Green tests are not proof.</h1>
+  <div class="cols">
+    <div class="card bad"><div class="tag">The AI's fix: every test passes</div>
+<pre>def encode(d):
+    return urlencode(d, doseq=True)
+
+encode({"q": None})</pre></div>
+    <div class="card good"><div class="tag">What the old library did</div>
+<pre>encode({"q": None})
+
+old library  → <span class="ok">''</span>
+patched code → <span class="hl">'q=None'</span></pre></div>
+  </div>
+  <h2>Upkeep: DECLINED. app.py:9, with the input that proves it.</h2>
+</section>
+
+<section class="slide" id="s3">
+  <h1>Hardest case: Muse Spark Open alone</h1>
+  <h2>Werkzeug upgrade, behavior check on. Correct fixes (hidden tests pass).</h2>
+  <div>
+    <div class="row"><div class="lab">One try</div><div class="track"><div class="fill" style="width:2%;background:var(--red)"></div></div><div class="val" style="color:var(--red)">0 / 47</div></div>
+    <div class="row"><div class="lab">Up to 3 tries, shown the failing input, reasoning hint off</div><div class="track"><div class="fill" style="width:12.5%;background:var(--amber)"></div></div><div class="val" style="color:var(--amber)">1 / 8</div></div>
+    <div class="row"><div class="lab">Up to 3 tries, shown the failing input, reasoning hint on</div><div class="track"><div class="fill" style="width:75%;background:var(--green)"></div></div><div class="val" style="color:var(--green)">6 / 8</div></div>
+  </div>
+  <h2>The same verifier judges every attempt.</h2>
+</section>
+
+<section class="slide" id="s4">
+  <h1>How it works</h1>
+  <div>
+    <span class="pill"><b>RADAR</b> finds the break (no AI)</span>
+    <span class="pill"><b>AGENT</b> edits only flagged lines</span>
+    <span class="pill"><b>SANDBOX</b> tests, no network</span>
+    <span class="pill"><b>ORACLE</b> the old library judges</span>
+    <span class="pill"><b>SEAL</b> every run hashed</span>
+  </div>
+  <h2>The model proposes. Everything else is code.</h2>
+</section>
+
+<section class="slide" id="s5">
+  <h1>Try it yourself</h1>
+  <div class="cap" style="max-width:40ch">The audit needs no key and no AI. Your code stays on your machine.</div>
+  <pre>github.com/Siddhartha20242/upkeep</pre>
+  <h2>Muse Spark Open, served through Baseten. Open source, MIT.</h2>
+</section>
+
+<div class="hint" id="hint">← → to change card · 1 to 5 to jump · F for full screen</div>
+<script>
+const s=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach((e,k)=>e.classList.toggle('on',k===i));}
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')show(i+1);else if(e.key==='ArrowLeft')show(i-1);else if(/^[1-5]$/.test(e.key))show(+e.key-1);else if(e.key==='f')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();});
+try{const h=location.hash.replace('#','');if(/^[1-5]$/.test(h))show(+h-1);}catch(e){}
+setTimeout(()=>{document.getElementById('hint').style.display='none'},6000);
+</script></body></html>
