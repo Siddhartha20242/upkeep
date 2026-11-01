@@ -280,6 +280,7 @@ Werkzeug 2.3.8 to 3.0.3 is the case no single Open attempt solved in 47 runs. Ev
 | Open, then escalate to 1.3, second model is shown the declined patch and the counterexample | 5 | 4 |
 | Open only, up to 3 attempts (`--repair-rounds 2`, compare tool, 40 turns), each retry shown the declined patch and the counterexample | 8 | 6 |
 | The same, with the reasoning hint switched off (`--no-reasoning-hint`) | 8 | 1 |
+| The same as the 6-of-8 row, with `--reasoning-effort medium` | 3 | 3 |
 
 `--escalate PROVIDER:MODEL` runs the cheap open-weight model first. Only if the deterministic verifier declines does a second model get
 the task. A correction: the first three escalation runs did NOT show the second model why the first attempt failed. I had written
@@ -425,7 +426,9 @@ tokens as output. I had never set it, so every earlier run used the default. `--
 | | low, n=5 | 5/5 | 22.3k | 19 |
 
 `low` cut tokens by about 40% on PyYAML, 22% on Jinja2 and 10% on emoji, and roughly halved the time, but it had the only failure (Jinja2, 4 of 5).
-`medium` was correct every time and saved about 15%. The savings are modest because most tokens on these cases are the code and tool output
+`medium` was correct every time and saved about 15%. On the hard Werkzeug case it did not save tokens: 3 of 3 runs were correct (hidden tests pass),
+but they used 571k, 995k and 1.08M tokens (median about 995k, against about 693k for the successful default-effort runs), because they needed more attempts
+(3, 3 and 2). So lower effort is a saving on easy cases, and not on the hard one. The savings are modest because most tokens on these cases are the code and tool output
 sent each turn, not the reasoning. Five runs per cell cannot rule out a small accuracy drop at `low`. I did not test `high`.
 
 ## Integrity of what it downloads and produces

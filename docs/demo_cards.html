@@ -75,11 +75,21 @@ patched code → <span class="hl">'q=None'</span></pre></div>
   <h2>Muse Spark Open, served through Baseten. Open source, MIT.</h2>
 </section>
 
-<div class="hint" id="hint">← → to change card · 1 to 5 to jump · F for full screen</div>
+<section class="slide" id="s6">
+  <h1>Almost every app runs on code written by strangers.</h1>
+<pre>requirements.txt
+PyYAML==5.4.1
+Werkzeug==2.3.8
+Jinja2==3.0.3
+emoji==1.7.0</pre>
+  <h2>And that code keeps changing.</h2>
+</section>
+
+<div class="hint" id="hint">← → to change card · 1 to 6 to jump · F for full screen</div>
 <script>
 const s=[...document.querySelectorAll('.slide')];let i=0;
 function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach((e,k)=>e.classList.toggle('on',k===i));}
-addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')show(i+1);else if(e.key==='ArrowLeft')show(i-1);else if(/^[1-5]$/.test(e.key))show(+e.key-1);else if(e.key==='f')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();});
-try{const h=location.hash.replace('#','');if(/^[1-5]$/.test(h))show(+h-1);}catch(e){}
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')show(i+1);else if(e.key==='ArrowLeft')show(i-1);else if(/^[1-6]$/.test(e.key))show(+e.key-1);else if(e.key==='f')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();});
+try{const h=location.hash.replace('#','');if(/^[1-6]$/.test(h))show(+h-1);}catch(e){}
 setTimeout(()=>{document.getElementById('hint').style.display='none'},6000);
 </script></body></html>

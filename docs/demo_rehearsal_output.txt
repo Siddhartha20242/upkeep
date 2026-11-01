@@ -12,16 +12,16 @@ upkeep: agent working (the model proposes; code decides)
   sites     listed the affected call sites
   read      app.py:1-20
   notes     asked the release notes about 'yaml.load Loader'
-  notes     asked the release notes about 'Loader'
-  REJECTED  rejected by content check: edit adds disallowed constructs: unsafe deserialization yaml.Loader (use yaml.SafeLoader, or decline)
-  edit      app.py:4-5
-  edit      app.py:8-9
+  notes     asked the release notes about 'load'
+  notes     asked the release notes about 'the affected symbols'
+  edit      app.py:5-5
+  edit      app.py:9-9
   tests     tests PASSED: 1 passed in 0.02s
   behavior  NO DIFFERENCES FOUND
   finish    fixed
 
 yaml: VERIFIED  (tests pass after the edits)
-wrote demo/out/pyyaml_load/fix.patch, PROOF.md, result.json, MANIFEST.json  (the repo itself was NOT modified)
+wrote demo/out/pyyaml_load/fix.patch, PROOF.md, result.json, model_transcript.json, MANIFEST.json  (the repo itself was NOT modified)
 
 $ upkeep fix --behavior-check (Werkzeug 2.3.8 -> 3.0.3)
 
@@ -32,17 +32,18 @@ upkeep: agent working (the model proposes; code decides)
   notes     asked the release notes about 'url_quote'
   notes     asked the release notes about 'urls'
   notes     asked the release notes about 'the affected symbols'
-  read      /deps/werkzeug/urls.py:1-200
   read      test_app.py:1-100
   read      app.py:1-20
-  read      app.py:1-9
+  read      /deps/werkzeug/urls.py:1-200
+  read      app.py:1-10
+  edit      app.py:1-1
+  tests     tests PASSED: 2 passed in 0.01s
+  behavior  DIFFERENCES FOUND: your edit changed behavior
+  read      /deps/werkzeug/urls.py:1-100
+  read      app.py:1-20
 
-werkzeug: DECLINED  (no edit was made)
-wrote demo/out/werkzeug_urls/fix.patch, PROOF.md, result.json, MANIFEST.json  (the repo itself was NOT modified)
-
-$ upkeep verify --run demo/out/werkzeug_urls
-OK   every file matches the SHA-256 manifest
-note: not signed, so this shows the files are unchanged, not who produced them
+werkzeug: DECLINED  (behavior differs from the old version: app.py:9 (werkzeug.urls.url_encode) encode({"a": ["1", "2", "3"], "b": "single"}) old={"ok": "'a=1&a=2&a=3&b=single'"} new={"ok": "'a=%5B%271%27%2C+%272%27%2C+%273%27%5D&b=single'"})
+wrote demo/out/werkzeug_urls/fix.patch, PROOF.md, result.json, model_transcript.json, MANIFEST.json  (the repo itself was NOT modified)
 
 $ python scripts/demo_replay.py   (recorded wrong fix, no model)
 Replaying a RECORDED wrong fix (a plausible edit a model produced) against the real Werkzeug 2.3.8 -> 3.0.3
@@ -74,3 +75,7 @@ radar: RED, 4 affected call site(s) in the ORIGINAL code
      patched code -> {"ok": "'a/b%3Ac'"}
 
 werkzeug: DECLINED  (behavior differs from the old version)
+
+$ upkeep verify --run demo/out/werkzeug_urls
+OK   every file matches the SHA-256 manifest
+note: not signed, so this shows the files are unchanged, not who produced them
