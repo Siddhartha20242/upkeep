@@ -22,7 +22,17 @@ pre{margin:1.5vh 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;fon
 .pill{display:inline-block;padding:.35em .9em;border:1px solid var(--line);border-radius:999px;font-size:clamp(16px,2vw,28px);margin:.4em .4em 0 0;background:var(--card)}
 </style></head><body>
 
-<section class="slide on" id="s1">
+<section class="slide on" id="s6">
+  <h1>Almost every app runs on code written by strangers.</h1>
+<pre>requirements.txt
+PyYAML==5.4.1
+Werkzeug==2.3.8
+Jinja2==3.0.3
+emoji==1.7.0</pre>
+  <h2>And that code keeps changing.</h2>
+</section>
+
+<section class="slide" id="s1">
   <div class="big">18/18</div>
   <div class="cap">times an AI agent called its own wrong fix "verified", while every test passed.</div>
   <h2>Check switched off. Real Werkzeug 2.3.8 to 3.0.3 upgrade.</h2>
@@ -75,21 +85,13 @@ patched code → <span class="hl">'q=None'</span></pre></div>
   <h2>Muse Spark Open, served through Baseten. Open source, MIT.</h2>
 </section>
 
-<section class="slide" id="s6">
-  <h1>Almost every app runs on code written by strangers.</h1>
-<pre>requirements.txt
-PyYAML==5.4.1
-Werkzeug==2.3.8
-Jinja2==3.0.3
-emoji==1.7.0</pre>
-  <h2>And that code keeps changing.</h2>
-</section>
-
-<div class="hint" id="hint">← → to change card · 1 to 6 to jump · F for full screen</div>
+<div class="hint" id="hint">click right side = next, left side = back · keys 1 to 6 · F = full screen · page shows card <span id="n">1</span> of 6</div>
 <script>
 const s=[...document.querySelectorAll('.slide')];let i=0;
-function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach((e,k)=>e.classList.toggle('on',k===i));}
+function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach((e,k)=>e.classList.toggle('on',k===i));const c=document.getElementById('n');if(c)c.textContent=i+1;}
 addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')show(i+1);else if(e.key==='ArrowLeft')show(i-1);else if(/^[1-6]$/.test(e.key))show(+e.key-1);else if(e.key==='f')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();});
-try{const h=location.hash.replace('#','');if(/^[1-6]$/.test(h))show(+h-1);}catch(e){}
-setTimeout(()=>{document.getElementById('hint').style.display='none'},6000);
+function fromHash(){try{const h=location.hash.replace('#','');if(/^[1-6]$/.test(h))show(+h-1);}catch(e){}}
+fromHash();addEventListener('hashchange',fromHash);
+addEventListener('click',e=>{if(e.target.closest('a'))return;show(e.clientX<innerWidth*0.3?i-1:i+1);});
+setTimeout(()=>{document.getElementById('hint').style.display='none'},12000);
 </script></body></html>
