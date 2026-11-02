@@ -6,6 +6,21 @@ Upkeep checks what a Python dependency upgrade would break in your code. If an A
 
 I built it for the Meta Global AI Developer Hackathon (Indie Developer track, Oct 26 to Nov 4, 2026). The agent runs on Muse Spark Open (`meta-models/muse-spark-open-1026`), served through Baseten. I wrote the code during the event, with Claude Code helping.
 
+**Try it in a minute, no API key:** `upkeep audit --repo .` lists the lines of your code that your next dependency upgrades would break ([setup below](#try-it)).
+
+## At a glance
+
+| What I measured | Result |
+|---|---|
+| AI fix on Werkzeug 2.3.8 → 3.0.3, no behavior check | Green tests and wrong in 18 of 18 runs |
+| Same case, behavior check on (88 runs) | 71 declined, 16 verified and correct, 1 verified and wrong |
+| Muse Spark Open, one attempt | 0 of 47 correct |
+| Muse Spark Open, up to 3 attempts with the reasoning hint | 6 of 8 correct (1 of 8 without the hint) |
+| Muse Spark tool calls exactly right | 84% Open, 97% 1.1, 99% 1.2, 100% 1.3 |
+| PyYAML, Jinja2, emoji upgrades | Fixed correctly 15 of 15 times each |
+
+The samples are small. [What does not work](#what-does-not-work) lists the limits, and [`docs/EVIDENCE.md`](docs/EVIDENCE.md) has every table and how to repeat it.
+
 ## The problem
 
 When a library ships a breaking change, your tests only tell you about the code they happen to run. AI agents can edit code, but nothing checks that an edit keeps the old behavior.
@@ -81,7 +96,7 @@ Every PyPI release is checked against the SHA-256 that PyPI publishes for it. A 
 
 ## Tests
 
-There are 563 tests, with about 90% line coverage, and `mypy` reports no problems. GitHub Actions runs them on Python 3.10, 3.11 and 3.12. No test needs the network, Docker or a model key.
+There are 565 tests, with about 90% line coverage, and `mypy` reports no problems. GitHub Actions runs them on Python 3.10, 3.11 and 3.12. No test needs the network, Docker or a model key.
 
 Two kinds of test found real bugs. The first is a ground-truth test for the radar. It generates thousands of random function signatures and changes, then asks Python's own `inspect.Signature.bind` whether each call still works. On its first run the radar missed 11% of the calls that broke, and I fixed that. The second is a set of adversarial edits for the content check. Details are in [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
